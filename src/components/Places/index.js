@@ -24,6 +24,9 @@ class Places extends Component  {
         <div className="place cigar-shop w3 h5">Charutaria</div>
         <div className="place graveyard w6 h2">Cemitério</div>
         <div className="place carriage-station w6 h3">Estação de carruagem</div>
+        <div className="place bank w7 h2">Banco</div>
+        <div className="place street w3 h3"></div>
+        <div className="place scotland-yard w5 h3">Scotland Yard</div>
       </div>
     )
   }

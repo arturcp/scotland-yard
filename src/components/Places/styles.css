@@ -121,3 +121,22 @@
   border-bottom: 1px solid #ccc;
   padding-top: 57px;
 }
+
+.bank {
+  left: 395px;
+  top: 837px;
+  border-right: 1px solid #ccc;
+  padding-top: 42px;
+}
+
+.street {
+  left: 739px;
+  top: 787px;
+  border-right: 1px solid #ccc;
+}
+
+.scotland-yard {
+  left: 887px;
+  top: 787px;
+  padding-top: 62px;
+}
