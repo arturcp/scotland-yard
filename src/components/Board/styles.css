@@ -1,0 +1,12 @@
+#board {
+  position: relative;
+  width: 1127px;
+  height: 882px;
+  border: 1px solid #000;
+  margin: 0 auto;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-content: start;
+  padding: 3px;
+}
