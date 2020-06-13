@@ -1,0 +1,142 @@
+.place {
+  -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+  -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+  box-sizing: border-box;         /* Opera/IE 8+ */
+
+  position: absolute;
+  background-color: #eee;
+  text-align: center;
+}
+
+.holmes-house {
+  right: 2px;
+  top: 2px;
+  padding: 78px 10px;
+}
+
+.museum {
+  right: 248px;
+  top: 52px;
+  padding: 78px 10px;
+}
+
+.bar {
+  right: 101px;
+  top: 297px;
+  padding: 64px 0px;
+}
+
+.big-bang {
+  right: 52px;
+  top: 480px;
+  padding: 64px 0px;
+  border-bottom: 1px solid #ccc;
+}
+
+.drugstore {
+  right: 52px;
+  top: 609px;
+  padding: 64px 0px;
+}
+
+.book-store {
+  left: 298px;
+  top: 1px;
+  padding: 78px 10px;
+  border-left: 1px solid #ccc;
+}
+
+.locksmith {
+  left: 150px;
+  top: 1px;
+  padding: 78px 10px;
+}
+
+.empty-area {
+  left: 2px;
+  top: 1px;
+  padding: 78px 10px;
+  border-right: 1px solid #ccc;
+}
+
+.docks {
+  left: 2px;
+  top: 150px;
+  padding: 100px 10px;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+
+.park {
+  left: 395px;
+  top: 348px;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  display: table;
+}
+
+.park .name {
+  display: table-cell;
+  vertical-align: bottom;
+  padding-bottom: 56px;
+}
+
+.pawnshop {
+  left: 542px;
+  top: 249px;
+  padding: 110px 10px;
+}
+
+.theater {
+  left: 395px;
+  top: 642px;
+  padding: 64px 10px;
+}
+
+.hotel {
+  left: 53px;
+  top: 395px;
+  padding: 64px 10px;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+
+.cigar-shop {
+  left: 201px;
+  top: 395px;
+  padding: 64px 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+.graveyard {
+  left: 53px;
+  top: 641px;
+  border-bottom: 1px solid #ccc;
+  padding-top: 38px;
+}
+
+.carriage-station {
+  left: 53px;
+  top: 740px;
+  border-bottom: 1px solid #ccc;
+  padding-top: 57px;
+}
+
+.bank {
+  left: 395px;
+  top: 837px;
+  border-right: 1px solid #ccc;
+  padding-top: 42px;
+}
+
+.street {
+  left: 739px;
+  top: 787px;
+  border-right: 1px solid #ccc;
+}
+
+.scotland-yard {
+  left: 887px;
+  top: 787px;
+  padding-top: 62px;
+}
