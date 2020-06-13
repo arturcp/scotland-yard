@@ -1,0 +1,15 @@
+#modal-notes .modal__container {
+  width: 800px;
+  height: 800px;
+  z-index: 3;
+}
+
+#modal-notes .modal__btn {
+  margin-right: 10px;
+}
+
+#modal-notes .modal__footer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+}
