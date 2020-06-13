@@ -10,3 +10,26 @@
 .square.empty {
   visibility: hidden;
 }
+
+.square.entrance,
+.square.start {
+  text-align: center;
+}
+
+.square.entrance i,
+.square.start i {
+  font-size: 24px;
+  color: #000;
+}
+
+[data-direction="left"] {
+  transform: rotate(-90deg);
+}
+
+[data-direction="right"] {
+  transform: rotate(90deg);
+}
+
+[data-direction="down"] {
+  transform: rotate(180deg);
+}
