@@ -75,3 +75,4 @@ This section has moved here: https://facebook.github.io/create-react-app/docs/tr
 ### Resources
 
 * modal: https://micromodal.now.sh/
+* editor: https://github.com/jpuri/react-draft-wysiwyg
