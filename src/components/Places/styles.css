@@ -4,139 +4,147 @@
   box-sizing: border-box;         /* Opera/IE 8+ */
 
   position: absolute;
-  background-color: #eee;
-  text-align: center;
 }
 
 .holmes-house {
   right: 2px;
   top: 2px;
-  padding: 78px 10px;
+  background-image: url(images/holmes-house.jpg);
+  background-size: 150px 195px;
 }
 
 .museum {
   right: 248px;
   top: 52px;
-  padding: 78px 10px;
+  background-image: url(images/museum.jpg);
+  background-size: 295px 202px;
+  background-position: -3px 0px;
 }
 
 .bar {
   right: 101px;
   top: 297px;
-  padding: 64px 0px;
+  background-image: url(images/bar.jpg);
+  background-size: 248px 147px;
 }
 
 .big-bang {
   right: 52px;
   top: 480px;
-  padding: 64px 0px;
-  border-bottom: 1px solid #ccc;
+  background-image: url(images/big-bang.jpg);
+  background-size: 295px 130px;
 }
 
 .drugstore {
   right: 52px;
   top: 609px;
-  padding: 64px 0px;
+  background-image: url(images/drugstore.jpg);
+  background-size: 295px 130px;
 }
 
 .book-store {
   left: 298px;
   top: 1px;
-  padding: 78px 10px;
-  border-left: 1px solid #ccc;
+  background-image: url(images/book-store.jpg);
+  background-size: 218px 156px;
+  background-position: -12px 0px;
 }
 
 .locksmith {
   left: 150px;
   top: 1px;
-  padding: 78px 10px;
+  background-image: url(images/locksmith.jpg);
+  background-size: 148px 147px;
 }
 
-.empty-area {
+.key {
   left: 2px;
-  top: 1px;
-  padding: 78px 10px;
-  border-right: 1px solid #ccc;
+  top: 2px;
+  background-image: url(images/key.jpg);
+  background-size: 155px 148px;
 }
 
 .docks {
-  left: 2px;
-  top: 150px;
-  padding: 100px 10px;
-  border-top: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
+  left: 200px;
+  top: 200px;
+  background-image: url(images/docks.jpg);
+  background-size: 293px 197px;
+}
+
+.bridge {
+  left: 3px;
+  top: 151px;
+  background-image: url(images/bridge.jpg);
+  background-size: 239px 196px;
 }
 
 .park {
   left: 395px;
   top: 348px;
-  border-top: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
-  display: table;
-}
-
-.park .name {
-  display: table-cell;
-  vertical-align: bottom;
-  padding-bottom: 56px;
+  background-image: url(images/park.jpg);
+  background-size: 295px 347px;
+  background-position: 0px -50px;
 }
 
 .pawnshop {
   left: 542px;
   top: 249px;
-  padding: 110px 10px;
+  background-image: url(images/pawnshop.jpg);
+  background-size: 150px 245px;
 }
 
 .theater {
   left: 395px;
   top: 642px;
-  padding: 64px 10px;
+  background-image: url(images/theater.jpg);
+  background-size: 300px 150px;
 }
 
 .hotel {
   left: 53px;
   top: 395px;
-  padding: 64px 10px;
-  border-right: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
+  background-image: url(images/hotel.jpg);
+  background-size: 150px 245px;
 }
 
 .cigar-shop {
   left: 201px;
   top: 395px;
-  padding: 64px 10px;
-  border-bottom: 1px solid #ccc;
+  background-image: url(images/cigar-shop.jpg);
+  background-size: 145px 250px;
 }
 
 .graveyard {
   left: 53px;
   top: 641px;
-  border-bottom: 1px solid #ccc;
-  padding-top: 38px;
+  background-image: url(images/graveyard.jpg);
+  background-size: 292px 98px;
 }
 
 .carriage-station {
   left: 53px;
   top: 740px;
-  border-bottom: 1px solid #ccc;
-  padding-top: 57px;
+  background-image: url(images/carriage-station.jpg);
+  background-size: 292px 144px;
 }
 
 .bank {
   left: 395px;
   top: 837px;
-  border-right: 1px solid #ccc;
-  padding-top: 42px;
+  background-image: url(images/bank.jpg);
+  background-size: 345px 100px;
 }
 
 .street {
   left: 739px;
   top: 787px;
-  border-right: 1px solid #ccc;
+  background-image: url(images/street.jpg);
+  background-size: 150px 150px;
 }
 
 .scotland-yard {
   left: 887px;
   top: 787px;
-  padding-top: 62px;
+  background-image: url(images/scotland-yard.jpg);
+  background-size: 245px 155px;
 }
