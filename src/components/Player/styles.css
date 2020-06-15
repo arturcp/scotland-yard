@@ -1,0 +1,17 @@
+.player {
+  width: 30px;
+  height: 30px;
+  position: absolute;
+  top: 145px;
+  right: 0;
+  font-size: 30px;
+}
+
+.player.blue {
+  color: blue;
+  right: 10px;
+}
+
+.player.yellow {
+  color: yellow;
+}

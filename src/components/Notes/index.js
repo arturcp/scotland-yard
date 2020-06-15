@@ -24,16 +24,16 @@ class Notes extends Component {
     const { editorState } = this.state;
 
     return (
-      <div class="modal micromodal-slide" id="modal-notes" aria-hidden="true">
-        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
-          <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="modal-notes-title">
-            <header class="modal__header">
-              <h2 class="modal__title" id="modal-notes-title">
+      <div className="modal micromodal-slide" id="modal-notes" aria-hidden="true">
+        <div className="modal__overlay" tabIndex="-1" data-micromodal-close>
+          <div className="modal__container" role="dialog" aria-modal="true" aria-labelledby="modal-notes-title">
+            <header className="modal__header">
+              <h2 className="modal__title" id="modal-notes-title">
                 Notas
               </h2>
-              <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+              <button className="modal__close" aria-label="Close modal" data-micromodal-close></button>
             </header>
-            <main class="modal__content" id="modal-notes-content">
+            <main className="modal__content" id="modal-notes-content">
             <Editor
                 editorState={editorState}
                 toolbarClassName="toolbarClassName"
@@ -42,9 +42,9 @@ class Notes extends Component {
                 onEditorStateChange={this.onEditorStateChange}
               />
             </main>
-            <footer class="modal__footer">
-              <button class="modal__btn modal__btn-primary">Salvar</button>
-              <button class="modal__btn" data-micromodal-close aria-label="Close this dialog window">Close</button>
+            <footer className="modal__footer">
+              <button className="modal__btn modal__btn-primary">Salvar</button>
+              <button className="modal__btn" data-micromodal-close aria-label="Close this dialog window">Close</button>
             </footer>
           </div>
         </div>
