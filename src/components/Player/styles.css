@@ -5,13 +5,5 @@
   top: 145px;
   right: 0;
   font-size: 30px;
-}
-
-.player.blue {
-  color: blue;
-  right: 10px;
-}
-
-.player.yellow {
-  color: yellow;
+  z-index: 3;
 }

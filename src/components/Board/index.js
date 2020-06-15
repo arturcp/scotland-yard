@@ -17,6 +17,8 @@ class Board extends Component {
     const position = player.position;
     if (position.place) {
       return { top: this.state.places[position.place].top, left: this.state.places[position.place].left + 8 * (player.id - 1) }
+    } else {
+      return { top: position.row * 49 + 7, left: position.column * 49 + 3 + 8 * (player.id - 1) }
     };
   }
 

@@ -7,8 +7,10 @@ import './styles.css';
 class Game extends Component {
   state = {
     players: [
-      { id: 1, name: 'John', color: 'blue', position: { row: null, column: null, place: 'holmes-house' } },
-      { id: 2, name: 'Jane', color: 'yellow', position: { row: null, column: null, place: 'hotel' } }
+      { id: 1, name: 'John', color: 'blue', position: { row: 10, column: 10, place: null } },
+      { id: 2, name: 'Jane', color: 'yellow', position: { row: 10, column: 10, place: null } },
+      { id: 3, name: 'Josh', color: 'brown', position: { row: 10, column: 10, place: null } },
+      { id: 4, name: 'Joan', color: 'lightpink', position: { row: 10, column: 10, place: null } },
     ]
   };
   render() {
