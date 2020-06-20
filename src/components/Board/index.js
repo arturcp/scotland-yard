@@ -11,8 +11,7 @@ class Board extends Component {
     super(props);
     this.state = {
       squares: BoardData.squares,
-      places: BoardData.places,
-      availableMovements: []
+      places: BoardData.places
     }
   }
 
