@@ -18,19 +18,22 @@ class PlayerMovement {
   }
 
   findNextMove = (results, position, boardData, movesRemaining) => {
-    if (movesRemaining === 0 || !position.canMove()) {
-      return this.resultsWithPosition(results, position);
-    } else {
-      movesRemaining--;
+    if (movesRemaining > 0) {
       const updatedBoardData = this.cloneBoardData(boardData);
       updatedBoardData[position.row][position.column] = '*';
-      results = this.findNextMove(results, position.up(), updatedBoardData, movesRemaining);
-      results = this.findNextMove(results, position.down(), updatedBoardData, movesRemaining);
-      results = this.findNextMove(results, position.left(), updatedBoardData, movesRemaining);
-      results = this.findNextMove(results, position.right(), updatedBoardData, movesRemaining);
+      results = this.resultsWithPosition(results, position);
 
-      return results;
+      if (position.canMove()) {
+        movesRemaining--;
+
+        results = this.findNextMove(results, position.up(), updatedBoardData, movesRemaining);
+        results = this.findNextMove(results, position.down(), updatedBoardData, movesRemaining);
+        results = this.findNextMove(results, position.left(), updatedBoardData, movesRemaining);
+        results = this.findNextMove(results, position.right(), updatedBoardData, movesRemaining);
+      }
     }
+
+    return results;
   }
 
   resultsWithPosition = (results, position) => {
