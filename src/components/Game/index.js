@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import Board from '../Board'
 import Sidebar from '../Sidebar'
 import Notes from '../Notes'
-import Player from '../Player';
 
 import './styles.css';
 
@@ -26,31 +25,14 @@ class Game extends Component {
     // console.log('results');
     // console.log(results);
 
-
-
-  playerPosition = (player) => {
-    const position = player.position;
-    if (position.place) {
-      return { top: this.state.places[position.place].top, left: this.state.places[position.place].left + 8 * (player.id - 1) }
-    } else {
-      return { top: position.row * 49 + 7, left: position.column * 49 + 3 + 8 * (player.id - 1) }
-    };
-  }
-
   render() {
     const { players } = this.state;
-    const boardPlayers = players.map((player, row) => {
-      return <Player player={player} key={player.id} style={this.playerPosition(player)}/>
-    });
 
     return (
       <div id="container">
         <Sidebar />
         <Board players={players}/>
         <Notes />
-        <div id="players">
-          {boardPlayers}
-        </div>
       </div>
     )
   }
