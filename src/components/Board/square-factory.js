@@ -19,8 +19,6 @@ class SquareFactory {
       case 4:
       case 5:
         return 'entrance';
-      case 6:
-        return 'start';
       default:
         return '';
     }
