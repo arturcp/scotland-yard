@@ -1,4 +1,4 @@
-import BoardData from './board-data'
+import BoardData from '../components/Board/board-data'
 import PlayerPosition from './player-position'
 
 class PlayerMovement {

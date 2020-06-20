@@ -24,7 +24,7 @@ class SquareFactory {
     }
   }
 
-  buildSquares = (list, row) => {
+  buildSquares = (list, row, debug) => {
     const self = this;
 
     return list.map((squareValue, column) => {
@@ -32,7 +32,7 @@ class SquareFactory {
       const type = self.squareType(squareValue);
       const direction = self.entranceDirection(squareValue);
 
-      return <Square type={type} direction={direction} state={squareState} row={row} column={column} key={row + column} />
+      return <Square type={type} direction={direction} state={squareState} row={row} column={column} key={row + column} debug={debug} />
     });
   }
 }

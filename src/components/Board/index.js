@@ -1,17 +1,19 @@
 import React, { Component } from 'react';
 import Places from '../Places';
-import BoardData from '../../lib/board-data';
+import BoardData from './board-data';
 import SquareFactory from './square-factory';
 import Player from '../Player';
 
 import './styles.css';
 
 class Board extends Component {
-  state = {
-    squares: BoardData.squares,
-    players: this.props.players,
-    places: BoardData.places,
-    availableMovements: []
+  constructor(props) {
+    super(props);
+    this.state = {
+      squares: BoardData.squares,
+      places: BoardData.places,
+      availableMovements: []
+    }
   }
 
   playerPosition = (player) => {
@@ -24,10 +26,12 @@ class Board extends Component {
   }
 
   render() {
-    const { squares, players } = this.state;
+    const { squares } = this.state,
+          players = this.props.players;
+
     const squareFactory = new SquareFactory();
     const boardSquares = squares.map((list, row) => {
-      return squareFactory.buildSquares(list, row);
+      return squareFactory.buildSquares(list, row, this.props.debug);
     });
 
     const boardPlayers = players.map((player, row) => {
