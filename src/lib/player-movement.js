@@ -6,38 +6,36 @@ class PlayerMovement {
     this.player = player;
   }
 
+  markInitialPosition = (data, position) => data[position.row][position.column] = 'S'
+  markCurrentPosition = (data, position) => data[position.row][position.column] = '*'
+  cloneBoard = (boardData) => JSON.parse(JSON.stringify(boardData))
+
   all = (diceResult) => {
-    let data = this.cloneBoardData(BoardData.squares),
-        position = this.player.position,
-        playerPosition = new PlayerPosition(data, position);
+    let data = this.cloneBoard(BoardData.squares),
+        position = new PlayerPosition(data, this.player.position);
 
-    data[position.row][position.column] = 'S';
-
-    return this.findNextMove([], playerPosition, data, diceResult + 1);
-  }
-
-  cloneBoardData = (boardData) => {
-    return JSON.parse(JSON.stringify(boardData));
+    this.markInitialPosition(data, position.current);
+    return this.findNextMove([], position, data, diceResult + 1);
   }
 
   findNextMove = (results, position, boardData, movesRemaining) => {
     if (movesRemaining > 0) {
-      const updatedBoardData = this.cloneBoardData(boardData),
-            startPosition = position.startPosition();
+      const board = this.cloneBoard(boardData),
+            startPosition = position.initialPosition();
 
       if (position.availableSquare() || startPosition) {
         if (!startPosition) {
-          updatedBoardData[position.row][position.column] = '*';
-          results = this.resultsWithPosition(results, position);
+          this.markCurrentPosition(board, position);
+          results = this.savePosition(results, position);
         }
 
         if (position.canMove()) {
           movesRemaining--;
 
-          results = this.findNextMove(results, position.up(), updatedBoardData, movesRemaining);
-          results = this.findNextMove(results, position.down(), updatedBoardData, movesRemaining);
-          results = this.findNextMove(results, position.left(), updatedBoardData, movesRemaining);
-          results = this.findNextMove(results, position.right(), updatedBoardData, movesRemaining);
+          results = this.findNextMove(results, position.up(), board, movesRemaining);
+          results = this.findNextMove(results, position.down(), board, movesRemaining);
+          results = this.findNextMove(results, position.left(), board, movesRemaining);
+          results = this.findNextMove(results, position.right(), board, movesRemaining);
         }
       }
     }
@@ -45,7 +43,7 @@ class PlayerMovement {
     return results;
   }
 
-  resultsWithPosition = (results, position) => {
+  savePosition = (results, position) => {
     if (!this.existInArray(results, position.id)) {
       results.push(position.current);
     }

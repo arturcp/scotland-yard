@@ -2,63 +2,28 @@ class PlayerPosition {
   constructor(boardData, current) {
     this.boardData = boardData;
     this.current = current;
+
     this.id = current.row + ',' + current.column;
     this.current.id = this.id;
-
     this.row = current.row;
     this.column = current.column;
-  }
-
-  startPosition = () => {
-    return this.boardData[this.row][this.column] === 'S';
   }
 
   canMove = () => {
     return this.canMoveUp() || this.canMoveDown() || this.canMoveLeft() || this.canMoveRight();
   }
 
-  insideBoard = (row, column) => {
-    return row >= 0 && column <= 22;
-  }
-
-  canMoveUp = () => {
-    let row = this.current.row - 1,
-        column = this.current.column;
-
-    return this.insideBoard(row, column) && this.availableSquare(row, column);
-  }
-
-  canMoveDown = () => {
-    let row = this.current.row + 1,
-        column = this.current.column;
-
-    return this.insideBoard(row, column) && this.availableSquare(row, column);
-  }
-
-  canMoveLeft = () => {
-    let row = this.current.row,
-        column = this.current.column - 1;
-
-    return this.insideBoard(row, column) && this.availableSquare(row, column);
-  }
-
-  canMoveRight = () => {
-    let row = this.current.row,
-        column = this.current.column + 1;
-
-    return this.insideBoard(row, column) && this.availableSquare(row, column);
-  }
-
-  availableSquare = (row = this.row, column = this.column) => {
-    return this.boardData[row][column] !== '*' &&
-      this.boardData[row][column] !== 'S' &&
-      this.boardData[row][column] > 0
-  }
-
-  up = () => { return new PlayerPosition(this.boardData, { row: this.current.row - 1, column: this.current.column }) }
-  down = () => { return new PlayerPosition(this.boardData, { row: this.current.row + 1, column: this.current.column }) }
-  left = () => { return new PlayerPosition(this.boardData, { row: this.current.row, column: this.current.column - 1 }) }
-  right = () => { return new PlayerPosition(this.boardData, { row: this.current.row, column: this.current.column + 1 }) }
+  initialPosition = () => this.boardData[this.row][this.column] === 'S';
+  insideBoard = (row, column) => row >= 0 && column <= 22
+  canMoveUp = () => this.insideBoard(this.row - 1, this.column) && this.availableSquare(this.row - 1, this.column)
+  canMoveDown = () => this.insideBoard(this.row + 1, this.column) && this.availableSquare(this.row + 1, this.column)
+  canMoveLeft = () => this.insideBoard(this.row, this.column - 1) && this.availableSquare(this.row, this.column - 1)
+  canMoveRight = () => this.insideBoard(this.row, this.column + 1) && this.availableSquare(this.row, this.column + 1)
+  up = () => new PlayerPosition(this.boardData, { row: this.row - 1, column: this.column })
+  down = () => new PlayerPosition(this.boardData, { row: this.row + 1, column: this.column })
+  left = () => new PlayerPosition(this.boardData, { row: this.row, column: this.column - 1 })
+  right = () => new PlayerPosition(this.boardData, { row: this.row, column: this.column + 1 })
+  availableSquare = (row = this.row, column = this.column) => parseInt(this.boardData[row][column]) > 0
 }
 
 export default PlayerPosition;
