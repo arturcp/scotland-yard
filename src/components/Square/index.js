@@ -14,8 +14,10 @@ class Square extends Component  {
     return `${this.props.row},${this.props.column}`;
   };
 
+  availabilityClass = () => this.props.available ? 'available-square' : '';
+
   render() {
-    const classes = `square ${this.props.state || ''} ${this.props.type}`
+    const classes = `square ${this.props.state || ''} ${this.props.type} ${this.availabilityClass()}`
     return (
       <div data-id={this.squareId()} className={classes} data-direction={this.props.direction} data-row={this.props.row} data-column={this.props.column}>
         {this.squareContent()}

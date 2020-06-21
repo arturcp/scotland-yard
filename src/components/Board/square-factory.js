@@ -24,15 +24,16 @@ class SquareFactory {
     }
   }
 
-  buildSquares = (list, row) => {
+  buildSquares = (list, row, availableSquares) => {
     const self = this;
 
     return list.map((squareValue, column) => {
       const squareState = squareValue === 0 ? 'empty' : '';
       const type = self.squareType(squareValue);
       const direction = self.entranceDirection(squareValue);
+      const available = availableSquares.indexOf(`${row},${column}`) > -1;
 
-      return <Square type={type} direction={direction} state={squareState} row={row} column={column} key={row + column} />
+      return <Square type={type} direction={direction} state={squareState} row={row} column={column} key={row + column} available={available} />
     });
   }
 }

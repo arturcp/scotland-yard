@@ -14,7 +14,8 @@ class Game extends Component {
         { id: 2, name: 'Jane', color: 'yellow', position: { row: 10, column: 10, place: null } },
         { id: 3, name: 'Josh', color: 'brown', position: { row: 10, column: 10, place: null } },
         { id: 4, name: 'Joan', color: 'lightpink', position: { row: 10, column: 10, place: null } },
-      ]
+      ],
+      availableSquares: []
     };
   }
 
@@ -27,8 +28,11 @@ class Game extends Component {
 
       list.push(player);
     });
-    this.setState({ players: list });
-    console.log(this.state.players)
+    this.setState({ players: list, availableSquares: [] });
+  }
+
+  updateAvailableSquares = (availableSquares) => {
+    this.setState({ availableSquares });
   }
 
   render() {
@@ -36,8 +40,8 @@ class Game extends Component {
 
     return (
       <div id="container">
-        <Sidebar players={players} updatePlayerPosition={this.updatePlayerPosition}/>
-        <Board players={players} />
+        <Sidebar players={players} updatePlayerPosition={this.updatePlayerPosition} updateAvailableSquares={this.updateAvailableSquares} />
+        <Board players={players} availableSquares={this.state.availableSquares} />
         <Notes />
       </div>
     )

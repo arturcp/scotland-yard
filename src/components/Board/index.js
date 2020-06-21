@@ -31,7 +31,7 @@ class Board extends Component {
 
     const squareFactory = new SquareFactory();
     const boardSquares = squares.map((list, row) => {
-      return squareFactory.buildSquares(list, row);
+      return squareFactory.buildSquares(list, row, this.props.availableSquares);
     });
 
     const boardPlayers = players.map((player, row) => {

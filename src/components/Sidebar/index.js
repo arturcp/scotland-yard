@@ -23,11 +23,10 @@ class Sidebar extends Component {
             results = new AvailableSquares(player).all(diceResult),
             board = document.querySelector('#board');
 
+      this.props.updateAvailableSquares(results.map(element => element.id));
+
       results.forEach(element => {
         const square = board.querySelector('[data-id="' + element.id + '"]')
-
-        // TODO: This should be done through setstate in the parent
-        square.classList.add('available-square');
 
         square.addEventListener('click', () => {
           const availableSquares = document.querySelectorAll('.available-square');

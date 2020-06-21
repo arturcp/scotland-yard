@@ -18,7 +18,6 @@ class AvailableSquares {
         position = new PositionOnBoard(data, this.player.position);
 
     this.markInitialPosition(data, position.current);
-    console.log(position)
     return this.findNextMove([], [], position, data, diceResult + 1);
   }
 
