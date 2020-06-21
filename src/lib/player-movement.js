@@ -1,38 +1,42 @@
 import BoardData from '../components/Board/board-data'
 import PlayerPosition from './player-position'
 
+// TODO: this class should be called AvailableSquares
 class PlayerMovement {
   constructor(player) {
     this.player = player;
   }
 
   markInitialPosition = (data, position) => data[position.row][position.column] = 'S'
-  markCurrentPosition = (data, position) => data[position.row][position.column] = '*'
-  cloneBoard = (boardData) => JSON.parse(JSON.stringify(boardData))
+  clone = (data) => JSON.parse(JSON.stringify(data))
+  markCurrentPosition = (data, path, position) => {
+    data[position.row][position.column] = '*';
+    path.push(position.id);
+  }
 
   all = (diceResult) => {
-    let data = this.cloneBoard(BoardData.squares),
+    let data = this.clone(BoardData.squares),
         position = new PlayerPosition(data, this.player.position);
 
     this.markInitialPosition(data, position.current);
-    return this.findNextMove([], position, data, diceResult + 1);
+    return this.findNextMove([], [], position, data, diceResult + 1);
   }
 
-  findNextMove = (results, position, boardData, movesRemaining) => {
+  findNextMove = (results, path, position, boardData, movesRemaining) => {
     if (movesRemaining > 0) {
-      const board = this.cloneBoard(boardData),
-            isInitialPosition = position.initialPosition();
+      const board = this.clone(boardData),
+            currentPath = this.clone(path);
 
-      if (position.availableSquare() || isInitialPosition) {
-        this.checkpoint(results, board, position);
+      if (position.availableSquare() || position.initialPosition()) {
+        this.checkpoint(results, currentPath, board, position);
 
         if (position.canMove()) {
           movesRemaining--;
 
-          this.findNextMove(results, position.up(), board, movesRemaining);
-          this.findNextMove(results, position.down(), board, movesRemaining);
-          this.findNextMove(results, position.left(), board, movesRemaining);
-          this.findNextMove(results, position.right(), board, movesRemaining);
+          this.findNextMove(results, currentPath, position.up(), board, movesRemaining);
+          this.findNextMove(results, currentPath, position.down(), board, movesRemaining);
+          this.findNextMove(results, currentPath, position.left(), board, movesRemaining);
+          this.findNextMove(results, currentPath, position.right(), board, movesRemaining);
         }
       }
     }
@@ -40,18 +44,19 @@ class PlayerMovement {
     return results;
   }
 
-  checkpoint = (results, board, position) => {
+  checkpoint = (results, path, board, position) => {
     if (!position.initialPosition()) {
-      this.markCurrentPosition(board, position);
-      results = this.savePosition(results, position);
+      this.markCurrentPosition(board, path, position);
+      this.savePosition(results, path, position);
     }
   }
 
-  savePosition = (results, position) => {
+  savePosition = (results, path, position) => {
     if (!this.existInArray(results, position.id)) {
-      results.push(position.current);
+      const data = position.current;
+      data.path = path;
+      results.push(data);
     }
-    return results;
   }
 
   existInArray = (array, id) => {
