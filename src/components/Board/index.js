@@ -1,84 +1,50 @@
 import React, { Component } from 'react';
-import Square from '../Square';
 import Places from '../Places';
+import BoardData from './board-data';
+import SquareFactory from './square-factory';
+import Player from '../Player';
+
 import './styles.css';
 
 class Board extends Component {
-  state = {
-    // 0: empty square
-    // 1: square
-    // 2: Down arrow
-    // 3: Left arrow
-    // 4: Up arrow
-    // 5: Right arrow
-    // 6: Home
-    squares: [
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 3, 1, 0, 0, 0],
-      [0, 0, 0, 0, 4, 1, 1, 4, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 6, 1],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1],
-      [1, 1, 2, 1, 1, 1, 1, 5, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1],
-      [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 3, 1, 0, 0, 0, 0, 0, 1, 1],
-      [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 4, 1, 1, 1, 1],
-      [1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1],
-      [5, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1],
-      [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1],
-      [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 5, 0, 0, 0, 0, 0, 0, 1],
-      [1, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1],
-      [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 1, 1, 1],
-      [1, 0, 0, 0, 0, 0, 0, 1, 1, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-      [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [1, 1, 1, 4, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ],
-  }
-
-  entranceDirection = (squareValue) => {
-    switch (squareValue) {
-      case 2: return 'down';
-      case 3: return 'left';
-      case 4: return 'up';
-      case 5: return 'right';
-      default: return '';
+  constructor(props) {
+    super(props);
+    this.state = {
+      squares: BoardData.squares,
+      places: BoardData.places
     }
   }
 
-  squareType = (squareValue) => {
-    switch (squareValue) {
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-        return 'entrance';
-      case 6:
-        return 'start';
-      default:
-        return '';
-    }
-  }
-
-  printSquare = (list, row) => {
-    return list.map((squareValue, column) => {
-      const state = squareValue === 0 ? 'empty' : '';
-      const type = this.squareType(squareValue);
-      const direction = this.entranceDirection(squareValue);
-
-      return <Square type={type} direction={direction} state={state} row={row} column={column} key={row + column} />
-    });
+  // TODO: can this go to the player
+  playerPosition = (player) => {
+    const position = player.position;
+    if (position.place) {
+      return { top: this.state.places[position.place].top, left: this.state.places[position.place].left + 8 * (player.id - 1) }
+    } else {
+      return { top: position.row * 49 + 7, left: position.column * 49 + 3 + 8 * (player.id - 1) }
+    };
   }
 
   render() {
-    const { squares } = this.state;
-    const items = squares.map((list, row) => {
-      return this.printSquare(list, row);
+    const { squares } = this.state,
+          players = this.props.players;
+
+    const squareFactory = new SquareFactory();
+    const boardSquares = squares.map((list, row) => {
+      return squareFactory.buildSquares(list, row);
+    });
+
+    const boardPlayers = players.map((player, row) => {
+      return <Player player={player} key={player.id} style={this.playerPosition(player)}/>
     });
 
     return (
       <section id="board">
-        {items}
+        {boardSquares}
         <Places />
+        <div id="players">
+          {boardPlayers}
+        </div>
       </section>
     )
   }

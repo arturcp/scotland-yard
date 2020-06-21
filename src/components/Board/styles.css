@@ -12,3 +12,9 @@
 
   background-color: #BA7039;
 }
+
+#players {
+  position: absolute;
+  width: 1128px;
+  height: 931px;
+}
