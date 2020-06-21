@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import MicroModal from 'micromodal';
 import AvailableSquares from '../../lib/available-squares';
+import MovementAnimation from '../../lib/movement-animation';
 import './styles.css';
 
 class Sidebar extends Component {
@@ -11,16 +12,27 @@ class Sidebar extends Component {
           playButton = document.querySelector('.fa-play');
 
     playButton.addEventListener('click', () => {
-      this.props.callback();
-      var results = new AvailableSquares(players[0]).all(6),
-      board = document.querySelector('#board');
+      const player = players[0],
+            results = new AvailableSquares(player).all(6),
+            board = document.querySelector('#board');
 
       results.forEach(element => {
-        board.querySelector('[data-id="' + element.id + '"]').classList.add('available-square');
-      });
+        const square = board.querySelector('[data-id="' + element.id + '"]')
 
-      console.log('results');
-      console.log(results);
+        // TODO: This should be done through setstate in the parent
+        square.classList.add('available-square');
+
+        square.addEventListener('click', () => {
+          if (window.confirm('Tem certeza?')) {
+            const availableSquares = document.querySelectorAll('.available-square');
+            availableSquares.forEach((element) => element.classList.remove('available-square'));
+            const newPosition = new MovementAnimation(player).move(element.path);
+            setTimeout(() => {
+              this.props.updatePlayerPosition(player.id, newPosition);
+            }, element.path.length * 500);
+          }
+        });
+      });
     });
   }
 

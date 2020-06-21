@@ -1,5 +1,5 @@
 import BoardData from '../components/Board/board-data'
-import PlayerPosition from './player-position'
+import PositionOnBoard from './position-on-board'
 
 class AvailableSquares {
   constructor(player) {
@@ -15,7 +15,7 @@ class AvailableSquares {
 
   all = (diceResult) => {
     let data = this.clone(BoardData.squares),
-        position = new PlayerPosition(data, this.player.position);
+        position = new PositionOnBoard(data, this.player.position);
 
     this.markInitialPosition(data, position.current);
     return this.findNextMove([], [], position, data, diceResult + 1);
@@ -32,10 +32,10 @@ class AvailableSquares {
         if (position.canMove()) {
           movesRemaining--;
 
-          this.findNextMove(results, currentPath, position.up(), board, movesRemaining);
-          this.findNextMove(results, currentPath, position.down(), board, movesRemaining);
-          this.findNextMove(results, currentPath, position.left(), board, movesRemaining);
-          this.findNextMove(results, currentPath, position.right(), board, movesRemaining);
+          this.findNextMove(results, currentPath, position.moveUp(), board, movesRemaining);
+          this.findNextMove(results, currentPath, position.moveDown(), board, movesRemaining);
+          this.findNextMove(results, currentPath, position.moveLeft(), board, movesRemaining);
+          this.findNextMove(results, currentPath, position.moveRight(), board, movesRemaining);
         }
       }
     }

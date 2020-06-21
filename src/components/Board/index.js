@@ -15,6 +15,7 @@ class Board extends Component {
     }
   }
 
+  // TODO: can this go to the player
   playerPosition = (player) => {
     const position = player.position;
     if (position.place) {
@@ -30,7 +31,7 @@ class Board extends Component {
 
     const squareFactory = new SquareFactory();
     const boardSquares = squares.map((list, row) => {
-      return squareFactory.buildSquares(list, row, this.props.debug);
+      return squareFactory.buildSquares(list, row);
     });
 
     const boardPlayers = players.map((player, row) => {

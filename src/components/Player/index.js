@@ -6,7 +6,7 @@ class Player extends Component {
     this.props.style.color = this.props.player.color;
 
     return (
-      <div className={`player ${this.props.player.color}`} style={this.props.style}>
+      <div id={`player-${this.props.player.id}`} className={`player ${this.props.player.color}`} style={this.props.style}>
         <i className="fa fa-user"></i>
       </div>
     )

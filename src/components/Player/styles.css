@@ -6,4 +6,7 @@
   right: 0;
   font-size: 30px;
   z-index: 3;
+
+  transition: all 0.5s linear;
+  /* transition: top 1s linear; */
 }

@@ -15,12 +15,10 @@ class Square extends Component  {
   };
 
   render() {
-    const classes = `square ${this.props.state || ''} ${this.props.type}`,
-          debugContent = this.props.debug ? this.squareId() : '';
+    const classes = `square ${this.props.state || ''} ${this.props.type}`
     return (
       <div data-id={this.squareId()} className={classes} data-direction={this.props.direction} data-row={this.props.row} data-column={this.props.column}>
         {this.squareContent()}
-        {debugContent}
       </div>
     )
   }
