@@ -1,8 +1,7 @@
 import BoardData from '../components/Board/board-data'
 import PlayerPosition from './player-position'
 
-// TODO: this class should be called AvailableSquares
-class PlayerMovement {
+class AvailableSquares {
   constructor(player) {
     this.player = player;
   }
@@ -68,4 +67,4 @@ class PlayerMovement {
   }
 }
 
-export default PlayerMovement;
+export default AvailableSquares;

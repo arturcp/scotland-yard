@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import MicroModal from 'micromodal';
-import PlayerMovement from '../../lib/player-movement';
+import AvailableSquares from '../../lib/available-squares';
 import './styles.css';
 
 class Sidebar extends Component {
@@ -12,7 +12,7 @@ class Sidebar extends Component {
 
     playButton.addEventListener('click', () => {
       this.props.callback();
-      var results = new PlayerMovement(players[0]).all(6),
+      var results = new AvailableSquares(players[0]).all(6),
       board = document.querySelector('#board');
 
       results.forEach(element => {
