@@ -1,3 +1,11 @@
+# Scotland Yard
+
+Scotland Yard is a board game in which a group of players tries to solve a crime, as if they were Sherlock Holmes.
+
+![Pin movement](docs/images/movement.gif)
+
+# Tech
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
