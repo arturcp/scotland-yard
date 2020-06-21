@@ -8,9 +8,12 @@ class PlayerMovement {
 
   all = (diceResult) => {
     let data = this.cloneBoardData(BoardData.squares),
-        playerPosition = new PlayerPosition(data, this.player.position);
+        position = this.player.position,
+        playerPosition = new PlayerPosition(data, position);
 
-    return this.findNextMove([], playerPosition, data, diceResult);
+    data[position.row][position.column] = 'S';
+
+    return this.findNextMove([], playerPosition, data, diceResult + 1);
   }
 
   cloneBoardData = (boardData) => {
@@ -19,17 +22,23 @@ class PlayerMovement {
 
   findNextMove = (results, position, boardData, movesRemaining) => {
     if (movesRemaining > 0) {
-      const updatedBoardData = this.cloneBoardData(boardData);
-      updatedBoardData[position.row][position.column] = '*';
-      results = this.resultsWithPosition(results, position);
+      const updatedBoardData = this.cloneBoardData(boardData),
+            startPosition = position.startPosition();
 
-      if (position.canMove()) {
-        movesRemaining--;
+      if (position.availableSquare() || startPosition) {
+        if (!startPosition) {
+          updatedBoardData[position.row][position.column] = '*';
+          results = this.resultsWithPosition(results, position);
+        }
 
-        results = this.findNextMove(results, position.up(), updatedBoardData, movesRemaining);
-        results = this.findNextMove(results, position.down(), updatedBoardData, movesRemaining);
-        results = this.findNextMove(results, position.left(), updatedBoardData, movesRemaining);
-        results = this.findNextMove(results, position.right(), updatedBoardData, movesRemaining);
+        if (position.canMove()) {
+          movesRemaining--;
+
+          results = this.findNextMove(results, position.up(), updatedBoardData, movesRemaining);
+          results = this.findNextMove(results, position.down(), updatedBoardData, movesRemaining);
+          results = this.findNextMove(results, position.left(), updatedBoardData, movesRemaining);
+          results = this.findNextMove(results, position.right(), updatedBoardData, movesRemaining);
+        }
       }
     }
 

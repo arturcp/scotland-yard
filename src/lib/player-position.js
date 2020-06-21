@@ -9,6 +9,10 @@ class PlayerPosition {
     this.column = current.column;
   }
 
+  startPosition = () => {
+    return this.boardData[this.row][this.column] === 'S';
+  }
+
   canMove = () => {
     return this.canMoveUp() || this.canMoveDown() || this.canMoveLeft() || this.canMoveRight();
   }
@@ -45,8 +49,10 @@ class PlayerPosition {
     return this.insideBoard(row, column) && this.availableSquare(row, column);
   }
 
-  availableSquare = (row, column) => {
-    return this.boardData[row][column] !== '*' && this.boardData[row][column] > 0
+  availableSquare = (row = this.row, column = this.column) => {
+    return this.boardData[row][column] !== '*' &&
+      this.boardData[row][column] !== 'S' &&
+      this.boardData[row][column] > 0
   }
 
   up = () => { return new PlayerPosition(this.boardData, { row: this.current.row - 1, column: this.current.column }) }

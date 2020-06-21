@@ -16,7 +16,7 @@ class Sidebar extends Component {
       board = document.querySelector('#board');
 
       results.forEach(element => {
-        board.querySelector('[data-id="' + element.id + '"]').style.backgroundColor = 'red';
+        board.querySelector('[data-id="' + element.id + '"]').classList.add('available-square');
       });
 
       console.log('results');
