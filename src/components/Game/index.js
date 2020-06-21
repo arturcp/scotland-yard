@@ -28,6 +28,7 @@ class Game extends Component {
       list.push(player);
     });
     this.setState({ players: list });
+    console.log(this.state.players)
   }
 
   render() {

@@ -40,12 +40,13 @@ export default class MovementAnimation {
   }
 
   parse = (notation) => {
-    const position = { id: notation };
+    const position = {};
 
     if (notation.indexOf(',') > -1) {
       const parts = notation.split(',');
       position.row = parseInt(parts[0]);
       position.column = parseInt(parts[1]);
+      position.place = null;
     } else {
       position.place = notation;
     }

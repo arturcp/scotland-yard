@@ -5,15 +5,22 @@ import MovementAnimation from '../../lib/movement-animation';
 import './styles.css';
 
 class Sidebar extends Component {
+  randomInt = (min, max) => min + Math.floor((max - min) * Math.random())
+
   componentDidMount() {
     MicroModal.init();
 
     const players = this.props.players,
           playButton = document.querySelector('.fa-play');
 
+    playButton.classList.add('pulsate-fwd');
+
     playButton.addEventListener('click', () => {
+      playButton.classList.remove('pulsate-fwd');
+      const diceResult = this.randomInt(1, 6);
+      alert('Rolagem de dados: ' + diceResult);
       const player = players[0],
-            results = new AvailableSquares(player).all(6),
+            results = new AvailableSquares(player).all(diceResult),
             board = document.querySelector('#board');
 
       results.forEach(element => {
@@ -23,14 +30,13 @@ class Sidebar extends Component {
         square.classList.add('available-square');
 
         square.addEventListener('click', () => {
-          if (window.confirm('Tem certeza?')) {
-            const availableSquares = document.querySelectorAll('.available-square');
-            availableSquares.forEach((element) => element.classList.remove('available-square'));
-            const newPosition = new MovementAnimation(player).move(element.path);
-            setTimeout(() => {
-              this.props.updatePlayerPosition(player.id, newPosition);
-            }, element.path.length * 500);
-          }
+          const availableSquares = document.querySelectorAll('.available-square');
+          availableSquares.forEach((element) => element.classList.remove('available-square'));
+          const newPosition = new MovementAnimation(player).move(element.path);
+          setTimeout(() => {
+            this.props.updatePlayerPosition(player.id, newPosition);
+            playButton.classList.add('pulsate-fwd');
+          }, element.path.length * 500);
         });
       });
     });

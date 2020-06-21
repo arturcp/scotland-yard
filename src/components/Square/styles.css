@@ -34,6 +34,11 @@
   transform: rotate(180deg);
 }
 
+.pulsate-fwd {
+  -webkit-animation: pulsate-fwd 1.5s ease-in-out infinite both;
+	        animation: pulsate-fwd 1.5s ease-in-out infinite both;
+}
+
 .available-square {
   -webkit-animation: pulsate-fwd 1.5s ease-in-out infinite both;
 	        animation: pulsate-fwd 1.5s ease-in-out infinite both;
