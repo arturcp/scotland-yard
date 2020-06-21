@@ -21,26 +21,30 @@ class PlayerMovement {
   findNextMove = (results, position, boardData, movesRemaining) => {
     if (movesRemaining > 0) {
       const board = this.cloneBoard(boardData),
-            startPosition = position.initialPosition();
+            isInitialPosition = position.initialPosition();
 
-      if (position.availableSquare() || startPosition) {
-        if (!startPosition) {
-          this.markCurrentPosition(board, position);
-          results = this.savePosition(results, position);
-        }
+      if (position.availableSquare() || isInitialPosition) {
+        this.checkpoint(results, board, position);
 
         if (position.canMove()) {
           movesRemaining--;
 
-          results = this.findNextMove(results, position.up(), board, movesRemaining);
-          results = this.findNextMove(results, position.down(), board, movesRemaining);
-          results = this.findNextMove(results, position.left(), board, movesRemaining);
-          results = this.findNextMove(results, position.right(), board, movesRemaining);
+          this.findNextMove(results, position.up(), board, movesRemaining);
+          this.findNextMove(results, position.down(), board, movesRemaining);
+          this.findNextMove(results, position.left(), board, movesRemaining);
+          this.findNextMove(results, position.right(), board, movesRemaining);
         }
       }
     }
 
     return results;
+  }
+
+  checkpoint = (results, board, position) => {
+    if (!position.initialPosition()) {
+      this.markCurrentPosition(board, position);
+      results = this.savePosition(results, position);
+    }
   }
 
   savePosition = (results, position) => {
