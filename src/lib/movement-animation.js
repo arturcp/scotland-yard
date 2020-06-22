@@ -25,8 +25,8 @@ export default class MovementAnimation {
 
     if (position.place) {
       style = {
-        top: this.state.places[position.place].top,
-        left: this.state.places[position.place].left + this.offset
+        // top: this.state.places[position.place].top,
+        // left: this.state.places[position.place].left + this.offset
       }
     } else {
       style = {

@@ -9,29 +9,27 @@ import './styles.css';
 class Board extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      squares: BoardData.squares,
-      places: BoardData.places
-    }
+    this.squares = BoardData.squares;
+    this.places = BoardData.places;
+    this.game = props.game;
   }
 
   // TODO: can this go to the player
   playerPosition = (player) => {
     const position = player.position;
     if (position.place) {
-      return { top: this.state.places[position.place].top, left: this.state.places[position.place].left + 8 * (player.id - 1) }
+      return { top: this.places[position.place].top, left: this.places[position.place].left + 8 * (player.id - 1) }
     } else {
       return { top: position.row * 49 + 7, left: position.column * 49 + 3 + 8 * (player.id - 1) }
     };
   }
 
   render() {
-    const { squares } = this.state,
-          players = this.props.players;
+    const players = this.props.players;
 
     const squareFactory = new SquareFactory();
-    const boardSquares = squares.map((list, row) => {
-      return squareFactory.buildSquares(list, row, this.props.availableSquares);
+    const boardSquares = this.squares.map((list, row) => {
+      return squareFactory.buildSquares(list, row, this.game);
     });
 
     const boardPlayers = players.map((player, row) => {

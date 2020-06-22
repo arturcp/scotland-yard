@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import MicroModal from 'micromodal';
 import AvailableSquares from '../../lib/available-squares';
-import MovementAnimation from '../../lib/movement-animation';
 import './styles.css';
 
 class Sidebar extends Component {
+  game = this.props.game
   randomInt = (min, max) => min + Math.floor((max - min) * Math.random())
 
   componentDidMount() {
@@ -20,26 +20,21 @@ class Sidebar extends Component {
       const diceResult = this.randomInt(1, 6);
       alert('Rolagem de dados: ' + diceResult);
       const player = players[0],
-            results = new AvailableSquares(player).all(diceResult),
-            board = document.querySelector('#board');
+            results = new AvailableSquares(player).all(diceResult);
 
-      this.props.updateAvailableSquares(results.map(element => element.id));
-
-      results.forEach(element => {
-        const square = board.querySelector('[data-id="' + element.id + '"]')
-
-        square.addEventListener('click', () => {
-          const availableSquares = document.querySelectorAll('.available-square');
-          availableSquares.forEach((element) => element.classList.remove('available-square'));
-          const newPosition = new MovementAnimation(player).move(element.path);
-          setTimeout(() => {
-            this.props.updatePlayerPosition(player.id, newPosition);
-            playButton.classList.add('pulsate-fwd');
-          }, element.path.length * 500);
-        });
-      });
+      this.game.updateAvailableSquares(results);
     });
   }
+
+  playButtonClasses = () => {
+    const gameShift = this.game.gameShift();
+
+    if (gameShift.status === 'in-progress') {
+      return 'fa fa-play pulsate-fwd';
+    } else {
+      return 'fa fa-play';
+    }
+  };
 
   render() {
     return (
@@ -55,7 +50,7 @@ class Sidebar extends Component {
             <i className="fa fa-user-secret"></i>
           </li>
           <li>
-            <i className="fa fa-play"></i>
+            <i className={this.playButtonClasses()}></i>
           </li>
         </ul>
       </aside>

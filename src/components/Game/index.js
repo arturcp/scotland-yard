@@ -15,7 +15,11 @@ class Game extends Component {
         { id: 3, name: 'Josh', color: 'brown', position: { row: 10, column: 10, place: null } },
         { id: 4, name: 'Joan', color: 'lightpink', position: { row: 10, column: 10, place: null } },
       ],
-      availableSquares: []
+      gameShift: {
+        status: 'waiting',
+        availableSquares: [],
+        playerId: 1
+      }
     };
   }
 
@@ -28,11 +32,32 @@ class Game extends Component {
 
       list.push(player);
     });
-    this.setState({ players: list, availableSquares: [] });
+    this.setState({
+      players: list,
+      gameShift: {
+        availableSquares: [],
+        playerId: 1,
+        status: 'waiting'
+      }
+    });
   }
 
   updateAvailableSquares = (availableSquares) => {
-    this.setState({ availableSquares });
+    this.setState({
+      gameShift: {
+        playerId: this.state.gameShift.playerId,
+        availableSquares: availableSquares,
+        status: 'in-progress'
+      }
+    })
+  }
+
+  gameShift = () => {
+    return {
+      player: this.state.players.filter((item) => item.id === this.state.gameShift.playerId)[0],
+      availableSquares: this.state.gameShift.availableSquares,
+      status: this.state.gameShift.status
+    }
   }
 
   render() {
@@ -40,8 +65,8 @@ class Game extends Component {
 
     return (
       <div id="container">
-        <Sidebar players={players} updatePlayerPosition={this.updatePlayerPosition} updateAvailableSquares={this.updateAvailableSquares} />
-        <Board players={players} availableSquares={this.state.availableSquares} />
+        <Sidebar players={players} game={this} />
+        <Board players={players} game={this} />
         <Notes />
       </div>
     )

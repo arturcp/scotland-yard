@@ -24,16 +24,27 @@ class SquareFactory {
     }
   }
 
-  buildSquares = (list, row, availableSquares) => {
-    const self = this;
+  buildSquares = (list, row, game) => {
+    const gameShift = game.gameShift(),
+          self = this;
 
     return list.map((squareValue, column) => {
       const squareState = squareValue === 0 ? 'empty' : '';
-      const type = self.squareType(squareValue);
-      const direction = self.entranceDirection(squareValue);
-      const available = availableSquares.indexOf(`${row},${column}`) > -1;
+      const availableSquareList = gameShift.availableSquares.filter((element) => element.id === `${row},${column}`);
+      const isAvailable = availableSquareList.length > 0;
+      const path = isAvailable ? availableSquareList[0].path : null;
 
-      return <Square type={type} direction={direction} state={squareState} row={row} column={column} key={row + column} available={available} />
+      return <Square
+        type={self.squareType(squareValue)}
+        direction={self.entranceDirection(squareValue)}
+        updatePlayerPosition={game.updatePlayerPosition}
+        state={squareState}
+        row={row}
+        column={column}
+        key={row + ',' + column}
+        available={isAvailable}
+        gameShift={gameShift}
+        path={path} />
     });
   }
 }
