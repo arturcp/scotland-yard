@@ -29,7 +29,7 @@ class Sidebar extends Component {
   playButtonClasses = () => {
     const gameShift = this.game.gameShift();
 
-    if (gameShift.status === 'in-progress') {
+    if (gameShift.status === 'waiting') {
       return 'fa fa-play pulsate-fwd';
     } else {
       return 'fa fa-play';

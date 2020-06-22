@@ -32,6 +32,7 @@ class Game extends Component {
 
       list.push(player);
     });
+
     this.setState({
       players: list,
       gameShift: {
