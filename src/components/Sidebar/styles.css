@@ -16,6 +16,10 @@
   cursor: pointer;
 }
 
+#sidebar i:hover {
+  color: #e9e8c5;
+}
+
 #sidebar ul {
   list-style: none;
   padding: 0;
