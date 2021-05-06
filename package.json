@@ -10,7 +10,7 @@
     "micromodal": "^0.4.6",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-draft-wysiwyg": "^1.14.5",
+    "react-draft-wysiwyg": "^1.14.6",
     "react-scripts": "3.4.1"
   },
   "scripts": {
