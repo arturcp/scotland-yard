@@ -1,8 +1,5 @@
 import React, { Component } from 'react';
-import { EditorState } from 'draft-js';
-import { Editor } from 'react-draft-wysiwyg';
 
-import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 import './micromodal.css';
 import './styles.css';
 
@@ -10,18 +7,12 @@ class Notes extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      editorState: EditorState.createEmpty(),
+      notes: '',
     };
   }
 
-  onEditorStateChange = (editorState) => {
-    this.setState({
-      editorState,
-    });
-  };
-
   render() {
-    const { editorState } = this.state;
+    const { notes } = this.state;
 
     return (
       <div className="modal micromodal-slide" id="modal-notes" aria-hidden="true">
@@ -34,12 +25,11 @@ class Notes extends Component {
               <button className="modal__close" aria-label="Close modal" data-micromodal-close></button>
             </header>
             <main className="modal__content" id="modal-notes-content">
-            <Editor
-                editorState={editorState}
-                toolbarClassName="toolbarClassName"
-                wrapperClassName="wrapperClassName"
-                editorClassName="editorClassName"
-                onEditorStateChange={this.onEditorStateChange}
+              <textarea
+                value={notes}
+                onChange={(e) => this.setState({ notes: e.target.value })}
+                className="notes__editor"
+                placeholder="Escreva suas notas aqui..."
               />
             </main>
             <footer className="modal__footer">
@@ -52,6 +42,5 @@ class Notes extends Component {
     )
   }
 }
-
 
 export default Notes;

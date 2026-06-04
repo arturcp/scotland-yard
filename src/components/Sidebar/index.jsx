@@ -13,8 +13,6 @@ class Sidebar extends Component {
     const players = this.props.players,
           playButton = document.querySelector('.fa-play');
 
-    playButton.classList.add('pulsate-fwd');
-
     playButton.addEventListener('click', () => {
       playButton.classList.remove('pulsate-fwd');
       const diceResult = this.randomInt(1, 6);
