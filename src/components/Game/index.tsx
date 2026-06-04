@@ -1,12 +1,18 @@
-import React, { Component } from 'react';
-import Board from '../Board'
-import Sidebar from '../Sidebar'
-import Notes from '../Notes'
+import { Component } from 'react';
+import Board from '../Board';
+import Notes from '../Notes';
+import Sidebar from '../Sidebar';
+import type { AvailableSquare, GameShiftState, GameShiftView, Player, Position } from '../../types/game';
 
 import './styles.css';
 
-class Game extends Component {
-  constructor(props) {
+interface GameState {
+  players: Player[];
+  gameShift: GameShiftState;
+}
+
+class Game extends Component<object, GameState> {
+  constructor(props: object) {
     super(props);
     this.state = {
       players: [
@@ -18,16 +24,16 @@ class Game extends Component {
       gameShift: {
         status: 'waiting',
         availableSquares: [],
-        playerId: 1
-      }
+        playerId: 1,
+      },
     };
   }
 
-  updatePlayerPosition = (playerId, position) => {
-    const list = [];
-    this.state.players.forEach(player => {
+  updatePlayerPosition = (playerId: number, position: Position) => {
+    const list: Player[] = [];
+    this.state.players.forEach((player) => {
       if (player.id === playerId) {
-        player.position = position
+        player.position = position;
       }
 
       list.push(player);
@@ -38,28 +44,28 @@ class Game extends Component {
       gameShift: {
         availableSquares: [],
         playerId: 1,
-        status: 'waiting'
-      }
+        status: 'waiting',
+      },
     });
-  }
+  };
 
-  updateAvailableSquares = (availableSquares) => {
+  updateAvailableSquares = (availableSquares: AvailableSquare[]) => {
     this.setState({
       gameShift: {
         playerId: this.state.gameShift.playerId,
         availableSquares: availableSquares,
-        status: 'in-progress'
-      }
-    })
-  }
+        status: 'in-progress',
+      },
+    });
+  };
 
-  gameShift = () => {
+  gameShift = (): GameShiftView => {
     return {
       player: this.state.players.filter((item) => item.id === this.state.gameShift.playerId)[0],
       availableSquares: this.state.gameShift.availableSquares,
-      status: this.state.gameShift.status
-    }
-  }
+      status: this.state.gameShift.status,
+    };
+  };
 
   render() {
     const { players } = this.state;
@@ -70,7 +76,7 @@ class Game extends Component {
         <Board players={players} game={this} />
         <Notes />
       </div>
-    )
+    );
   }
 }
 

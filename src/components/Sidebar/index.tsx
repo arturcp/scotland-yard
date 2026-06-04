@@ -1,24 +1,31 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import MicroModal from 'micromodal';
 import AvailableSquares from '../../lib/available-squares';
+import type { GameController, Player } from '../../types/game';
+
 import './styles.css';
 
-class Sidebar extends Component {
-  game = this.props.game
-  randomInt = (min, max) => min + Math.floor((max - min) * Math.random())
+interface SidebarProps {
+  players: Player[];
+  game: GameController;
+}
+
+class Sidebar extends Component<SidebarProps> {
+  game = this.props.game;
+  randomInt = (min: number, max: number) => min + Math.floor((max - min) * Math.random());
 
   componentDidMount() {
     MicroModal.init();
 
-    const players = this.props.players,
-          playButton = document.querySelector('.fa-play');
+    const players = this.props.players;
+    const playButton = document.querySelector('.fa-play');
 
-    playButton.addEventListener('click', () => {
+    playButton?.addEventListener('click', () => {
       playButton.classList.remove('pulsate-fwd');
       const diceResult = this.randomInt(1, 6);
       alert('Rolagem de dados: ' + diceResult);
-      const player = players[0],
-            results = new AvailableSquares(player).all(diceResult);
+      const player = players[0];
+      const results = new AvailableSquares(player).all(diceResult);
 
       this.game.updateAvailableSquares(results);
     });
@@ -29,9 +36,8 @@ class Sidebar extends Component {
 
     if (gameShift.status === 'waiting') {
       return 'fa fa-play pulsate-fwd';
-    } else {
-      return 'fa fa-play';
     }
+    return 'fa fa-play';
   };
 
   render() {
@@ -52,7 +58,7 @@ class Sidebar extends Component {
           </li>
         </ul>
       </aside>
-    )
+    );
   }
 }
 

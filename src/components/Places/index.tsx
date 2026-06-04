@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import './sizes.css';
 import './styles.css';
 
-class Places extends Component  {
+class Places extends Component {
   render() {
     return (
       <div>
@@ -27,7 +27,7 @@ class Places extends Component  {
         <div className="place street w3 h3"></div>
         <div className="place scotland-yard w5 h3"></div>
       </div>
-    )
+    );
   }
 }
 
