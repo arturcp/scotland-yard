@@ -112,11 +112,18 @@ describe('AvailableSquares', () => {
       expect(docks?.path).toEqual(['5,10', 'docks']);
     });
 
-    test('includes book-store when stepping left onto the entrance arrow', () => {
+    test('includes locksmith when stepping left onto the entrance arrow', () => {
       const results = new AvailableSquares(makePlayer(3, 5)).all(1);
+      const locksmith = results.find((r) => r.place === 'locksmith');
+      expect(locksmith).toBeDefined();
+      expect(locksmith?.path).toEqual(['3,4', 'locksmith']);
+    });
+
+    test('includes book-store when stepping right onto the entrance arrow', () => {
+      const results = new AvailableSquares(makePlayer(3, 6)).all(1);
       const bookStore = results.find((r) => r.place === 'book-store');
       expect(bookStore).toBeDefined();
-      expect(bookStore?.path).toEqual(['3,4', 'book-store']);
+      expect(bookStore?.path).toEqual(['3,7', 'book-store']);
     });
 
     test('crosses the bridge from the top-left path tile to the hotel entrance', () => {
