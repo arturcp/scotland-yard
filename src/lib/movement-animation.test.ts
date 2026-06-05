@@ -1,4 +1,4 @@
-import MovementAnimation from './movement-animation';
+import MovementAnimation, { STEP_DURATION_MS } from './movement-animation';
 
 const makePlayer = (id = 1) => ({
   id,
@@ -61,7 +61,7 @@ describe('MovementAnimation', () => {
       expect(pin.style.left).toBe('110.5px');
     });
 
-    test('animates each step with a 500ms delay', () => {
+    test('animates each step with a STEP_DURATION_MS delay', () => {
       vi.useFakeTimers();
       const anim = new MovementAnimation(makePlayer());
       const pin = document.querySelector('#player-1') as HTMLElement;
@@ -71,7 +71,7 @@ describe('MovementAnimation', () => {
       vi.advanceTimersByTime(0);
       expect(pin.style.top).toBe('56px');
 
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(STEP_DURATION_MS);
       expect(pin.style.top).toBe('105px');
     });
 

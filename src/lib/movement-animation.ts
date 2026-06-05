@@ -1,5 +1,7 @@
 import type { Player, Position } from '../types/game';
 
+export const STEP_DURATION_MS = 200;
+
 export default class MovementAnimation {
   player: Player;
   players: Player[];
@@ -47,7 +49,7 @@ export default class MovementAnimation {
       setTimeout(() => {
         const position = this.parse(element);
         this.moveTo(position);
-      }, 500 * index);
+      }, STEP_DURATION_MS * index);
     });
 
     const finalNotation = path[path.length - 1];

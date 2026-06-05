@@ -1,4 +1,4 @@
-import MovementAnimation from '../../lib/movement-animation';
+import MovementAnimation, { STEP_DURATION_MS } from '../../lib/movement-animation';
 import { ZONE_IDS as zoneIds } from '../../board';
 import type { ZoneId } from '../../board/types';
 import type { GameController } from '../../types/game';
@@ -41,7 +41,7 @@ export default function Places({ game }: PlacesProps) {
     const newPosition = new MovementAnimation(player, players).move(path);
     setTimeout(() => {
       game.updatePlayerPosition(player.id, newPosition);
-    }, path.length * 500);
+    }, path.length * STEP_DURATION_MS);
   }
 
   return (

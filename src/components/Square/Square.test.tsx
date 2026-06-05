@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/react';
-import MovementAnimation from '../../lib/movement-animation';
+import MovementAnimation, { STEP_DURATION_MS } from '../../lib/movement-animation';
 import type { GameShiftView, Player } from '../../types/game';
 import Square from './index';
 
@@ -114,7 +114,7 @@ describe('Square', () => {
       );
       fireEvent.click(container.querySelector('.square')!);
 
-      vi.advanceTimersByTime(1499);
+      vi.advanceTimersByTime(path.length * STEP_DURATION_MS - 1);
       expect(updateFn).not.toHaveBeenCalled();
 
       vi.advanceTimersByTime(1);

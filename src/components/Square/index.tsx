@@ -1,4 +1,4 @@
-import MovementAnimation from '../../lib/movement-animation';
+import MovementAnimation, { STEP_DURATION_MS } from '../../lib/movement-animation';
 import type { GameShiftView, Position } from '../../types/game';
 
 import './styles.css';
@@ -35,7 +35,7 @@ export default function Square({
     const newPosition = new MovementAnimation(player, players).move(path);
     setTimeout(() => {
       updatePlayerPosition(player.id, newPosition);
-    }, path.length * 500);
+    }, path.length * STEP_DURATION_MS);
   }
 
   return (
