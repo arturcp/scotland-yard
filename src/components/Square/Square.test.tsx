@@ -4,6 +4,11 @@ import type { GameShiftView, Player } from '../../types/game';
 import Square from './index';
 
 vi.mock('../../lib/movement-animation');
+vi.mock('../../lib/debug-mode', () => ({
+  isDebugMode: vi.fn(() => false),
+}));
+
+import { isDebugMode } from '../../lib/debug-mode';
 
 const player: Player = { id: 1, name: 'John', color: 'blue', position: { row: 5, column: 3, place: null } };
 
@@ -21,6 +26,10 @@ const makeProps = (overrides = {}) => ({
 });
 
 describe('Square', () => {
+  beforeEach(() => {
+    vi.mocked(isDebugMode).mockReturnValue(false);
+  });
+
   describe('rendering', () => {
     test('renders with the correct data-id', () => {
       const { container } = render(<Square {...makeProps()} />);
@@ -62,6 +71,24 @@ describe('Square', () => {
     test('does not apply available-square class when not available', () => {
       const { container } = render(<Square {...makeProps({ available: false })} />);
       expect(container.querySelector('.square')).not.toHaveClass('available-square');
+    });
+
+    test('shows coordinates on path tiles when debug mode is enabled', () => {
+      vi.mocked(isDebugMode).mockReturnValue(true);
+      const { container } = render(<Square {...makeProps()} />);
+      expect(container.querySelector('.square-debug-coords')).toHaveTextContent('(5,3)');
+    });
+
+    test('does not show coordinates on empty tiles when debug mode is enabled', () => {
+      vi.mocked(isDebugMode).mockReturnValue(true);
+      const { container } = render(<Square {...makeProps({ state: 'empty' })} />);
+      expect(container.querySelector('.square-debug-coords')).not.toBeInTheDocument();
+    });
+
+    test('does not show coordinates when debug mode is disabled', () => {
+      vi.mocked(isDebugMode).mockReturnValue(false);
+      const { container } = render(<Square {...makeProps()} />);
+      expect(container.querySelector('.square-debug-coords')).not.toBeInTheDocument();
     });
   });
 

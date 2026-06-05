@@ -77,8 +77,8 @@ describe('MovementAnimation', () => {
 
     test('returns zone destination keeping the traversed path', () => {
       const anim = new MovementAnimation(makePlayer());
-      const path = ['7,2', 'docks'];
-      expect(anim.move(path)).toEqual({ place: 'docks', id: 'docks', path });
+      const path = ['7,2', 'hotel'];
+      expect(anim.move(path)).toEqual({ place: 'hotel', id: 'hotel', path });
     });
   });
 });

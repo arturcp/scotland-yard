@@ -66,10 +66,10 @@ describe('AvailableSquares', () => {
 
     test('zone path ends with zone id after grid steps', () => {
       const results = new AvailableSquares(makePlayer(7, 3)).all(2);
-      const docks = results.find((r) => r.place === 'docks');
-      expect(docks).toBeDefined();
-      expect(docks!.path[docks!.path.length - 1]).toBe('docks');
-      expect(docks!.path.some((step) => step.includes(','))).toBe(true);
+      const hotel = results.find((r) => r.place === 'hotel');
+      expect(hotel).toBeDefined();
+      expect(hotel!.path[hotel!.path.length - 1]).toBe('hotel');
+      expect(hotel!.path.some((step) => step.includes(','))).toBe(true);
     });
 
     test('does not include park from the north path beside the zone', () => {
@@ -84,11 +84,11 @@ describe('AvailableSquares', () => {
       expect(park?.path).toEqual(['7,7', 'park']);
     });
 
-    test('includes docks when approaching along the horizontal path', () => {
+    test('includes hotel when approaching along the horizontal path', () => {
       const results = new AvailableSquares(makePlayer(7, 3)).all(2);
-      const docks = results.find((r) => r.place === 'docks');
-      expect(docks).toBeDefined();
-      expect(docks?.path).toEqual(['7,2', 'docks']);
+      const hotel = results.find((r) => r.place === 'hotel');
+      expect(hotel).toBeDefined();
+      expect(hotel?.path).toEqual(['7,2', 'hotel']);
     });
 
     test('includes pawnshop when stepping down from the vertical path', () => {
@@ -106,8 +106,10 @@ describe('AvailableSquares', () => {
     });
 
     test('includes docks when stepping left along the horizontal path', () => {
-      const results = new AvailableSquares(makePlayer(7, 6)).all(5);
-      expect(results.some((r) => r.place === 'docks')).toBe(true);
+      const results = new AvailableSquares(makePlayer(5, 11)).all(1);
+      const docks = results.find((r) => r.place === 'docks');
+      expect(docks).toBeDefined();
+      expect(docks?.path).toEqual(['5,10', 'docks']);
     });
 
     test('includes book-store when stepping left onto the entrance arrow', () => {
@@ -117,14 +119,14 @@ describe('AvailableSquares', () => {
       expect(bookStore?.path).toEqual(['3,4', 'book-store']);
     });
 
-    test('crosses the bridge from the top-left path tile to the docks entrance', () => {
+    test('crosses the bridge from the top-left path tile to the hotel entrance', () => {
       const results = new AvailableSquares(makePlayer(3, 4)).all(1);
       const bridgeExit = results.find((r) => r.id === '7,2');
       expect(bridgeExit).toBeDefined();
       expect(bridgeExit?.path).toEqual(['7,2']);
     });
 
-    test('reaches the docks entrance via the bridge from the path before it', () => {
+    test('reaches the hotel entrance via the bridge from the path before it', () => {
       const results = new AvailableSquares(makePlayer(3, 5)).all(2);
       const bridgeExit = results.find((r) => r.id === '7,2');
       expect(bridgeExit).toBeDefined();
@@ -136,7 +138,7 @@ describe('AvailableSquares', () => {
         id: 1,
         name: 'John',
         color: 'blue',
-        position: { place: 'docks', id: 'docks', path: ['7,2', 'docks'] },
+        position: { place: 'hotel', id: 'hotel', path: ['7,2', 'hotel'] },
       };
       const results = new AvailableSquares(playerInZone).all(2);
       expect(results.length).toBeGreaterThan(0);
@@ -148,7 +150,7 @@ describe('AvailableSquares', () => {
         id: 1,
         name: 'John',
         color: 'blue',
-        position: { place: 'docks', id: 'docks', path: ['7,2', 'docks'] },
+        position: { place: 'hotel', id: 'hotel', path: ['7,2', 'hotel'] },
       };
       const results = new AvailableSquares(playerInZone).all(1);
       expect(results).toEqual([

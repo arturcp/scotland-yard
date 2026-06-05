@@ -1,3 +1,4 @@
+import { isDebugMode } from '../../lib/debug-mode';
 import MovementAnimation, { STEP_DURATION_MS } from '../../lib/movement-animation';
 import type { GameShiftView, Position } from '../../types/game';
 
@@ -27,7 +28,8 @@ export default function Square({
   path,
 }: SquareProps) {
   const squareId = `${row},${column}`;
-  const classes = `square ${state || ''} ${type} ${available ? 'available-square' : ''}`;
+  const showCoords = isDebugMode() && state !== 'empty';
+  const classes = `square ${state || ''} ${type} ${available ? 'available-square' : ''}${showCoords ? ' square-debug' : ''}`;
 
   function handleClick() {
     if (!available || !path) return;
@@ -48,6 +50,7 @@ export default function Square({
       onClick={handleClick}
     >
       {type === 'entrance' && <i className="fa fa-chevron-up"></i>}
+      {showCoords && <span className="square-debug-coords">({row},{column})</span>}
     </div>
   );
 }
