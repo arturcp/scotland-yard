@@ -18,14 +18,18 @@ class AvailableSquares {
 
     const data = GRID.map((row) => [...row]) as MarkedCell[][];
     if (this.player.position.place) {
-      const entryTile = this.entryTileForZone(this.player.position.place, this.player.position.path);
-      if (!entryTile) {
+      const exitTiles = this.exitTilesForZone(this.player.position.place as ZoneId);
+      if (!exitTiles.length) {
         return [];
       }
 
-      const { row, column } = this.parseTileId(entryTile);
-      const position = new BoardNavigator(data, { row, column, place: null });
-      return this.findNextMove([], [], position, data, diceResult);
+      const results: AvailableSquare[] = [];
+      for (const exitTile of exitTiles) {
+        const { row, column } = this.parseTileId(exitTile);
+        const position = new BoardNavigator(data, { row, column, place: null });
+        this.findNextMove(results, [], position, data, diceResult);
+      }
+      return results;
     }
 
     const row = this.player.position.row ?? 0;
@@ -36,31 +40,10 @@ class AvailableSquares {
     return this.findNextMove([], [], position, data, diceResult + 1);
   };
 
-  entryTileFromZonePath = (path?: string[]) => {
-    if (!path?.length) {
-      return null;
-    }
-    for (let index = path.length - 1; index >= 0; index -= 1) {
-      if (path[index].includes(',')) {
-        return path[index];
-      }
-    }
-    return null;
-  };
-
-  entryTileForZone = (zoneId: ZoneId, path?: string[]) => {
-    const fromPath = this.entryTileFromZonePath(path);
-    if (fromPath) {
-      return fromPath;
-    }
-
-    const entrances = ENTRANCES.filter((entrance) => entrance.zoneId === zoneId);
-    if (entrances.length === 1) {
-      const { row, column } = entrances[0].at;
-      return cellKey(row, column);
-    }
-
-    return null;
+  exitTilesForZone = (zoneId: ZoneId): string[] => {
+    return ENTRANCES.filter((entrance) => entrance.zoneId === zoneId).map((entrance) =>
+      cellKey(entrance.at.row, entrance.at.column),
+    );
   };
 
   parseTileId = (tileId: string) => {

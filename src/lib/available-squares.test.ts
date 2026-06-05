@@ -186,7 +186,7 @@ describe('AvailableSquares', () => {
       expect(bridgeExit?.path).toEqual(['3,4', '7,2']);
     });
 
-    test('when inside a zone, first mandatory tile is the tile used to enter it', () => {
+    test('when inside a multi-entrance zone, paths start from a valid exit tile', () => {
       const playerInZone = {
         id: 1,
         name: 'John',
@@ -194,11 +194,42 @@ describe('AvailableSquares', () => {
         position: { place: 'hotel', id: 'hotel', path: ['7,2', 'hotel'] },
       };
       const results = new AvailableSquares(playerInZone).all(2);
+      const validExits = new Set(['7,2', '11,0']);
       expect(results.length).toBeGreaterThan(0);
-      expect(results.every((result) => result.path[0] === '7,2')).toBe(true);
+      expect(results.every((result) => validExits.has(result.path[0]))).toBe(true);
     });
 
-    test('with dice 1 inside a zone, only the mandatory exit tile is reachable', () => {
+    test('with dice 1 inside a single-entrance zone, only that exit tile is reachable', () => {
+      const playerInZone = {
+        id: 1,
+        name: 'John',
+        color: 'blue',
+        position: { place: 'drugstore', id: 'drugstore', path: ['13,15', 'drugstore'] },
+      };
+      const results = new AvailableSquares(playerInZone).all(1);
+      expect(results).toEqual([
+        { id: '13,15', row: 13, column: 15, place: null, path: ['13,15'] },
+      ]);
+    });
+
+    test('with dice 1 inside a multi-entrance zone, all exit tiles are reachable', () => {
+      const playerInZone = {
+        id: 1,
+        name: 'John',
+        color: 'blue',
+        position: { place: 'park', id: 'park', path: ['7,7', 'park'] },
+      };
+      const results = new AvailableSquares(playerInZone).all(1);
+      expect(results).toEqual(
+        expect.arrayContaining([
+          { id: '7,7', row: 7, column: 7, place: null, path: ['7,7'] },
+          { id: '10,10', row: 10, column: 10, place: null, path: ['10,10'] },
+        ]),
+      );
+      expect(results).toHaveLength(2);
+    });
+
+    test('with dice 1 inside hotel, both exit tiles are reachable', () => {
       const playerInZone = {
         id: 1,
         name: 'John',
@@ -206,9 +237,13 @@ describe('AvailableSquares', () => {
         position: { place: 'hotel', id: 'hotel', path: ['7,2', 'hotel'] },
       };
       const results = new AvailableSquares(playerInZone).all(1);
-      expect(results).toEqual([
-        { id: '7,2', row: 7, column: 2, place: null, path: ['7,2'] },
-      ]);
+      expect(results).toEqual(
+        expect.arrayContaining([
+          { id: '7,2', row: 7, column: 2, place: null, path: ['7,2'] },
+          { id: '11,0', row: 11, column: 0, place: null, path: ['11,0'] },
+        ]),
+      );
+      expect(results).toHaveLength(2);
     });
   });
 
