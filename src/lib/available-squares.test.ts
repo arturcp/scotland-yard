@@ -99,31 +99,77 @@ describe('AvailableSquares', () => {
     });
 
     test('includes docks from the vertical path beside the zone', () => {
-      const results = new AvailableSquares(makePlayer(6, 10)).all(1);
+      const results = new AvailableSquares(makePlayer(6, 10)).all(2);
       const docks = results.find((r) => r.place === 'docks');
       expect(docks).toBeDefined();
       expect(docks?.path).toEqual(['5,10', 'docks']);
     });
 
     test('includes docks when stepping left along the horizontal path', () => {
-      const results = new AvailableSquares(makePlayer(5, 11)).all(1);
+      const results = new AvailableSquares(makePlayer(5, 11)).all(2);
       const docks = results.find((r) => r.place === 'docks');
       expect(docks).toBeDefined();
       expect(docks?.path).toEqual(['5,10', 'docks']);
     });
 
     test('includes locksmith when stepping left onto the entrance arrow', () => {
-      const results = new AvailableSquares(makePlayer(3, 5)).all(1);
+      const results = new AvailableSquares(makePlayer(3, 5)).all(2);
       const locksmith = results.find((r) => r.place === 'locksmith');
       expect(locksmith).toBeDefined();
       expect(locksmith?.path).toEqual(['3,4', 'locksmith']);
     });
 
     test('includes book-store when stepping right onto the entrance arrow', () => {
-      const results = new AvailableSquares(makePlayer(3, 6)).all(1);
+      const results = new AvailableSquares(makePlayer(3, 6)).all(2);
       const bookStore = results.find((r) => r.place === 'book-store');
       expect(bookStore).toBeDefined();
       expect(bookStore?.path).toEqual(['3,7', 'book-store']);
+    });
+
+    test('does not include a zone when the roll reaches the entrance but cannot step in', () => {
+      const results = new AvailableSquares(makePlayer(10, 15)).all(3);
+      expect(results.some((r) => r.place === 'drugstore')).toBe(false);
+      expect(results.some((r) => r.id === '13,15')).toBe(true);
+    });
+
+    test('includes a zone when the roll reaches the entrance with a move left to step in', () => {
+      const results = new AvailableSquares(makePlayer(10, 15)).all(4);
+      const drugstore = results.find((r) => r.place === 'drugstore');
+      expect(drugstore).toBeDefined();
+      expect(drugstore?.path).toEqual(['11,15', '12,15', '13,15', 'drugstore']);
+    });
+
+    test('includes a zone when already standing on the entrance arrow', () => {
+      const results = new AvailableSquares(makePlayer(13, 15)).all(2);
+      const drugstore = results.find((r) => r.place === 'drugstore');
+      expect(drugstore).toBeDefined();
+      expect(drugstore?.path).toEqual(['13,15', 'drugstore']);
+    });
+
+    test('with dice 1 inside drugstore, the entrance tile is reachable', () => {
+      const playerInZone = {
+        id: 1,
+        name: 'John',
+        color: 'blue',
+        position: { place: 'drugstore', id: 'drugstore', path: ['13,15', 'drugstore'] },
+      };
+      const results = new AvailableSquares(playerInZone).all(1);
+      expect(results).toEqual([
+        { id: '13,15', row: 13, column: 15, place: null, path: ['13,15'] },
+      ]);
+    });
+
+    test('with dice 1 inside drugstore, resolves the entrance when path omits the grid tile', () => {
+      const playerInZone = {
+        id: 1,
+        name: 'John',
+        color: 'blue',
+        position: { place: 'drugstore', id: 'drugstore', path: ['drugstore'] },
+      };
+      const results = new AvailableSquares(playerInZone).all(1);
+      expect(results).toEqual([
+        { id: '13,15', row: 13, column: 15, place: null, path: ['13,15'] },
+      ]);
     });
 
     test('crosses the bridge from the top-left path tile to the hotel entrance', () => {

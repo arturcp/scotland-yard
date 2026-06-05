@@ -1,5 +1,5 @@
-import { GRID, bridgeDestination, canEnterFromDirection } from '../board';
-import type { Direction, Entrance } from '../board/types';
+import { GRID, ENTRANCES, bridgeDestination, canEnterFromDirection, cellKey } from '../board';
+import type { Direction, Entrance, ZoneId } from '../board/types';
 import type { AvailableSquare, Player } from '../types/game';
 import BoardNavigator from '../board/navigator';
 
@@ -18,7 +18,7 @@ class AvailableSquares {
 
     const data = GRID.map((row) => [...row]) as MarkedCell[][];
     if (this.player.position.place) {
-      const entryTile = this.entryTileFromZonePath(this.player.position.path);
+      const entryTile = this.entryTileForZone(this.player.position.place, this.player.position.path);
       if (!entryTile) {
         return [];
       }
@@ -45,6 +45,21 @@ class AvailableSquares {
         return path[index];
       }
     }
+    return null;
+  };
+
+  entryTileForZone = (zoneId: ZoneId, path?: string[]) => {
+    const fromPath = this.entryTileFromZonePath(path);
+    if (fromPath) {
+      return fromPath;
+    }
+
+    const entrances = ENTRANCES.filter((entrance) => entrance.zoneId === zoneId);
+    if (entrances.length === 1) {
+      const { row, column } = entrances[0].at;
+      return cellKey(row, column);
+    }
+
     return null;
   };
 
@@ -80,13 +95,15 @@ class AvailableSquares {
       this.checkpointGrid(results, pathAtCell, board, position);
     }
 
-    if (
+    const canStepIntoZone =
       entrance &&
-      movesRemaining >= 1 &&
-      lastMove &&
-      canEnterFromDirection(entrance, lastMove)
-    ) {
-      this.checkpointZone(results, pathAtCell, entrance);
+      movesRemaining >= 2 &&
+      (position.initialPosition() ||
+        (lastMove !== undefined && canEnterFromDirection(entrance, lastMove)));
+
+    if (canStepIntoZone) {
+      const zoneEntryPath = position.initialPosition() ? [position.id] : pathAtCell;
+      this.checkpointZone(results, zoneEntryPath, entrance);
     }
 
     const movesAfterStep = movesRemaining - 1;
