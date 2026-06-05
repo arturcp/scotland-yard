@@ -15,17 +15,42 @@ class AvailableSquares {
   clone = <T>(data: T): T => JSON.parse(JSON.stringify(data));
 
   all = (diceResult: number) => {
-    if (this.player.position.place) {
-      return [];
-    }
 
     const data = GRID.map((row) => [...row]) as MarkedCell[][];
+    if (this.player.position.place) {
+      const entryTile = this.entryTileFromZonePath(this.player.position.path);
+      if (!entryTile) {
+        return [];
+      }
+
+      const { row, column } = this.parseTileId(entryTile);
+      const position = new BoardNavigator(data, { row, column, place: null });
+      return this.findNextMove([], [], position, data, diceResult);
+    }
+
     const row = this.player.position.row ?? 0;
     const column = this.player.position.column ?? 0;
     data[row][column] = 'S';
 
     const position = new BoardNavigator(data, { row, column, place: null }, true);
     return this.findNextMove([], [], position, data, diceResult + 1);
+  };
+
+  entryTileFromZonePath = (path?: string[]) => {
+    if (!path?.length) {
+      return null;
+    }
+    for (let index = path.length - 1; index >= 0; index -= 1) {
+      if (path[index].includes(',')) {
+        return path[index];
+      }
+    }
+    return null;
+  };
+
+  parseTileId = (tileId: string) => {
+    const [row, column] = tileId.split(',');
+    return { row: parseInt(row, 10), column: parseInt(column, 10) };
   };
 
   findNextMove = (

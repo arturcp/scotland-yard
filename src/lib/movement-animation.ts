@@ -9,7 +9,7 @@ export default class MovementAnimation {
   paddingTop: number;
   paddingLeft: number;
 
-  constructor(player: Player, players: Player[]) {
+  constructor(player: Player, players: Player[] = [player]) {
     this.player = player;
     this.players = players;
     this.pin = document.querySelector(`#player-${player.id}`)!;
@@ -50,7 +50,18 @@ export default class MovementAnimation {
       }, 500 * index);
     });
 
-    return this.parse(path[path.length - 1]);
+    const finalNotation = path[path.length - 1];
+    const finalPosition = this.parse(finalNotation);
+
+    if (!finalPosition.place) {
+      return finalPosition;
+    }
+
+    return {
+      ...finalPosition,
+      id: finalNotation,
+      path,
+    };
   };
 
   moveTo = (position: Position) => {

@@ -109,6 +109,31 @@ describe('AvailableSquares', () => {
       const results = new AvailableSquares(makePlayer(7, 6)).all(5);
       expect(results.some((r) => r.place === 'docks')).toBe(true);
     });
+
+    test('when inside a zone, first mandatory tile is the tile used to enter it', () => {
+      const playerInZone = {
+        id: 1,
+        name: 'John',
+        color: 'blue',
+        position: { place: 'docks', id: 'docks', path: ['7,2', 'docks'] },
+      };
+      const results = new AvailableSquares(playerInZone).all(2);
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.every((result) => result.path[0] === '7,2')).toBe(true);
+    });
+
+    test('with dice 1 inside a zone, only the mandatory exit tile is reachable', () => {
+      const playerInZone = {
+        id: 1,
+        name: 'John',
+        color: 'blue',
+        position: { place: 'docks', id: 'docks', path: ['7,2', 'docks'] },
+      };
+      const results = new AvailableSquares(playerInZone).all(1);
+      expect(results).toEqual([
+        { id: '7,2', row: 7, column: 2, place: null, path: ['7,2'] },
+      ]);
+    });
   });
 
   describe('existInArray', () => {

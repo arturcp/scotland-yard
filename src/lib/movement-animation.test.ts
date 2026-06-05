@@ -58,7 +58,7 @@ describe('MovementAnimation', () => {
 
       const pin = document.querySelector('#player-1') as HTMLElement;
       expect(pin.style.top).toBe('56px');
-      expect(pin.style.left).toBe('101px');
+      expect(pin.style.left).toBe('110.5px');
     });
 
     test('animates each step with a 500ms delay', () => {
@@ -73,6 +73,12 @@ describe('MovementAnimation', () => {
 
       vi.advanceTimersByTime(500);
       expect(pin.style.top).toBe('105px');
+    });
+
+    test('returns zone destination keeping the traversed path', () => {
+      const anim = new MovementAnimation(makePlayer());
+      const path = ['7,2', 'docks'];
+      expect(anim.move(path)).toEqual({ place: 'docks', id: 'docks', path });
     });
   });
 });
