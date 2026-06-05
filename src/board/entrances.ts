@@ -4,9 +4,9 @@ import { cellKey } from './grid';
 /** Arrow cell → zone (verify against physical board if needed). */
 export const ENTRANCES: Entrance[] = [
   { at: { row: 0, column: 14 }, direction: 'down', zoneId: 'museum' },
-  { at: { row: 2, column: 4 }, direction: 'up', zoneId: 'book-store' },
-  { at: { row: 2, column: 7 }, direction: 'up', zoneId: 'locksmith' },
-  { at: { row: 3, column: 21 }, direction: 'up', zoneId: 'holmes-house' },
+  { at: { row: 3, column: 4 }, direction: 'up', zoneId: 'book-store' },
+  { at: { row: 3, column: 7 }, direction: 'up', zoneId: 'locksmith' },
+  { at: { row: 4, column: 21 }, direction: 'up', zoneId: 'holmes-house' },
   { at: { row: 5, column: 10 }, direction: 'left', zoneId: 'docks' },
   { at: { row: 7, column: 2 }, direction: 'down', zoneId: 'docks' },
   { at: { row: 7, column: 7 }, direction: 'right', zoneId: 'park' },
@@ -16,9 +16,9 @@ export const ENTRANCES: Entrance[] = [
   { at: { row: 11, column: 0 }, direction: 'right', zoneId: 'key' },
   { at: { row: 13, column: 15 }, direction: 'right', zoneId: 'theater' },
   { at: { row: 14, column: 7 }, direction: 'right', zoneId: 'cigar-shop' },
-  { at: { row: 16, column: 19 }, direction: 'down', zoneId: 'drugstore' },
-  { at: { row: 17, column: 9 }, direction: 'down', zoneId: 'carriage-station' },
-  { at: { row: 19, column: 3 }, direction: 'up', zoneId: 'carriage-station' },
+  { at: { row: 15, column: 19 }, direction: 'down', zoneId: 'drugstore' },
+  { at: { row: 16, column: 9 }, direction: 'down', zoneId: 'carriage-station' },
+  { at: { row: 18, column: 3 }, direction: 'up', zoneId: 'carriage-station' },
 ];
 
 const entranceByCell: Record<string, Entrance> = Object.fromEntries(

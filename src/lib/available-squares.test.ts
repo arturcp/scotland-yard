@@ -110,6 +110,13 @@ describe('AvailableSquares', () => {
       expect(results.some((r) => r.place === 'docks')).toBe(true);
     });
 
+    test('includes book-store when stepping left onto the entrance arrow', () => {
+      const results = new AvailableSquares(makePlayer(3, 5)).all(1);
+      const bookStore = results.find((r) => r.place === 'book-store');
+      expect(bookStore).toBeDefined();
+      expect(bookStore?.path).toEqual(['3,4', 'book-store']);
+    });
+
     test('when inside a zone, first mandatory tile is the tile used to enter it', () => {
       const playerInZone = {
         id: 1,
