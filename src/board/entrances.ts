@@ -5,7 +5,7 @@ import { cellKey } from './grid';
 export const ENTRANCES: Entrance[] = [
   { at: { row: 0, column: 14 }, direction: 'down', zoneId: 'museum' },
   { at: { row: 3, column: 4 }, direction: 'up', zoneId: 'book-store' },
-  { at: { row: 3, column: 7 }, direction: 'up', zoneId: 'locksmith' },
+  { at: { row: 3, column: 4 }, direction: 'up', zoneId: 'locksmith' },
   { at: { row: 4, column: 21 }, direction: 'up', zoneId: 'holmes-house' },
   { at: { row: 5, column: 10 }, direction: 'left', zoneId: 'docks' },
   { at: { row: 7, column: 2 }, direction: 'down', zoneId: 'docks' },
