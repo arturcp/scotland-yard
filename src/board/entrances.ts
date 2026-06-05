@@ -1,4 +1,4 @@
-import type { Entrance } from './types';
+import type { Direction, Entrance } from './types';
 import { cellKey } from './grid';
 
 /** Arrow cell → zone (verify against physical board if needed). */
@@ -7,7 +7,7 @@ export const ENTRANCES: Entrance[] = [
   { at: { row: 2, column: 4 }, direction: 'up', zoneId: 'book-store' },
   { at: { row: 2, column: 7 }, direction: 'up', zoneId: 'locksmith' },
   { at: { row: 3, column: 21 }, direction: 'up', zoneId: 'holmes-house' },
-  { at: { row: 5, column: 10 }, direction: 'left', zoneId: 'park' },
+  { at: { row: 5, column: 10 }, direction: 'left', zoneId: 'docks' },
   { at: { row: 7, column: 2 }, direction: 'down', zoneId: 'docks' },
   { at: { row: 7, column: 7 }, direction: 'right', zoneId: 'park' },
   { at: { row: 8, column: 14 }, direction: 'left', zoneId: 'pawnshop' },
@@ -27,4 +27,19 @@ const entranceByCell: Record<string, Entrance> = Object.fromEntries(
 
 export function entranceAt(row: number, column: number): Entrance | undefined {
   return entranceByCell[cellKey(row, column)];
+}
+
+/** Arrow points into the zone; you cannot step onto the cell from that side. */
+const APPROACH_FROM_ZONE: Record<Direction, Direction> = {
+  up: 'down',
+  down: 'up',
+  left: 'right',
+  right: 'left',
+};
+
+export function canEnterFromDirection(
+  entrance: Entrance,
+  approachDirection: Direction,
+): boolean {
+  return approachDirection !== APPROACH_FROM_ZONE[entrance.direction];
 }

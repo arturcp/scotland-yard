@@ -1,5 +1,5 @@
-import { GRID } from '../board';
-import type { Entrance } from '../board/types';
+import { GRID, canEnterFromDirection } from '../board';
+import type { Direction, Entrance } from '../board/types';
 import type { AvailableSquare, Player } from '../types/game';
 import BoardNavigator from '../board/navigator';
 
@@ -34,6 +34,7 @@ class AvailableSquares {
     position: BoardNavigator,
     boardData: MarkedCell[][],
     movesRemaining: number,
+    lastMove?: Direction,
   ): AvailableSquare[] => {
     if (movesRemaining <= 0) {
       return results;
@@ -54,7 +55,12 @@ class AvailableSquares {
       this.checkpointGrid(results, pathAtCell, board, position);
     }
 
-    if (entrance && movesRemaining >= 1) {
+    if (
+      entrance &&
+      movesRemaining >= 1 &&
+      lastMove &&
+      canEnterFromDirection(entrance, lastMove)
+    ) {
       this.checkpointZone(results, pathAtCell, entrance);
     }
 
@@ -63,11 +69,12 @@ class AvailableSquares {
     }
 
     const movesAfterStep = movesRemaining - 1;
+    const pathForChildren = position.initialPosition() ? currentPath : pathAtCell;
 
-    this.findNextMove(results, currentPath, position.moveUp(), board, movesAfterStep);
-    this.findNextMove(results, currentPath, position.moveDown(), board, movesAfterStep);
-    this.findNextMove(results, currentPath, position.moveLeft(), board, movesAfterStep);
-    this.findNextMove(results, currentPath, position.moveRight(), board, movesAfterStep);
+    this.findNextMove(results, pathForChildren, position.moveUp(), board, movesAfterStep, 'up');
+    this.findNextMove(results, pathForChildren, position.moveDown(), board, movesAfterStep, 'down');
+    this.findNextMove(results, pathForChildren, position.moveLeft(), board, movesAfterStep, 'left');
+    this.findNextMove(results, pathForChildren, position.moveRight(), board, movesAfterStep, 'right');
 
     return results;
   };

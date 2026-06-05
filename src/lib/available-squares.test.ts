@@ -56,7 +56,7 @@ describe('AvailableSquares', () => {
     });
 
     test('includes reachable zones with place set', () => {
-      const results = new AvailableSquares(makePlayer(7, 1)).all(3);
+      const results = new AvailableSquares(makePlayer(7, 3)).all(3);
       const zones = results.filter((r) => r.place);
       expect(zones.length).toBeGreaterThan(0);
       for (const zone of zones) {
@@ -65,12 +65,49 @@ describe('AvailableSquares', () => {
     });
 
     test('zone path ends with zone id after grid steps', () => {
-      const results = new AvailableSquares(makePlayer(7, 1)).all(2);
+      const results = new AvailableSquares(makePlayer(7, 3)).all(2);
       const docks = results.find((r) => r.place === 'docks');
-      if (docks) {
-        expect(docks.path[docks.path.length - 1]).toBe('docks');
-        expect(docks.path.some((step) => step.includes(','))).toBe(true);
-      }
+      expect(docks).toBeDefined();
+      expect(docks!.path[docks!.path.length - 1]).toBe('docks');
+      expect(docks!.path.some((step) => step.includes(','))).toBe(true);
+    });
+
+    test('does not include park from the north path beside the zone', () => {
+      const results = new AvailableSquares(makePlayer(6, 10)).all(2);
+      expect(results.some((r) => r.place === 'park')).toBe(false);
+    });
+
+    test('includes park when approaching entrance from the correct direction', () => {
+      const results = new AvailableSquares(makePlayer(7, 6)).all(2);
+      const park = results.find((r) => r.place === 'park');
+      expect(park).toBeDefined();
+      expect(park?.path).toEqual(['7,7', 'park']);
+    });
+
+    test('includes docks when approaching along the horizontal path', () => {
+      const results = new AvailableSquares(makePlayer(7, 3)).all(2);
+      const docks = results.find((r) => r.place === 'docks');
+      expect(docks).toBeDefined();
+      expect(docks?.path).toEqual(['7,2', 'docks']);
+    });
+
+    test('includes pawnshop when stepping down from the vertical path', () => {
+      const results = new AvailableSquares(makePlayer(7, 14)).all(2);
+      const pawnshop = results.find((r) => r.place === 'pawnshop');
+      expect(pawnshop).toBeDefined();
+      expect(pawnshop?.path).toEqual(['8,14', 'pawnshop']);
+    });
+
+    test('includes docks from the vertical path beside the zone', () => {
+      const results = new AvailableSquares(makePlayer(6, 10)).all(1);
+      const docks = results.find((r) => r.place === 'docks');
+      expect(docks).toBeDefined();
+      expect(docks?.path).toEqual(['5,10', 'docks']);
+    });
+
+    test('includes docks when stepping left along the horizontal path', () => {
+      const results = new AvailableSquares(makePlayer(7, 6)).all(5);
+      expect(results.some((r) => r.place === 'docks')).toBe(true);
     });
   });
 

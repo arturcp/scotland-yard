@@ -1,5 +1,5 @@
 export type { Direction, Entrance, GridCell, Terrain, Zone, ZoneId } from './types';
 export { GRID, GRID_COLUMNS, GRID_ROWS, cellKey, cloneGrid, isWalkable } from './grid';
-export { ENTRANCES, entranceAt } from './entrances';
+export { ENTRANCES, canEnterFromDirection, entranceAt } from './entrances';
 export { ZONE_IDS, ZONES, zonePins } from './zones';
 export { default as BoardNavigator } from './navigator';
