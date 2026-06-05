@@ -26,7 +26,12 @@ const PLACE_NAMES = [
 ];
 
 const makeGame = (): GameController => ({
-  gameShift: () => ({ player: { id: 1, name: 'John', color: 'blue', position: { row: 0, column: 0, place: null } }, availableSquares: [], status: 'waiting' }),
+  gameShift: () => ({
+    player: { id: 1, name: 'John', color: 'blue', position: { row: 0, column: 0, place: null } },
+    availableSquares: [],
+    status: 'waiting',
+    players: [],
+  }),
   updatePlayerPosition: vi.fn(),
   updateAvailableSquares: vi.fn(),
 });

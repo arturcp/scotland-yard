@@ -65,6 +65,7 @@ export default function Game() {
       player: players.find((p) => p.id === gameShift.playerId)!,
       availableSquares: gameShift.availableSquares,
       status: gameShift.status,
+      players,
     }),
     updatePlayerPosition,
     updateAvailableSquares,

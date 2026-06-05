@@ -14,17 +14,37 @@ interface BoardProps {
 
 const PLACE_PINS = zonePins();
 
-function playerPosition(player: GamePlayer): CSSProperties {
+function playerPosition(player: GamePlayer, players: GamePlayer[]): CSSProperties {
   const { position } = player;
+  const playersAtSamePos = players
+    .filter((p) => {
+      if (position.place) {
+        return p.position.place === position.place;
+      }
+      return (
+        (p.position.row ?? 0) === (position.row ?? 0) &&
+        (p.position.column ?? 0) === (position.column ?? 0)
+      );
+    })
+    .sort((a, b) => a.id - b.id);
+
+  const idx = playersAtSamePos.findIndex((p) => p.id === player.id);
+  const N = playersAtSamePos.length;
+  const spacing = 8;
+
   if (position.place) {
+    const leftStart = PLACE_PINS[position.place].left + 12 - 4 * (N - 1);
     return {
       top: PLACE_PINS[position.place].top,
-      left: PLACE_PINS[position.place].left + 8 * (player.id - 1),
+      left: leftStart + spacing * idx,
     };
   }
+
+  const column = position.column ?? 0;
+  const leftStart = column * 49 + 3 + 9.5 - 4 * (N - 1);
   return {
     top: (position.row ?? 0) * 49 + 7,
-    left: (position.column ?? 0) * 49 + 3 + 8 * (player.id - 1),
+    left: leftStart + spacing * idx,
   };
 }
 
@@ -35,7 +55,7 @@ export default function Board({ players, game }: BoardProps) {
       <Places game={game} />
       <div id="players">
         {players.map((player) => (
-          <Player key={player.id} player={player} style={playerPosition(player)} />
+          <Player key={player.id} player={player} style={playerPosition(player, players)} />
         ))}
       </div>
     </section>

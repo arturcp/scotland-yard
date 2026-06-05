@@ -30,6 +30,7 @@ export interface GameShiftView {
   player: Player;
   availableSquares: AvailableSquare[];
   status: GameShiftStatus;
+  players: Player[];
 }
 
 export interface GameController {

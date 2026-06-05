@@ -10,7 +10,7 @@ const players: Player[] = [
 ];
 
 const makeGame = (status: GameShiftStatus = 'waiting'): GameController => ({
-  gameShift: () => ({ player: players[0], availableSquares: [], status }),
+  gameShift: () => ({ player: players[0], availableSquares: [], status, players }),
   updateAvailableSquares: vi.fn(),
   updatePlayerPosition: vi.fn(),
 });

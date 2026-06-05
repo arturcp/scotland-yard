@@ -31,8 +31,8 @@ export default function Square({
 
   function handleClick() {
     if (!available || !path) return;
-    const { player } = gameShift;
-    const newPosition = new MovementAnimation(player).move(path);
+    const { player, players } = gameShift;
+    const newPosition = new MovementAnimation(player, players).move(path);
     setTimeout(() => {
       updatePlayerPosition(player.id, newPosition);
     }, path.length * 500);

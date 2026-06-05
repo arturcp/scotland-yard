@@ -37,8 +37,8 @@ export default function Places({ game }: PlacesProps) {
   const { availableSquares } = game.gameShift();
 
   function handleZoneClick(zoneId: ZoneId, path: string[]) {
-    const { player } = game.gameShift();
-    const newPosition = new MovementAnimation(player).move(path);
+    const { player, players } = game.gameShift();
+    const newPosition = new MovementAnimation(player, players).move(path);
     setTimeout(() => {
       game.updatePlayerPosition(player.id, newPosition);
     }, path.length * 500);

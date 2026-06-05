@@ -14,7 +14,7 @@ const makeProps = (overrides = {}) => ({
   state: '',
   available: false,
   direction: '',
-  gameShift: { player, availableSquares: [], status: 'waiting' as const },
+  gameShift: { player, availableSquares: [], status: 'waiting' as const, players: [player] },
   updatePlayerPosition: vi.fn(),
   path: null,
   ...overrides,
@@ -84,7 +84,7 @@ describe('Square', () => {
       } as unknown as typeof MovementAnimation);
 
       const path = ['5,3', '5,4'];
-      const gameShift: GameShiftView = { player, availableSquares: [], status: 'in-progress' };
+      const gameShift: GameShiftView = { player, availableSquares: [], status: 'in-progress', players: [player] };
 
       const { container } = render(
         <Square {...makeProps({ available: true, path, gameShift, updatePlayerPosition: updateFn })} />,
@@ -107,7 +107,7 @@ describe('Square', () => {
       } as unknown as typeof MovementAnimation);
 
       const path = ['5,3', '5,4', '5,5'];
-      const gameShift: GameShiftView = { player, availableSquares: [], status: 'in-progress' };
+      const gameShift: GameShiftView = { player, availableSquares: [], status: 'in-progress', players: [player] };
 
       const { container } = render(
         <Square {...makeProps({ available: true, path, gameShift, updatePlayerPosition: updateFn })} />,
