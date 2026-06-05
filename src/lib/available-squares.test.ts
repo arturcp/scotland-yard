@@ -117,6 +117,20 @@ describe('AvailableSquares', () => {
       expect(bookStore?.path).toEqual(['3,4', 'book-store']);
     });
 
+    test('crosses the bridge from the top-left path tile to the docks entrance', () => {
+      const results = new AvailableSquares(makePlayer(3, 4)).all(1);
+      const bridgeExit = results.find((r) => r.id === '7,2');
+      expect(bridgeExit).toBeDefined();
+      expect(bridgeExit?.path).toEqual(['7,2']);
+    });
+
+    test('reaches the docks entrance via the bridge from the path before it', () => {
+      const results = new AvailableSquares(makePlayer(3, 5)).all(2);
+      const bridgeExit = results.find((r) => r.id === '7,2');
+      expect(bridgeExit).toBeDefined();
+      expect(bridgeExit?.path).toEqual(['3,4', '7,2']);
+    });
+
     test('when inside a zone, first mandatory tile is the tile used to enter it', () => {
       const playerInZone = {
         id: 1,

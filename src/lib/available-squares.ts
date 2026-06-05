@@ -1,4 +1,4 @@
-import { GRID, canEnterFromDirection } from '../board';
+import { GRID, bridgeDestination, canEnterFromDirection } from '../board';
 import type { Direction, Entrance } from '../board/types';
 import type { AvailableSquare, Player } from '../types/game';
 import BoardNavigator from '../board/navigator';
@@ -89,12 +89,22 @@ class AvailableSquares {
       this.checkpointZone(results, pathAtCell, entrance);
     }
 
+    const movesAfterStep = movesRemaining - 1;
+    const pathForChildren = position.initialPosition() ? currentPath : pathAtCell;
+
+    const bridgeTarget = bridgeDestination(position.row, position.column);
+    if (bridgeTarget) {
+      const bridgePosition = new BoardNavigator(board, {
+        row: bridgeTarget.row,
+        column: bridgeTarget.column,
+        place: null,
+      });
+      this.findNextMove(results, pathForChildren, bridgePosition, board, movesAfterStep);
+    }
+
     if (!position.canMove()) {
       return results;
     }
-
-    const movesAfterStep = movesRemaining - 1;
-    const pathForChildren = position.initialPosition() ? currentPath : pathAtCell;
 
     this.findNextMove(results, pathForChildren, position.moveUp(), board, movesAfterStep, 'up');
     this.findNextMove(results, pathForChildren, position.moveDown(), board, movesAfterStep, 'down');
