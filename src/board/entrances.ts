@@ -38,9 +38,6 @@ const APPROACH_FROM_ZONE: Record<Direction, Direction> = {
   right: 'left',
 };
 
-export function canEnterFromDirection(
-  entrance: Entrance,
-  approachDirection: Direction,
-): boolean {
+export function canEnterFromDirection(entrance: Entrance, approachDirection: Direction): boolean {
   return approachDirection !== APPROACH_FROM_ZONE[entrance.direction];
 }

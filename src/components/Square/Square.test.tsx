@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/react';
-import MovementAnimation, { STEP_DURATION_MS } from '../../lib/movement-animation';
+import { movePlayer, STEP_DURATION_MS } from '../../lib/movement-animation';
 import type { GameShiftView, Player } from '../../types/game';
 import Square from './index';
 
@@ -10,7 +10,12 @@ vi.mock('../../lib/debug-mode', () => ({
 
 import { isDebugMode } from '../../lib/debug-mode';
 
-const player: Player = { id: 1, name: 'John', color: 'blue', position: { row: 5, column: 3, place: null } };
+const player: Player = {
+  id: 1,
+  name: 'John',
+  color: 'blue',
+  position: { row: 5, column: 3, place: null },
+};
 
 const makeProps = (overrides = {}) => ({
   type: '',
@@ -105,16 +110,20 @@ describe('Square', () => {
       const updateFn = vi.fn();
       const newPosition = { row: 5, column: 4, place: null };
       document.body.innerHTML = '<div id="player-1"></div>';
-      vi.mocked(MovementAnimation).mockImplementation(function (this: MovementAnimation) {
-        this.move = () => newPosition;
-        return this;
-      } as unknown as typeof MovementAnimation);
+      vi.mocked(movePlayer).mockReturnValue(newPosition);
 
       const path = ['5,3', '5,4'];
-      const gameShift: GameShiftView = { player, availableSquares: [], status: 'in-progress', players: [player] };
+      const gameShift: GameShiftView = {
+        player,
+        availableSquares: [],
+        status: 'in-progress',
+        players: [player],
+      };
 
       const { container } = render(
-        <Square {...makeProps({ available: true, path, gameShift, updatePlayerPosition: updateFn })} />,
+        <Square
+          {...makeProps({ available: true, path, gameShift, updatePlayerPosition: updateFn })}
+        />,
       );
       fireEvent.click(container.querySelector('.square')!);
       vi.runAllTimers();
@@ -128,16 +137,20 @@ describe('Square', () => {
       const updateFn = vi.fn();
       const newPosition = { row: 5, column: 5, place: null };
       document.body.innerHTML = '<div id="player-1"></div>';
-      vi.mocked(MovementAnimation).mockImplementation(function (this: MovementAnimation) {
-        this.move = () => newPosition;
-        return this;
-      } as unknown as typeof MovementAnimation);
+      vi.mocked(movePlayer).mockReturnValue(newPosition);
 
       const path = ['5,3', '5,4', '5,5'];
-      const gameShift: GameShiftView = { player, availableSquares: [], status: 'in-progress', players: [player] };
+      const gameShift: GameShiftView = {
+        player,
+        availableSquares: [],
+        status: 'in-progress',
+        players: [player],
+      };
 
       const { container } = render(
-        <Square {...makeProps({ available: true, path, gameShift, updatePlayerPosition: updateFn })} />,
+        <Square
+          {...makeProps({ available: true, path, gameShift, updatePlayerPosition: updateFn })}
+        />,
       );
       fireEvent.click(container.querySelector('.square')!);
 

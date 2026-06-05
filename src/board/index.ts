@@ -3,4 +3,21 @@ export { GRID, GRID_COLUMNS, GRID_ROWS, cellKey, cloneGrid, isWalkable } from '.
 export { ENTRANCES, canEnterFromDirection, entranceAt } from './entrances';
 export { bridgeDestination } from './bridges';
 export { ZONE_IDS, ZONES, zonePins } from './zones';
-export { default as BoardNavigator } from './navigator';
+export {
+  availableSquare,
+  canMove,
+  canMoveDown,
+  canMoveLeft,
+  canMoveRight,
+  canMoveUp,
+  cellAt,
+  createBoardPosition,
+  entrance,
+  initialPosition,
+  insideBoard,
+  moveDown,
+  moveLeft,
+  moveRight,
+  moveUp,
+  type BoardPosition,
+} from './navigator';

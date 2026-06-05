@@ -5,63 +5,130 @@ import type { GridCell } from './types';
 
 type MarkedCell = GridCell | 'S' | '*';
 
-export default class BoardNavigator {
+export interface BoardPosition {
   boardData: MarkedCell[][];
   current: Position;
   id: string;
   row: number;
   column: number;
   isStart: boolean;
+}
 
-  constructor(boardData: MarkedCell[][], current: Position, isStart = false) {
-    this.boardData = boardData;
-    this.current = current;
-    this.isStart = isStart;
+export function createBoardPosition(
+  boardData: MarkedCell[][],
+  current: Position,
+  isStart = false,
+): BoardPosition {
+  const id = current.place ?? `${current.row},${current.column}`;
+  current.id = id;
 
-    this.id = current.place ?? `${current.row},${current.column}`;
-    this.current.id = this.id;
-    this.row = current.row ?? 0;
-    this.column = current.column ?? 0;
+  return {
+    boardData,
+    current,
+    id,
+    row: current.row ?? 0,
+    column: current.column ?? 0,
+    isStart,
+  };
+}
+
+export function entrance(position: BoardPosition) {
+  return entranceAt(position.row, position.column);
+}
+
+export function insideBoard(row: number, column: number) {
+  return row >= 0 && row < GRID_ROWS && column >= 0 && column < GRID_COLUMNS;
+}
+
+export function cellAt(
+  position: BoardPosition,
+  row: number,
+  column: number,
+): MarkedCell | undefined {
+  if (!insideBoard(row, column)) {
+    return undefined;
   }
+  return position.boardData[row][column];
+}
 
-  entrance = () => entranceAt(this.row, this.column);
+export function availableSquare(
+  position: BoardPosition,
+  row = position.row,
+  column = position.column,
+) {
+  const cell = cellAt(position, row, column);
+  if (cell === 'S' || cell === '*') {
+    return true;
+  }
+  return isWalkable(cell as GridCell | undefined);
+}
 
-  canMove = () => {
-    return this.canMoveUp() || this.canMoveDown() || this.canMoveLeft() || this.canMoveRight();
-  };
+export function initialPosition(position: BoardPosition) {
+  return position.isStart || cellAt(position, position.row, position.column) === 'S';
+}
 
-  insideBoard = (row: number, column: number) =>
-    row >= 0 && row < GRID_ROWS && column >= 0 && column < GRID_COLUMNS;
+export function canMoveUp(position: BoardPosition) {
+  return (
+    insideBoard(position.row - 1, position.column) &&
+    availableSquare(position, position.row - 1, position.column)
+  );
+}
 
-  cellAt = (row: number, column: number): MarkedCell | undefined => {
-    if (!this.insideBoard(row, column)) {
-      return undefined;
-    }
-    return this.boardData[row][column];
-  };
+export function canMoveDown(position: BoardPosition) {
+  return (
+    insideBoard(position.row + 1, position.column) &&
+    availableSquare(position, position.row + 1, position.column)
+  );
+}
 
-  canMoveUp = () => this.insideBoard(this.row - 1, this.column) && this.availableSquare(this.row - 1, this.column);
-  canMoveDown = () => this.insideBoard(this.row + 1, this.column) && this.availableSquare(this.row + 1, this.column);
-  canMoveLeft = () => this.insideBoard(this.row, this.column - 1) && this.availableSquare(this.row, this.column - 1);
-  canMoveRight = () =>
-    this.insideBoard(this.row, this.column + 1) && this.availableSquare(this.row, this.column + 1);
+export function canMoveLeft(position: BoardPosition) {
+  return (
+    insideBoard(position.row, position.column - 1) &&
+    availableSquare(position, position.row, position.column - 1)
+  );
+}
 
-  moveUp = () =>
-    new BoardNavigator(this.boardData, { row: this.row - 1, column: this.column, place: null });
-  moveDown = () =>
-    new BoardNavigator(this.boardData, { row: this.row + 1, column: this.column, place: null });
-  moveLeft = () =>
-    new BoardNavigator(this.boardData, { row: this.row, column: this.column - 1, place: null });
-  moveRight = () =>
-    new BoardNavigator(this.boardData, { row: this.row, column: this.column + 1, place: null });
+export function canMoveRight(position: BoardPosition) {
+  return (
+    insideBoard(position.row, position.column + 1) &&
+    availableSquare(position, position.row, position.column + 1)
+  );
+}
 
-  initialPosition = () => this.isStart || this.cellAt(this.row, this.column) === 'S';
+export function canMove(position: BoardPosition) {
+  return (
+    canMoveUp(position) || canMoveDown(position) || canMoveLeft(position) || canMoveRight(position)
+  );
+}
 
-  availableSquare = (row = this.row, column = this.column) => {
-    const cell = this.cellAt(row, column);
-    if (cell === 'S' || cell === '*') {
-      return true;
-    }
-    return isWalkable(cell as GridCell | undefined);
-  };
+export function moveUp(position: BoardPosition): BoardPosition {
+  return createBoardPosition(position.boardData, {
+    row: position.row - 1,
+    column: position.column,
+    place: null,
+  });
+}
+
+export function moveDown(position: BoardPosition): BoardPosition {
+  return createBoardPosition(position.boardData, {
+    row: position.row + 1,
+    column: position.column,
+    place: null,
+  });
+}
+
+export function moveLeft(position: BoardPosition): BoardPosition {
+  return createBoardPosition(position.boardData, {
+    row: position.row,
+    column: position.column - 1,
+    place: null,
+  });
+}
+
+export function moveRight(position: BoardPosition): BoardPosition {
+  return createBoardPosition(position.boardData, {
+    row: position.row,
+    column: position.column + 1,
+    place: null,
+  });
 }

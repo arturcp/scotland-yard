@@ -20,7 +20,11 @@ export default function Notes({ notes, onNotesChange }: NotesProps) {
             <h2 className="modal__title" id="modal-notes-title">
               Notas
             </h2>
-            <button className="modal__close" aria-label="Close modal" data-micromodal-close></button>
+            <button
+              className="modal__close"
+              aria-label="Close modal"
+              data-micromodal-close
+            ></button>
           </header>
           <main className="modal__content" id="modal-notes-content">
             <textarea
@@ -32,7 +36,11 @@ export default function Notes({ notes, onNotesChange }: NotesProps) {
           </main>
           <footer className="modal__footer">
             <button className="modal__btn modal__btn-primary">Salvar</button>
-            <button className="modal__btn" data-micromodal-close aria-label="Close this dialog window">
+            <button
+              className="modal__btn"
+              data-micromodal-close
+              aria-label="Close this dialog window"
+            >
               Close
             </button>
           </footer>

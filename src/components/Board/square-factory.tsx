@@ -7,9 +7,7 @@ export function buildSquares(list: GridCell[], row: number, game: GameController
 
   return list.map((cell, column) => {
     const squareId = `${row},${column}`;
-    const availableEntry = gameShift.availableSquares.find(
-      (s) => s.id === squareId && !s.place,
-    );
+    const availableEntry = gameShift.availableSquares.find((s) => s.id === squareId && !s.place);
     const isAvailable = !!availableEntry;
 
     return (

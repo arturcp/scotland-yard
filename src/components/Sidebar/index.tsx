@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import MicroModal from 'micromodal';
-import AvailableSquares from '../../lib/available-squares';
+import { getAvailableSquares } from '../../lib/available-squares';
 import type { GameController, Player } from '../../types/game';
 
 import './styles.css';
@@ -23,7 +23,7 @@ export default function Sidebar({ players, game }: SidebarProps) {
     const diceResult = randomInt(1, 6);
     alert('Rolagem de dados: ' + diceResult);
     const player = players[0];
-    const results = new AvailableSquares(player).all(diceResult);
+    const results = getAvailableSquares(player, diceResult);
     game.updateAvailableSquares(results);
   }
 

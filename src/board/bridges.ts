@@ -10,7 +10,10 @@ export interface BridgeEndpoint {
  * Coordinates use grid row/column (see cellKey); board labels may use column,row.
  */
 const BRIDGE_PAIRS: [BridgeEndpoint, BridgeEndpoint][] = [
-  [{ row: 3, column: 4 }, { row: 7, column: 2 }],
+  [
+    { row: 3, column: 4 },
+    { row: 7, column: 2 },
+  ],
 ];
 
 const bridgeDestinations = new Map<string, BridgeEndpoint>();

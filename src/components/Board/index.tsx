@@ -3,6 +3,7 @@ import Places from '../Places';
 import Player from '../Player';
 import type { GameController, Player as GamePlayer } from '../../types/game';
 import { GRID, zonePins } from '../../board';
+import type { ZoneId } from '../../board/types';
 import { buildSquares } from './square-factory';
 
 import './styles.css';
@@ -33,9 +34,10 @@ function playerPosition(player: GamePlayer, players: GamePlayer[]): CSSPropertie
   const spacing = 8;
 
   if (position.place) {
-    const leftStart = PLACE_PINS[position.place].left + 12 - 4 * (N - 1);
+    const zoneId = position.place as ZoneId;
+    const leftStart = PLACE_PINS[zoneId].left + 12 - 4 * (N - 1);
     return {
-      top: PLACE_PINS[position.place].top,
+      top: PLACE_PINS[zoneId].top,
       left: leftStart + spacing * idx,
     };
   }

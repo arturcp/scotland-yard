@@ -38,27 +38,27 @@
   color: #000;
 }
 
-[data-direction="left"] {
+[data-direction='left'] {
   transform: rotate(-90deg);
 }
 
-[data-direction="right"] {
+[data-direction='right'] {
   transform: rotate(90deg);
 }
 
-[data-direction="down"] {
+[data-direction='down'] {
   transform: rotate(180deg);
 }
 
 .pulsate-fwd {
   -webkit-animation: pulsate-fwd 1.5s ease-in-out infinite both;
-	        animation: pulsate-fwd 1.5s ease-in-out infinite both;
+  animation: pulsate-fwd 1.5s ease-in-out infinite both;
 }
 
 .available-square {
   -webkit-animation: pulsate-fwd 1.5s ease-in-out infinite both;
-	        animation: pulsate-fwd 1.5s ease-in-out infinite both;
-  border: 1px solid #BA7039;
+  animation: pulsate-fwd 1.5s ease-in-out infinite both;
+  border: 1px solid #ba7039;
   background-color: #dad068;
   cursor: pointer;
   position: relative;
@@ -81,31 +81,31 @@
  * animation pulsate-fwd
  * ----------------------------------------
  */
- @-webkit-keyframes pulsate-fwd {
+@-webkit-keyframes pulsate-fwd {
   0% {
     -webkit-transform: scale(1);
-            transform: scale(1);
+    transform: scale(1);
   }
   50% {
     -webkit-transform: scale(1.1);
-            transform: scale(1.1);
+    transform: scale(1.1);
   }
   100% {
     -webkit-transform: scale(1);
-            transform: scale(1);
+    transform: scale(1);
   }
 }
 @keyframes pulsate-fwd {
   0% {
     -webkit-transform: scale(1);
-            transform: scale(1);
+    transform: scale(1);
   }
   50% {
     -webkit-transform: scale(1.1);
-            transform: scale(1.1);
+    transform: scale(1.1);
   }
   100% {
     -webkit-transform: scale(1);
-            transform: scale(1);
+    transform: scale(1);
   }
 }

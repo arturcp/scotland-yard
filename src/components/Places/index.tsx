@@ -1,4 +1,4 @@
-import MovementAnimation, { STEP_DURATION_MS } from '../../lib/movement-animation';
+import { movePlayer, STEP_DURATION_MS } from '../../lib/movement-animation';
 import { ZONE_IDS as zoneIds } from '../../board';
 import type { ZoneId } from '../../board/types';
 import type { GameController } from '../../types/game';
@@ -36,9 +36,9 @@ const PLACE_CLASSES: Record<ZoneId, string> = {
 export default function Places({ game }: PlacesProps) {
   const { availableSquares } = game.gameShift();
 
-  function handleZoneClick(zoneId: ZoneId, path: string[]) {
+  function handleZoneClick(_zoneId: ZoneId, path: string[]) {
     const { player, players } = game.gameShift();
-    const newPosition = new MovementAnimation(player, players).move(path);
+    const newPosition = movePlayer(player, players, path);
     setTimeout(() => {
       game.updatePlayerPosition(player.id, newPosition);
     }, path.length * STEP_DURATION_MS);

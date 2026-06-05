@@ -1,7 +1,12 @@
 import { render } from '@testing-library/react';
 import Player from './index';
 
-const player = { id: 2, name: 'Jane', color: 'yellow', position: { row: 3, column: 5, place: null } };
+const player = {
+  id: 2,
+  name: 'Jane',
+  color: 'yellow',
+  position: { row: 3, column: 5, place: null },
+};
 
 describe('Player', () => {
   test('renders with the correct id', () => {

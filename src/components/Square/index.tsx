@@ -1,5 +1,5 @@
 import { isDebugMode } from '../../lib/debug-mode';
-import MovementAnimation, { STEP_DURATION_MS } from '../../lib/movement-animation';
+import { movePlayer, STEP_DURATION_MS } from '../../lib/movement-animation';
 import type { GameShiftView, Position } from '../../types/game';
 
 import './styles.css';
@@ -34,7 +34,7 @@ export default function Square({
   function handleClick() {
     if (!available || !path) return;
     const { player, players } = gameShift;
-    const newPosition = new MovementAnimation(player, players).move(path);
+    const newPosition = movePlayer(player, players, path);
     setTimeout(() => {
       updatePlayerPosition(player.id, newPosition);
     }, path.length * STEP_DURATION_MS);
@@ -50,7 +50,11 @@ export default function Square({
       onClick={handleClick}
     >
       {type === 'entrance' && <i className="fa fa-chevron-up"></i>}
-      {showCoords && <span className="square-debug-coords">({row},{column})</span>}
+      {showCoords && (
+        <span className="square-debug-coords">
+          ({row},{column})
+        </span>
+      )}
     </div>
   );
 }

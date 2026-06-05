@@ -4,7 +4,13 @@ import type { ZoneId } from '../../board/types';
 import Board from '../Board';
 import Notes from '../Notes';
 import Sidebar from '../Sidebar';
-import type { AvailableSquare, GameController, GameShiftState, Player, Position } from '../../types/game';
+import type {
+  AvailableSquare,
+  GameController,
+  GameShiftState,
+  Player,
+  Position,
+} from '../../types/game';
 
 import './styles.css';
 

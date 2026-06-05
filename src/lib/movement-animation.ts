@@ -2,98 +2,73 @@ import type { Player, Position } from '../types/game';
 
 export const STEP_DURATION_MS = 200;
 
-export default class MovementAnimation {
-  player: Player;
-  players: Player[];
-  pin: HTMLElement;
-  squareWidth: number;
-  squareHeight: number;
-  paddingTop: number;
-  paddingLeft: number;
+const SQUARE_WIDTH = 49;
+const SQUARE_HEIGHT = 49;
+const PADDING_TOP = 7;
+const PADDING_LEFT = 3;
 
-  constructor(player: Player, players: Player[] = [player]) {
-    this.player = player;
-    this.players = players;
-    this.pin = document.querySelector(`#player-${player.id}`)!;
-    this.squareWidth = 49;
-    this.squareHeight = 49;
-    this.paddingTop = 7;
-    this.paddingLeft = 3;
+export function parseNotation(notation: string): Position {
+  if (notation.includes(',')) {
+    const [row, column] = notation.split(',');
+    return {
+      row: parseInt(row, 10),
+      column: parseInt(column, 10),
+      place: null,
+    };
+  }
+  return { place: notation };
+}
+
+function getCenteredOffset(player: Player, players: Player[], position: Position): number {
+  const playersAtSamePos = players.filter((p) => {
+    if (p.id === player.id) return false;
+    const pPos = p.position;
+    if (position.place) {
+      return pPos.place === position.place;
+    }
+    return (pPos.row ?? 0) === (position.row ?? 0) && (pPos.column ?? 0) === (position.column ?? 0);
+  });
+
+  playersAtSamePos.push(player);
+  playersAtSamePos.sort((a, b) => a.id - b.id);
+
+  const idx = playersAtSamePos.findIndex((p) => p.id === player.id);
+  const N = playersAtSamePos.length;
+  const spacing = 8;
+
+  return 9.5 - 4 * (N - 1) + spacing * idx;
+}
+
+function movePinTo(pin: HTMLElement, player: Player, players: Player[], position: Position) {
+  if (position.place) {
+    return;
   }
 
-  getCenteredOffset = (position: Position): number => {
-    const playersAtSamePos = this.players.filter((p) => {
-      if (p.id === this.player.id) return false;
-      const pPos = p.position;
-      if (position.place) {
-        return pPos.place === position.place;
-      }
-      return (
-        (pPos.row ?? 0) === (position.row ?? 0) &&
-        (pPos.column ?? 0) === (position.column ?? 0)
-      );
-    });
+  const offset = getCenteredOffset(player, players, position);
+  pin.style.top = `${(position.row ?? 0) * SQUARE_WIDTH + PADDING_TOP}px`;
+  pin.style.left = `${(position.column ?? 0) * SQUARE_HEIGHT + PADDING_LEFT + offset}px`;
+}
 
-    playersAtSamePos.push(this.player);
-    playersAtSamePos.sort((a, b) => a.id - b.id);
+export function movePlayer(player: Player, players: Player[], path: string[]): Position {
+  const pin = document.querySelector(`#player-${player.id}`)! as HTMLElement;
 
-    const idx = playersAtSamePos.findIndex((p) => p.id === this.player.id);
-    const N = playersAtSamePos.length;
-    const spacing = 8;
+  path.forEach((element, index) => {
+    setTimeout(() => {
+      const position = parseNotation(element);
+      movePinTo(pin, player, players, position);
+    }, STEP_DURATION_MS * index);
+  });
 
-    return 9.5 - 4 * (N - 1) + spacing * idx;
-  };
+  const finalNotation = path[path.length - 1];
+  const finalPosition = parseNotation(finalNotation);
 
-  move = (path: string[]) => {
-    path.forEach((element, index) => {
-      setTimeout(() => {
-        const position = this.parse(element);
-        this.moveTo(position);
-      }, STEP_DURATION_MS * index);
-    });
+  if (!finalPosition.place) {
+    return finalPosition;
+  }
 
-    const finalNotation = path[path.length - 1];
-    const finalPosition = this.parse(finalNotation);
-
-    if (!finalPosition.place) {
-      return finalPosition;
-    }
-
-    return {
-      ...finalPosition,
-      id: finalNotation,
-      path,
-    };
-  };
-
-  moveTo = (position: Position) => {
-    let style: { top?: number; left?: number } = {};
-
-    if (position.place) {
-      style = {};
-    } else {
-      const offset = this.getCenteredOffset(position);
-      style = {
-        top: (position.row ?? 0) * this.squareWidth + this.paddingTop,
-        left: (position.column ?? 0) * this.squareHeight + this.paddingLeft + offset,
-      };
-    }
-
-    if (style.top !== undefined && style.left !== undefined) {
-      this.pin.style.top = style.top + 'px';
-      this.pin.style.left = style.left + 'px';
-    }
-  };
-
-  parse = (notation: string): Position => {
-    if (notation.indexOf(',') > -1) {
-      const parts = notation.split(',');
-      return {
-        row: parseInt(parts[0]),
-        column: parseInt(parts[1]),
-        place: null,
-      };
-    }
-    return { place: notation };
+  return {
+    ...finalPosition,
+    id: finalNotation,
+    path,
   };
 }
