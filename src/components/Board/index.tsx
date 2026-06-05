@@ -1,10 +1,9 @@
-import { Component } from 'react';
 import type { CSSProperties } from 'react';
 import Places from '../Places';
 import Player from '../Player';
 import type { GameController, Player as GamePlayer } from '../../types/game';
-import BoardData from './board-data';
-import SquareFactory from './square-factory';
+import { GRID, zonePins } from '../../board';
+import { buildSquares } from './square-factory';
 
 import './styles.css';
 
@@ -13,51 +12,32 @@ interface BoardProps {
   game: GameController;
 }
 
-class Board extends Component<BoardProps> {
-  squares = BoardData.squares;
-  places = BoardData.places;
-  game: GameController;
+const PLACE_PINS = zonePins();
 
-  constructor(props: BoardProps) {
-    super(props);
-    this.game = props.game;
-  }
-
-  // TODO: can this go to the player
-  playerPosition = (player: GamePlayer): CSSProperties => {
-    const position = player.position;
-    if (position.place) {
-      return {
-        top: this.places[position.place].top,
-        left: this.places[position.place].left + 8 * (player.id - 1),
-      };
-    }
+function playerPosition(player: GamePlayer): CSSProperties {
+  const { position } = player;
+  if (position.place) {
     return {
-      top: (position.row ?? 0) * 49 + 7,
-      left: (position.column ?? 0) * 49 + 3 + 8 * (player.id - 1),
+      top: PLACE_PINS[position.place].top,
+      left: PLACE_PINS[position.place].left + 8 * (player.id - 1),
     };
-  };
-
-  render() {
-    const players = this.props.players;
-
-    const squareFactory = new SquareFactory();
-    const boardSquares = this.squares.map((list, row) => {
-      return squareFactory.buildSquares(list, row, this.game);
-    });
-
-    const boardPlayers = players.map((player) => {
-      return <Player player={player} key={player.id} style={this.playerPosition(player)} />;
-    });
-
-    return (
-      <section id="board">
-        {boardSquares}
-        <Places />
-        <div id="players">{boardPlayers}</div>
-      </section>
-    );
   }
+  return {
+    top: (position.row ?? 0) * 49 + 7,
+    left: (position.column ?? 0) * 49 + 3 + 8 * (player.id - 1),
+  };
 }
 
-export default Board;
+export default function Board({ players, game }: BoardProps) {
+  return (
+    <section id="board">
+      {GRID.map((list, row) => buildSquares(list, row, game))}
+      <Places game={game} />
+      <div id="players">
+        {players.map((player) => (
+          <Player key={player.id} player={player} style={playerPosition(player)} />
+        ))}
+      </div>
+    </section>
+  );
+}

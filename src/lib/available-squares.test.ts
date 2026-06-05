@@ -20,10 +20,12 @@ describe('AvailableSquares', () => {
       expect(results.length).toBeGreaterThan(0);
       for (const result of results) {
         expect(result).toHaveProperty('id');
-        expect(result).toHaveProperty('row');
-        expect(result).toHaveProperty('column');
         expect(result).toHaveProperty('path');
         expect(Array.isArray(result.path)).toBe(true);
+        if (!result.place) {
+          expect(result).toHaveProperty('row');
+          expect(result).toHaveProperty('column');
+        }
       }
     });
 
@@ -50,6 +52,24 @@ describe('AvailableSquares', () => {
       for (const result of results) {
         expect(result.path.length).toBeGreaterThan(0);
         expect(result.path[result.path.length - 1]).toBe(result.id);
+      }
+    });
+
+    test('includes reachable zones with place set', () => {
+      const results = new AvailableSquares(makePlayer(7, 1)).all(3);
+      const zones = results.filter((r) => r.place);
+      expect(zones.length).toBeGreaterThan(0);
+      for (const zone of zones) {
+        expect(zone.path[zone.path.length - 1]).toBe(zone.place);
+      }
+    });
+
+    test('zone path ends with zone id after grid steps', () => {
+      const results = new AvailableSquares(makePlayer(7, 1)).all(2);
+      const docks = results.find((r) => r.place === 'docks');
+      if (docks) {
+        expect(docks.path[docks.path.length - 1]).toBe('docks');
+        expect(docks.path.some((step) => step.includes(','))).toBe(true);
       }
     });
   });

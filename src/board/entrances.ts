@@ -1,0 +1,30 @@
+import type { Entrance } from './types';
+import { cellKey } from './grid';
+
+/** Arrow cell → zone (verify against physical board if needed). */
+export const ENTRANCES: Entrance[] = [
+  { at: { row: 0, column: 14 }, direction: 'down', zoneId: 'museum' },
+  { at: { row: 2, column: 4 }, direction: 'up', zoneId: 'book-store' },
+  { at: { row: 2, column: 7 }, direction: 'up', zoneId: 'locksmith' },
+  { at: { row: 3, column: 21 }, direction: 'up', zoneId: 'holmes-house' },
+  { at: { row: 5, column: 10 }, direction: 'left', zoneId: 'park' },
+  { at: { row: 7, column: 2 }, direction: 'down', zoneId: 'docks' },
+  { at: { row: 7, column: 7 }, direction: 'right', zoneId: 'park' },
+  { at: { row: 8, column: 14 }, direction: 'left', zoneId: 'pawnshop' },
+  { at: { row: 9, column: 18 }, direction: 'up', zoneId: 'bar' },
+  { at: { row: 10, column: 7 }, direction: 'left', zoneId: 'hotel' },
+  { at: { row: 11, column: 0 }, direction: 'right', zoneId: 'key' },
+  { at: { row: 13, column: 15 }, direction: 'right', zoneId: 'theater' },
+  { at: { row: 14, column: 7 }, direction: 'right', zoneId: 'cigar-shop' },
+  { at: { row: 16, column: 19 }, direction: 'down', zoneId: 'drugstore' },
+  { at: { row: 17, column: 9 }, direction: 'down', zoneId: 'carriage-station' },
+  { at: { row: 19, column: 3 }, direction: 'up', zoneId: 'carriage-station' },
+];
+
+const entranceByCell: Record<string, Entrance> = Object.fromEntries(
+  ENTRANCES.map((entrance) => [cellKey(entrance.at.row, entrance.at.column), entrance]),
+);
+
+export function entranceAt(row: number, column: number): Entrance | undefined {
+  return entranceByCell[cellKey(row, column)];
+}

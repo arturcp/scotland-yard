@@ -45,6 +45,8 @@
   border: 1px solid #BA7039;
   background-color: #dad068;
   cursor: pointer;
+  position: relative;
+  z-index: 10;
 }
 
 .available-square i {

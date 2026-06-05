@@ -1,8 +1,9 @@
-import BoardData from '../components/Board/board-data';
+import { GRID } from '../board';
+import type { Entrance } from '../board/types';
 import type { AvailableSquare, Player } from '../types/game';
-import PositionOnBoard from './position-on-board';
+import BoardNavigator from '../board/navigator';
 
-type BoardCell = number | string;
+type MarkedCell = (typeof GRID)[number][number] | 'S' | '*';
 
 class AvailableSquares {
   player: Player;
@@ -11,72 +12,105 @@ class AvailableSquares {
     this.player = player;
   }
 
-  markInitialPosition = (data: BoardCell[][], position: PositionOnBoard) => {
-    data[position.row][position.column] = 'S';
-  };
-
   clone = <T>(data: T): T => JSON.parse(JSON.stringify(data));
 
-  markCurrentPosition = (data: BoardCell[][], path: string[], position: PositionOnBoard) => {
-    data[position.row][position.column] = '*';
-    path.push(position.id);
-  };
-
   all = (diceResult: number) => {
-    const data = this.clone(BoardData.squares);
-    const position = new PositionOnBoard(data, this.player.position);
+    if (this.player.position.place) {
+      return [];
+    }
 
-    this.markInitialPosition(data, position);
+    const data = GRID.map((row) => [...row]) as MarkedCell[][];
+    const row = this.player.position.row ?? 0;
+    const column = this.player.position.column ?? 0;
+    data[row][column] = 'S';
+
+    const position = new BoardNavigator(data, { row, column, place: null }, true);
     return this.findNextMove([], [], position, data, diceResult + 1);
   };
 
   findNextMove = (
     results: AvailableSquare[],
     path: string[],
-    position: PositionOnBoard,
-    boardData: BoardCell[][],
+    position: BoardNavigator,
+    boardData: MarkedCell[][],
     movesRemaining: number,
   ): AvailableSquare[] => {
-    if (movesRemaining > 0) {
-      const board = this.clone(boardData);
-      const currentPath = this.clone(path);
-
-      if (position.availableSquare() || position.initialPosition()) {
-        this.checkpoint(results, currentPath, board, position);
-
-        if (position.canMove()) {
-          movesRemaining--;
-
-          this.findNextMove(results, currentPath, position.moveUp(), board, movesRemaining);
-          this.findNextMove(results, currentPath, position.moveDown(), board, movesRemaining);
-          this.findNextMove(results, currentPath, position.moveLeft(), board, movesRemaining);
-          this.findNextMove(results, currentPath, position.moveRight(), board, movesRemaining);
-        }
-      }
+    if (movesRemaining <= 0) {
+      return results;
     }
+
+    if (!position.availableSquare() && !position.initialPosition()) {
+      return results;
+    }
+
+    const board = this.clone(boardData);
+    const currentPath = this.clone(path);
+
+    const entrance = position.entrance();
+    let pathAtCell = currentPath;
+
+    if (!position.initialPosition()) {
+      pathAtCell = [...currentPath, position.id];
+      this.checkpointGrid(results, pathAtCell, board, position);
+    }
+
+    if (entrance && movesRemaining >= 1) {
+      this.checkpointZone(results, pathAtCell, entrance);
+    }
+
+    if (!position.canMove()) {
+      return results;
+    }
+
+    const movesAfterStep = movesRemaining - 1;
+
+    this.findNextMove(results, currentPath, position.moveUp(), board, movesAfterStep);
+    this.findNextMove(results, currentPath, position.moveDown(), board, movesAfterStep);
+    this.findNextMove(results, currentPath, position.moveLeft(), board, movesAfterStep);
+    this.findNextMove(results, currentPath, position.moveRight(), board, movesAfterStep);
 
     return results;
   };
 
-  checkpoint = (results: AvailableSquare[], path: string[], board: BoardCell[][], position: PositionOnBoard) => {
-    if (!position.initialPosition()) {
-      this.markCurrentPosition(board, path, position);
-      this.savePosition(results, path, position);
+  checkpointGrid = (
+    results: AvailableSquare[],
+    path: string[],
+    board: MarkedCell[][],
+    position: BoardNavigator,
+  ) => {
+    board[position.row][position.column] = '*';
+    this.saveGridPosition(results, path, position);
+  };
+
+  checkpointZone = (results: AvailableSquare[], path: string[], entrance: Entrance) => {
+    const zonePath = [...path, entrance.zoneId];
+    this.saveZonePosition(results, zonePath, entrance.zoneId);
+  };
+
+  saveGridPosition = (results: AvailableSquare[], path: string[], position: BoardNavigator) => {
+    if (!this.existInArray(results, position.id)) {
+      results.push({
+        id: position.id,
+        row: position.row,
+        column: position.column,
+        place: null,
+        path,
+      });
     }
   };
 
-  savePosition = (results: AvailableSquare[], path: string[], position: PositionOnBoard) => {
-    if (!this.existInArray(results, position.id)) {
-      const data = position.current as AvailableSquare;
-      data.path = path;
-      results.push(data);
+  saveZonePosition = (results: AvailableSquare[], path: string[], zoneId: string) => {
+    if (!this.existInArray(results, zoneId)) {
+      results.push({
+        id: zoneId,
+        place: zoneId,
+        path,
+      });
     }
   };
 
   existInArray = (array: AvailableSquare[], id: string) => {
-    const filteredElements = array.filter((item) => item.id === id);
-
-    return filteredElements.length > 0;
+    return array.some((item) => item.id === id);
   };
 }
 

@@ -4,6 +4,14 @@
   box-sizing: border-box;         /* Opera/IE 8+ */
 
   position: absolute;
+  z-index: 1;
+}
+
+.place.available-zone {
+  cursor: pointer;
+  outline: 3px solid #f5d742;
+  outline-offset: -3px;
+  z-index: 5;
 }
 
 .holmes-house {

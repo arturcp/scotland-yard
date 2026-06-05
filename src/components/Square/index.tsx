@@ -1,4 +1,3 @@
-import { Component } from 'react';
 import MovementAnimation from '../../lib/movement-animation';
 import type { GameShiftView, Position } from '../../types/game';
 
@@ -16,43 +15,39 @@ interface SquareProps {
   path: string[] | null;
 }
 
-class Square extends Component<SquareProps> {
-  squareContent = () => {
-    if (this.props.type === 'entrance') {
-      return <i className="fa fa-chevron-up"></i>;
-    }
-    return null;
-  };
+export default function Square({
+  type,
+  direction,
+  updatePlayerPosition,
+  state,
+  row,
+  column,
+  available,
+  gameShift,
+  path,
+}: SquareProps) {
+  const squareId = `${row},${column}`;
+  const classes = `square ${state || ''} ${type} ${available ? 'available-square' : ''}`;
 
-  squareId = () => `${this.props.row},${this.props.column}`;
-  availabilityClass = () => (this.props.available ? 'available-square' : '');
-  handleOnClick = () => {
-    if (this.props.available && this.props.path) {
-      const gameShift = this.props.gameShift;
-      const player = gameShift.player;
-      const newPosition = new MovementAnimation(player).move(this.props.path);
-
-      setTimeout(() => {
-        this.props.updatePlayerPosition(player.id, newPosition);
-      }, this.props.path.length * 500);
-    }
-  };
-
-  render() {
-    const classes = `square ${this.props.state || ''} ${this.props.type} ${this.availabilityClass()}`;
-    return (
-      <div
-        data-id={this.squareId()}
-        className={classes}
-        data-direction={this.props.direction}
-        data-row={this.props.row}
-        data-column={this.props.column}
-        onClick={this.handleOnClick}
-      >
-        {this.squareContent()}
-      </div>
-    );
+  function handleClick() {
+    if (!available || !path) return;
+    const { player } = gameShift;
+    const newPosition = new MovementAnimation(player).move(path);
+    setTimeout(() => {
+      updatePlayerPosition(player.id, newPosition);
+    }, path.length * 500);
   }
-}
 
-export default Square;
+  return (
+    <div
+      data-id={squareId}
+      className={classes}
+      data-direction={direction}
+      data-row={row}
+      data-column={column}
+      onClick={handleClick}
+    >
+      {type === 'entrance' && <i className="fa fa-chevron-up"></i>}
+    </div>
+  );
+}
