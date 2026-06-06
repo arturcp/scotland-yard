@@ -2,7 +2,8 @@
 
 Scotland Yard is a board game in which a group of players tries to solve a crime, as if they were Sherlock Holmes.
 
-![Pin movement](docs/images/movement.gif)
+![Board](docs/images/board1.png)
+![Board2](docs/images/board2.png)
 
 # Tech
 
