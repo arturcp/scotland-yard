@@ -49,7 +49,7 @@ export default function Square({
       data-column={column}
       onClick={handleClick}
     >
-      {type === 'entrance' && <i className="fa fa-chevron-up"></i>}
+      {type === 'entrance' && <i className="fa-solid fa-chevron-up"></i>}
       {showCoords && (
         <span className="square-debug-coords">
           ({row},{column})

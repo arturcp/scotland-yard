@@ -25,6 +25,7 @@ const INITIAL_GAME_SHIFT: GameShiftState = {
   status: 'waiting',
   availableSquares: [],
   playerId: 1,
+  diceResult: null,
 };
 
 export default function Game() {
@@ -55,11 +56,16 @@ export default function Game() {
     setPlayers((prev) =>
       prev.map((player) => (player.id === playerId ? { ...player, position } : player)),
     );
-    setGameShift((prev) => ({ availableSquares: [], playerId: prev.playerId, status: 'waiting' }));
+    setGameShift((prev) => ({
+      availableSquares: [],
+      playerId: prev.playerId,
+      status: 'waiting',
+      diceResult: null,
+    }));
   }
 
-  function updateAvailableSquares(availableSquares: AvailableSquare[]) {
-    setGameShift((prev) => ({ ...prev, availableSquares, status: 'in-progress' }));
+  function updateAvailableSquares(availableSquares: AvailableSquare[], diceResult: number) {
+    setGameShift((prev) => ({ ...prev, availableSquares, status: 'in-progress', diceResult }));
   }
 
   function updateNotes(playerId: number, notes: string) {
@@ -71,6 +77,7 @@ export default function Game() {
       player: players.find((p) => p.id === gameShift.playerId)!,
       availableSquares: gameShift.availableSquares,
       status: gameShift.status,
+      diceResult: gameShift.diceResult,
       players,
     }),
     updatePlayerPosition,

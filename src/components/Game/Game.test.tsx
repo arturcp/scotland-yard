@@ -3,14 +3,6 @@ import Game from './index';
 
 vi.mock('micromodal', () => ({ default: { init: vi.fn() } }));
 
-beforeAll(() => {
-  vi.spyOn(window, 'alert').mockImplementation(() => {});
-});
-
-afterAll(() => {
-  vi.restoreAllMocks();
-});
-
 describe('Game', () => {
   test('renders the main container', () => {
     const { container } = render(<Game />);
@@ -37,8 +29,8 @@ describe('Game', () => {
     expect(container.querySelectorAll('[id^="player-"]')).toHaveLength(4);
   });
 
-  test('play button starts with pulsate-fwd class', () => {
+  test('dice button starts with pulsate-fwd class', () => {
     const { container } = render(<Game />);
-    expect(container.querySelector('.fa-play')).toHaveClass('pulsate-fwd');
+    expect(container.querySelector('.dice-roll-trigger')).toHaveClass('pulsate-fwd');
   });
 });

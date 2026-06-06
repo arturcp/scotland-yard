@@ -24,7 +24,7 @@ const makeProps = (overrides = {}) => ({
   state: '',
   available: false,
   direction: '',
-  gameShift: { player, availableSquares: [], status: 'waiting' as const, players: [player] },
+  gameShift: { player, availableSquares: [], status: 'waiting' as const, players: [player], diceResult: null },
   updatePlayerPosition: vi.fn(),
   path: null,
   ...overrides,
@@ -118,6 +118,7 @@ describe('Square', () => {
         availableSquares: [],
         status: 'in-progress',
         players: [player],
+        diceResult: 2,
       };
 
       const { container } = render(
@@ -145,6 +146,7 @@ describe('Square', () => {
         availableSquares: [],
         status: 'in-progress',
         players: [player],
+        diceResult: 2,
       };
 
       const { container } = render(

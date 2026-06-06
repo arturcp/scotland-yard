@@ -15,7 +15,7 @@ export default function Player({ player, style }: PlayerProps) {
       className={`player ${player.color}`}
       style={{ ...style, color: player.color }}
     >
-      <i className="fa fa-user"></i>
+      <i className="fa-solid fa-user"></i>
     </div>
   );
 }

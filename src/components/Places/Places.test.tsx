@@ -31,6 +31,7 @@ const makeGame = (): GameController => ({
     availableSquares: [],
     status: 'waiting',
     players: [],
+    diceResult: null,
   }),
   updatePlayerPosition: vi.fn(),
   updateAvailableSquares: vi.fn(),

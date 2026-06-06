@@ -11,13 +11,65 @@
   padding: 5px 13px;
 }
 
-#sidebar i {
+#sidebar i,
+#sidebar .dice-roll-trigger {
   font-size: 35px;
   cursor: pointer;
 }
 
-#sidebar i:hover {
+#sidebar i:hover,
+#sidebar .dice-roll-trigger:hover:not(:disabled) {
   color: #e9e8c5;
+}
+
+#sidebar .dice-roll-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.dice-result-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -8px;
+  min-width: 16px;
+  height: 12px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #dad068;
+  border: 1px solid #ba7039;
+  color: #2f2b28;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+}
+
+#sidebar .dice-roll-trigger:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.sidebar-dice-icon {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.sidebar-dice-pip {
+  fill: #737167;
+}
+
+#sidebar .dice-roll-trigger:hover:not(:disabled) .sidebar-dice-pip {
+  fill: #5c574f;
 }
 
 #sidebar ul {
