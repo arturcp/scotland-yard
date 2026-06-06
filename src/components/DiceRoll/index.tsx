@@ -73,7 +73,7 @@ export default function DiceRoll({ onComplete }: DiceRollProps) {
         offscreen: false,
         theme: 'default',
         themeColor: '#d4af37',
-        scale: 8,
+        scale: 4,
         throwForce: 7,
         spinForce: 6,
         enableShadows: true,
