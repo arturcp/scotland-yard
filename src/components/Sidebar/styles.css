@@ -74,12 +74,13 @@
 
 .nav-item i,
 #sidebar .dice-roll-trigger .sidebar-dice-icon {
-  font-size: 22px;
+  font-size: 28px;
 }
 
 .nav-item span {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.02em;
+  margin-top: 2px;
 }
 
 .nav-item:hover,
@@ -89,6 +90,7 @@
 
 .nav-item.active {
   background-color: rgba(212, 175, 55, 0.12);
+  border: 1px solid var(--color-gold-dim);
 }
 
 #sidebar .dice-roll-trigger {
