@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@3d-dice/dice-box": "^1.1.4",
     "@fortawesome/fontawesome-free": "^7.2.0",
     "canvas-confetti": "^1.9.4",
     "micromodal": "^0.7.0",

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ZONES } from '../../board';
 import type { ZoneId } from '../../board/types';
 import useIsDesktop from '../../hooks/useIsDesktop';
+import { getAvailableSquares } from '../../lib/available-squares';
 import Board from '../Board';
 import Notes from '../Notes';
 import Sidebar from '../Sidebar';
@@ -37,6 +38,22 @@ export default function Game() {
   const [gameShift, setGameShift] = useState<GameShiftState>(INITIAL_GAME_SHIFT);
   const [notesByPlayer, setNotesByPlayer] = useState<Record<number, string>>({});
   const [visitedZonesByPlayer, setVisitedZonesByPlayer] = useState<Record<number, ZoneId[]>>({});
+  const [rolling, setRolling] = useState(false);
+
+  const handleRollComplete = useCallback(
+    (diceResult: number) => {
+      const player = players.find((p) => p.id === gameShift.playerId)!;
+      const results = getAvailableSquares(player, diceResult);
+      setGameShift((prev) => ({
+        ...prev,
+        availableSquares: results,
+        status: 'in-progress',
+        diceResult,
+      }));
+      setRolling(false);
+    },
+    [gameShift.playerId, players],
+  );
 
   function updatePlayerPosition(playerId: number, position: Position) {
     const zoneId = position.place as ZoneId | null | undefined;
@@ -98,11 +115,16 @@ export default function Game() {
   return (
     <div id="container">
       <div id="vignette" aria-hidden="true" />
-      <Sidebar players={players} game={game} />
+      <Sidebar game={game} rolling={rolling} onRollStart={() => setRolling(true)} />
       <main id="main-content">
         <TopBar />
         <div id="board-spotlight">
-          <Board players={players} game={game} />
+          <Board
+            players={players}
+            game={game}
+            rolling={rolling}
+            onRollComplete={handleRollComplete}
+          />
         </div>
       </main>
       <Notes notes={notes} onNotesChange={(value) => updateNotes(activePlayerId, value)} />

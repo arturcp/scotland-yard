@@ -1,63 +1,86 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import confetti from 'canvas-confetti';
-import DiceRoll, { RESULT_HOLD_MS, ROLL_DURATION_MS } from './index';
+import DiceRoll, { RESULT_HOLD_MS } from './index';
 
 vi.mock('canvas-confetti', () => ({ default: vi.fn() }));
 
+let mockRollValue = 6;
+
+vi.mock('@3d-dice/dice-box/dist/style.css', () => ({}));
+vi.mock('@3d-dice/dice-box', () => ({
+  default: class MockDiceBox {
+    onRollComplete: ((results: unknown) => void) | undefined;
+
+    constructor(config: { onRollComplete?: (results: unknown) => void }) {
+      this.onRollComplete = config.onRollComplete;
+    }
+
+    init() {
+      return Promise.resolve();
+    }
+
+    show() {}
+
+    roll() {
+      queueMicrotask(() => {
+        this.onRollComplete?.([{ rolls: [{ value: mockRollValue }] }]);
+      });
+    }
+
+    clear() {}
+  },
+}));
+
+function renderDiceRoll(onComplete = vi.fn()) {
+  return render(
+    <div style={{ position: 'relative', width: 1133, height: 937 }}>
+      <DiceRoll onComplete={onComplete} />
+    </div>,
+  );
+}
+
 describe('DiceRoll', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    mockRollValue = 6;
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
-  });
+  test('shows the roll result after the dice settle', async () => {
+    renderDiceRoll(vi.fn());
 
-  test('shows the roll result after the animation', () => {
-    const onComplete = vi.fn();
-    render(<DiceRoll onComplete={onComplete} />);
-
-    expect(screen.queryByText('Você tirou o número 6!')).not.toBeInTheDocument();
-
-    act(() => {
-      vi.advanceTimersByTime(ROLL_DURATION_MS);
+    await waitFor(() => {
+      expect(screen.getByText('Você tirou o número 6!')).toBeInTheDocument();
     });
-
-    expect(screen.getByText('Você tirou o número 6!')).toBeInTheDocument();
   });
 
-  test('fires confetti when the roll is 6', () => {
-    render(<DiceRoll onComplete={vi.fn()} />);
+  test('fires confetti when the roll is 6', async () => {
+    renderDiceRoll();
 
-    act(() => {
-      vi.advanceTimersByTime(ROLL_DURATION_MS);
+    await waitFor(() => {
+      expect(confetti).toHaveBeenCalledTimes(1);
     });
-
-    expect(confetti).toHaveBeenCalledTimes(1);
   });
 
-  test('does not fire confetti when the roll is not 6', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0);
+  test('does not fire confetti when the roll is not 6', async () => {
+    mockRollValue = 3;
 
-    render(<DiceRoll onComplete={vi.fn()} />);
+    renderDiceRoll();
 
-    act(() => {
-      vi.advanceTimersByTime(ROLL_DURATION_MS);
+    await waitFor(() => {
+      expect(screen.getByText('Você tirou o número 3!')).toBeInTheDocument();
     });
 
     expect(confetti).not.toHaveBeenCalled();
   });
 
-  test('calls onComplete after showing the result', () => {
+  test('calls onComplete after showing the result', async () => {
     const onComplete = vi.fn();
-    render(<DiceRoll onComplete={onComplete} />);
+    renderDiceRoll(onComplete);
 
-    act(() => {
-      vi.advanceTimersByTime(ROLL_DURATION_MS + RESULT_HOLD_MS);
-    });
-
-    expect(onComplete).toHaveBeenCalledWith(6);
+    await waitFor(
+      () => {
+        expect(onComplete).toHaveBeenCalledWith(6);
+      },
+      { timeout: RESULT_HOLD_MS + 1000 },
+    );
   });
 });

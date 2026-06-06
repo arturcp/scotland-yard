@@ -1,21 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import MicroModal from 'micromodal';
-import DiceRoll from '../DiceRoll';
 import DiceIcon from './DiceIcon';
 import DetectiveLogo from './DetectiveLogo';
-import { getAvailableSquares } from '../../lib/available-squares';
-import type { GameController, Player } from '../../types/game';
+import type { GameController } from '../../types/game';
 
 import './styles.css';
 
 interface SidebarProps {
-  players: Player[];
   game: GameController;
+  rolling: boolean;
+  onRollStart: () => void;
 }
 
-export default function Sidebar({ players, game }: SidebarProps) {
-  const [rolling, setRolling] = useState(false);
-
+export default function Sidebar({ game, rolling, onRollStart }: SidebarProps) {
   useEffect(() => {
     MicroModal.init();
   }, []);
@@ -25,18 +22,8 @@ export default function Sidebar({ players, game }: SidebarProps) {
       return;
     }
 
-    setRolling(true);
+    onRollStart();
   }
-
-  const handleRollComplete = useCallback(
-    (diceResult: number) => {
-      const player = players[0];
-      const results = getAvailableSquares(player, diceResult);
-      game.updateAvailableSquares(results, diceResult);
-      setRolling(false);
-    },
-    [game, players],
-  );
 
   const { status, diceResult } = game.gameShift();
   const diceButtonClasses =
@@ -96,8 +83,6 @@ export default function Sidebar({ players, game }: SidebarProps) {
           <span>Ajuda</span>
         </button>
       </div>
-
-      {rolling && <DiceRoll onComplete={handleRollComplete} />}
     </aside>
   );
 }
