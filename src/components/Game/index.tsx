@@ -6,7 +6,6 @@ import Board from '../Board';
 import Notes from '../Notes';
 import Sidebar from '../Sidebar';
 import MobileWarning from './MobileWarning';
-import SceneDecorations from './SceneDecorations';
 import TopBar from './TopBar';
 import type {
   AvailableSquare,
@@ -99,7 +98,6 @@ export default function Game() {
   return (
     <div id="container">
       <div id="vignette" aria-hidden="true" />
-      <SceneDecorations />
       <Sidebar players={players} game={game} />
       <main id="main-content">
         <TopBar />
