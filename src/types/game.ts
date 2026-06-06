@@ -24,16 +24,19 @@ export interface GameShiftState {
   status: GameShiftStatus;
   availableSquares: AvailableSquare[];
   playerId: number;
+  diceResult: number | null;
 }
 
 export interface GameShiftView {
   player: Player;
   availableSquares: AvailableSquare[];
   status: GameShiftStatus;
+  players: Player[];
+  diceResult: number | null;
 }
 
 export interface GameController {
   gameShift: () => GameShiftView;
   updatePlayerPosition: (playerId: number, position: Position) => void;
-  updateAvailableSquares: (availableSquares: AvailableSquare[]) => void;
+  updateAvailableSquares: (availableSquares: AvailableSquare[], diceResult: number) => void;
 }

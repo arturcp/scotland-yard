@@ -8,7 +8,7 @@ const players: Player[] = [
 ];
 
 const makeGame = (): GameController => ({
-  gameShift: () => ({ player: players[0], availableSquares: [], status: 'waiting' }),
+  gameShift: () => ({ player: players[0], availableSquares: [], status: 'waiting', players, diceResult: null }),
   updatePlayerPosition: vi.fn(),
   updateAvailableSquares: vi.fn(),
 });
@@ -43,7 +43,7 @@ describe('Board', () => {
   test('marks available squares', () => {
     const availableSquares = [{ id: '0,10', row: 0, column: 10, path: ['0,10'] }];
     const game: GameController = {
-      gameShift: () => ({ player: players[0], availableSquares, status: 'in-progress' }),
+      gameShift: () => ({ player: players[0], availableSquares, status: 'in-progress', players, diceResult: 3 }),
       updatePlayerPosition: vi.fn(),
       updateAvailableSquares: vi.fn(),
     };

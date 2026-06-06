@@ -1,83 +1,97 @@
-import { Component } from 'react';
+import { useState } from 'react';
+import { ZONES } from '../../board';
+import type { ZoneId } from '../../board/types';
 import Board from '../Board';
 import Notes from '../Notes';
 import Sidebar from '../Sidebar';
-import type { AvailableSquare, GameShiftState, GameShiftView, Player, Position } from '../../types/game';
+import type {
+  AvailableSquare,
+  GameController,
+  GameShiftState,
+  Player,
+  Position,
+} from '../../types/game';
 
 import './styles.css';
 
-interface GameState {
-  players: Player[];
-  gameShift: GameShiftState;
-}
+const INITIAL_PLAYERS: Player[] = [
+  { id: 1, name: 'John', color: 'blue', position: { row: 10, column: 10, place: null } },
+  { id: 2, name: 'Jane', color: 'yellow', position: { row: 10, column: 10, place: null } },
+  { id: 3, name: 'Josh', color: 'brown', position: { row: 10, column: 10, place: null } },
+  { id: 4, name: 'Joan', color: 'lightpink', position: { row: 10, column: 10, place: null } },
+];
 
-class Game extends Component<object, GameState> {
-  constructor(props: object) {
-    super(props);
-    this.state = {
-      players: [
-        { id: 1, name: 'John', color: 'blue', position: { row: 10, column: 10, place: null } },
-        { id: 2, name: 'Jane', color: 'yellow', position: { row: 10, column: 10, place: null } },
-        { id: 3, name: 'Josh', color: 'brown', position: { row: 10, column: 10, place: null } },
-        { id: 4, name: 'Joan', color: 'lightpink', position: { row: 10, column: 10, place: null } },
-      ],
-      gameShift: {
-        status: 'waiting',
-        availableSquares: [],
-        playerId: 1,
-      },
-    };
-  }
+const INITIAL_GAME_SHIFT: GameShiftState = {
+  status: 'waiting',
+  availableSquares: [],
+  playerId: 1,
+  diceResult: null,
+};
 
-  updatePlayerPosition = (playerId: number, position: Position) => {
-    const list: Player[] = [];
-    this.state.players.forEach((player) => {
-      if (player.id === playerId) {
-        player.position = position;
-      }
+export default function Game() {
+  const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
+  const [gameShift, setGameShift] = useState<GameShiftState>(INITIAL_GAME_SHIFT);
+  const [notesByPlayer, setNotesByPlayer] = useState<Record<number, string>>({});
+  const [visitedZonesByPlayer, setVisitedZonesByPlayer] = useState<Record<number, ZoneId[]>>({});
 
-      list.push(player);
-    });
+  function updatePlayerPosition(playerId: number, position: Position) {
+    const zoneId = position.place as ZoneId | null | undefined;
+    const zone = zoneId ? ZONES[zoneId] : null;
+    const visited = visitedZonesByPlayer[playerId] ?? [];
+    const isNewZoneVisit = !!zone && !visited.includes(zoneId as ZoneId);
 
-    this.setState({
-      players: list,
-      gameShift: {
-        availableSquares: [],
-        playerId: 1,
-        status: 'waiting',
-      },
-    });
-  };
+    if (isNewZoneVisit && zoneId && zone) {
+      window.alert(`Puzzle: ${zone.puzzleId}`);
+      setVisitedZonesByPlayer((prev) => ({
+        ...prev,
+        [playerId]: [...(prev[playerId] ?? []), zoneId as ZoneId],
+      }));
+      setNotesByPlayer((prev) => {
+        const previous = prev[playerId] ?? '';
+        const updated = previous ? `${previous}\n${zone.clueText}` : zone.clueText;
+        return { ...prev, [playerId]: updated };
+      });
+    }
 
-  updateAvailableSquares = (availableSquares: AvailableSquare[]) => {
-    this.setState({
-      gameShift: {
-        playerId: this.state.gameShift.playerId,
-        availableSquares: availableSquares,
-        status: 'in-progress',
-      },
-    });
-  };
-
-  gameShift = (): GameShiftView => {
-    return {
-      player: this.state.players.filter((item) => item.id === this.state.gameShift.playerId)[0],
-      availableSquares: this.state.gameShift.availableSquares,
-      status: this.state.gameShift.status,
-    };
-  };
-
-  render() {
-    const { players } = this.state;
-
-    return (
-      <div id="container">
-        <Sidebar players={players} game={this} />
-        <Board players={players} game={this} />
-        <Notes />
-      </div>
+    setPlayers((prev) =>
+      prev.map((player) => (player.id === playerId ? { ...player, position } : player)),
     );
+    setGameShift((prev) => ({
+      availableSquares: [],
+      playerId: prev.playerId,
+      status: 'waiting',
+      diceResult: null,
+    }));
   }
-}
 
-export default Game;
+  function updateAvailableSquares(availableSquares: AvailableSquare[], diceResult: number) {
+    setGameShift((prev) => ({ ...prev, availableSquares, status: 'in-progress', diceResult }));
+  }
+
+  function updateNotes(playerId: number, notes: string) {
+    setNotesByPlayer((prev) => ({ ...prev, [playerId]: notes }));
+  }
+
+  const game: GameController = {
+    gameShift: () => ({
+      player: players.find((p) => p.id === gameShift.playerId)!,
+      availableSquares: gameShift.availableSquares,
+      status: gameShift.status,
+      diceResult: gameShift.diceResult,
+      players,
+    }),
+    updatePlayerPosition,
+    updateAvailableSquares,
+  };
+
+  const activePlayerId = gameShift.playerId;
+  const notes = notesByPlayer[activePlayerId] ?? '';
+
+  return (
+    <div id="container">
+      <Sidebar players={players} game={game} />
+      <Board players={players} game={game} />
+      <Notes notes={notes} onNotesChange={(value) => updateNotes(activePlayerId, value)} />
+    </div>
+  );
+}

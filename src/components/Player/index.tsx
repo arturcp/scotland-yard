@@ -1,4 +1,3 @@
-import { Component } from 'react';
 import type { CSSProperties } from 'react';
 import type { Player as GamePlayer } from '../../types/game';
 
@@ -9,20 +8,14 @@ interface PlayerProps {
   style: CSSProperties;
 }
 
-class Player extends Component<PlayerProps> {
-  render() {
-    const style = { ...this.props.style, color: this.props.player.color };
-
-    return (
-      <div
-        id={`player-${this.props.player.id}`}
-        className={`player ${this.props.player.color}`}
-        style={style}
-      >
-        <i className="fa fa-user"></i>
-      </div>
-    );
-  }
+export default function Player({ player, style }: PlayerProps) {
+  return (
+    <div
+      id={`player-${player.id}`}
+      className={`player ${player.color}`}
+      style={{ ...style, color: player.color }}
+    >
+      <i className="fa-solid fa-user"></i>
+    </div>
+  );
 }
-
-export default Player;

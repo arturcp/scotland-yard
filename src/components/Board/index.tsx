@@ -1,10 +1,10 @@
-import { Component } from 'react';
 import type { CSSProperties } from 'react';
 import Places from '../Places';
 import Player from '../Player';
 import type { GameController, Player as GamePlayer } from '../../types/game';
-import BoardData from './board-data';
-import SquareFactory from './square-factory';
+import { GRID, zonePins } from '../../board';
+import type { ZoneId } from '../../board/types';
+import { buildSquares } from './square-factory';
 
 import './styles.css';
 
@@ -13,51 +13,53 @@ interface BoardProps {
   game: GameController;
 }
 
-class Board extends Component<BoardProps> {
-  squares = BoardData.squares;
-  places = BoardData.places;
-  game: GameController;
+const PLACE_PINS = zonePins();
 
-  constructor(props: BoardProps) {
-    super(props);
-    this.game = props.game;
-  }
+function playerPosition(player: GamePlayer, players: GamePlayer[]): CSSProperties {
+  const { position } = player;
+  const playersAtSamePos = players
+    .filter((p) => {
+      if (position.place) {
+        return p.position.place === position.place;
+      }
+      return (
+        (p.position.row ?? 0) === (position.row ?? 0) &&
+        (p.position.column ?? 0) === (position.column ?? 0)
+      );
+    })
+    .sort((a, b) => a.id - b.id);
 
-  // TODO: can this go to the player
-  playerPosition = (player: GamePlayer): CSSProperties => {
-    const position = player.position;
-    if (position.place) {
-      return {
-        top: this.places[position.place].top,
-        left: this.places[position.place].left + 8 * (player.id - 1),
-      };
-    }
+  const idx = playersAtSamePos.findIndex((p) => p.id === player.id);
+  const N = playersAtSamePos.length;
+  const spacing = 8;
+
+  if (position.place) {
+    const zoneId = position.place as ZoneId;
+    const leftStart = PLACE_PINS[zoneId].left + 12 - 4 * (N - 1);
     return {
-      top: (position.row ?? 0) * 49 + 7,
-      left: (position.column ?? 0) * 49 + 3 + 8 * (player.id - 1),
+      top: PLACE_PINS[zoneId].top,
+      left: leftStart + spacing * idx,
     };
-  };
-
-  render() {
-    const players = this.props.players;
-
-    const squareFactory = new SquareFactory();
-    const boardSquares = this.squares.map((list, row) => {
-      return squareFactory.buildSquares(list, row, this.game);
-    });
-
-    const boardPlayers = players.map((player) => {
-      return <Player player={player} key={player.id} style={this.playerPosition(player)} />;
-    });
-
-    return (
-      <section id="board">
-        {boardSquares}
-        <Places />
-        <div id="players">{boardPlayers}</div>
-      </section>
-    );
   }
+
+  const column = position.column ?? 0;
+  const leftStart = column * 49 + 3 + 9.5 - 4 * (N - 1);
+  return {
+    top: (position.row ?? 0) * 49 + 7,
+    left: leftStart + spacing * idx,
+  };
 }
 
-export default Board;
+export default function Board({ players, game }: BoardProps) {
+  return (
+    <section id="board">
+      {GRID.map((list, row) => buildSquares(list, row, game))}
+      <Places game={game} />
+      <div id="players">
+        {players.map((player) => (
+          <Player key={player.id} player={player} style={playerPosition(player, players)} />
+        ))}
+      </div>
+    </section>
+  );
+}

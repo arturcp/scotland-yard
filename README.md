@@ -75,12 +75,11 @@ This section has moved here: https://facebook.github.io/create-react-app/docs/de
 
 This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
 
-
 ### To fix node version problem:
 
-* nvm use 14.4.0
+- nvm use 14.4.0
 
 ### Resources
 
-* modal: https://micromodal.now.sh/
-* editor: https://github.com/jpuri/react-draft-wysiwyg
+- modal: https://micromodal.now.sh/
+- editor: https://github.com/jpuri/react-draft-wysiwyg
