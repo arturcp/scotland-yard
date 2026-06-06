@@ -3,6 +3,7 @@ import Places from '../Places';
 import Player from '../Player';
 import type { GameController, Player as GamePlayer } from '../../types/game';
 import { GRID, zonePins } from '../../board';
+import { piecePosition } from '../../board/layout';
 import type { ZoneId } from '../../board/types';
 import { buildSquares } from './square-factory';
 
@@ -31,10 +32,10 @@ function playerPosition(player: GamePlayer, players: GamePlayer[]): CSSPropertie
 
   const idx = playersAtSamePos.findIndex((p) => p.id === player.id);
   const N = playersAtSamePos.length;
-  const spacing = 8;
 
   if (position.place) {
     const zoneId = position.place as ZoneId;
+    const spacing = 8;
     const leftStart = PLACE_PINS[zoneId].left + 12 - 4 * (N - 1);
     return {
       top: PLACE_PINS[zoneId].top,
@@ -42,12 +43,8 @@ function playerPosition(player: GamePlayer, players: GamePlayer[]): CSSPropertie
     };
   }
 
-  const column = position.column ?? 0;
-  const leftStart = column * 49 + 3 + 9.5 - 4 * (N - 1);
-  return {
-    top: (position.row ?? 0) * 49 + 7,
-    left: leftStart + spacing * idx,
-  };
+  const { top, left } = piecePosition(position.row ?? 0, position.column ?? 0, idx, N);
+  return { top, left };
 }
 
 export default function Board({ players, game }: BoardProps) {

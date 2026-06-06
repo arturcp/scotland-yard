@@ -13,8 +13,8 @@
 
 #board {
   position: relative;
-  width: 1127px;
-  height: 930px;
+  width: 1133px;
+  height: 937px;
   margin: 0 auto;
 
   display: flex;
@@ -30,8 +30,8 @@
 
 #players {
   position: absolute;
-  width: 1128px;
-  height: 931px;
+  width: 1133px;
+  height: 937px;
   z-index: 20;
   pointer-events: none;
 }
