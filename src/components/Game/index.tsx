@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { ZONES } from '../../board';
 import type { ZoneId } from '../../board/types';
+import useIsDesktop from '../../hooks/useIsDesktop';
 import Board from '../Board';
 import Notes from '../Notes';
 import Sidebar from '../Sidebar';
+import MobileWarning from './MobileWarning';
+import SceneDecorations from './SceneDecorations';
+import TopBar from './TopBar';
 import type {
   AvailableSquare,
   GameController,
@@ -29,6 +33,7 @@ const INITIAL_GAME_SHIFT: GameShiftState = {
 };
 
 export default function Game() {
+  const isDesktop = useIsDesktop();
   const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
   const [gameShift, setGameShift] = useState<GameShiftState>(INITIAL_GAME_SHIFT);
   const [notesByPlayer, setNotesByPlayer] = useState<Record<number, string>>({});
@@ -87,10 +92,21 @@ export default function Game() {
   const activePlayerId = gameShift.playerId;
   const notes = notesByPlayer[activePlayerId] ?? '';
 
+  if (!isDesktop) {
+    return <MobileWarning />;
+  }
+
   return (
     <div id="container">
+      <div id="vignette" aria-hidden="true" />
+      <SceneDecorations />
       <Sidebar players={players} game={game} />
-      <Board players={players} game={game} />
+      <main id="main-content">
+        <TopBar />
+        <div id="board-spotlight">
+          <Board players={players} game={game} />
+        </div>
+      </main>
       <Notes notes={notes} onNotesChange={(value) => updateNotes(activePlayerId, value)} />
     </div>
   );

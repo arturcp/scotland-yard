@@ -52,14 +52,16 @@ function playerPosition(player: GamePlayer, players: GamePlayer[]): CSSPropertie
 
 export default function Board({ players, game }: BoardProps) {
   return (
-    <section id="board">
-      {GRID.map((list, row) => buildSquares(list, row, game))}
-      <Places game={game} />
-      <div id="players">
-        {players.map((player) => (
-          <Player key={player.id} player={player} style={playerPosition(player, players)} />
-        ))}
-      </div>
-    </section>
+    <div id="board-frame">
+      <section id="board">
+        {GRID.map((list, row) => buildSquares(list, row, game))}
+        <Places game={game} />
+        <div id="players">
+          {players.map((player) => (
+            <Player key={player.id} player={player} style={playerPosition(player, players)} />
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }

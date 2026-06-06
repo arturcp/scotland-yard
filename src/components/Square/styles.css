@@ -1,9 +1,9 @@
 .square {
   width: 47px;
   height: 47px;
-  background-color: #d6d2a9;
+  background-color: var(--color-tile);
   border-radius: 5px;
-  border: 1px solid #000;
+  border: 1px solid var(--color-tile-border);
   z-index: 2;
 }
 
@@ -58,8 +58,8 @@
 .available-square {
   -webkit-animation: pulsate-fwd 1.5s ease-in-out infinite both;
   animation: pulsate-fwd 1.5s ease-in-out infinite both;
-  border: 1px solid #ba7039;
-  background-color: #dad068;
+  border: 1px solid var(--color-gold);
+  background-color: #c4a832;
   cursor: pointer;
   position: relative;
   z-index: 10;

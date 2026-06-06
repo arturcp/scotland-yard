@@ -12,7 +12,7 @@
 
 .place.available-zone {
   cursor: pointer;
-  outline: 3px solid #f5d742;
+  outline: 3px solid var(--color-gold);
   outline-offset: -3px;
   filter: brightness(1.8) saturate(1.1);
   transition: filter 0.2s ease;

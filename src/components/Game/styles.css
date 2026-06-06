@@ -1,3 +1,49 @@
-body {
-  background-color: #f0f1e4;
+#container {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#vignette {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 70% at 55% 50%,
+    transparent 20%,
+    rgba(0, 0, 0, 0.75) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+#main-content {
+  position: relative;
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  z-index: 2;
+}
+
+#board-spotlight {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#board-spotlight::before {
+  content: '';
+  position: absolute;
+  inset: -80px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(60, 45, 30, 0.5) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
 }
