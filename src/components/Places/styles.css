@@ -60,7 +60,7 @@
 
 .book-store {
   left: 298px;
-  top: 1px;
+  top: 2px;
   background-image: url(images/book-store.jpg);
   background-size: 218px 156px;
   background-position: -12px 0px;
@@ -68,7 +68,7 @@
 
 .locksmith {
   left: 150px;
-  top: 1px;
+  top: 2px;
   background-image: url(images/locksmith.jpg);
   background-size: 148px 147px;
 }
