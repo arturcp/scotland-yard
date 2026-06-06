@@ -56,17 +56,11 @@
 }
 
 .available-square {
-  -webkit-animation: pulsate-fwd 1.5s ease-in-out infinite both;
-  animation: pulsate-fwd 1.5s ease-in-out infinite both;
-  border: 1px solid var(--color-gold);
-  background-color: #c4a832;
+  outline: 2px solid var(--color-gold);
+  outline-offset: -2px;
   cursor: pointer;
   position: relative;
   z-index: 10;
-}
-
-.available-square i {
-  display: none;
 }
 
 /* ----------------------------------------------

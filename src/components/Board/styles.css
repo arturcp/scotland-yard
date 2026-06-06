@@ -29,3 +29,13 @@
   z-index: 20;
   pointer-events: none;
 }
+
+#board .square,
+#board .place {
+  transition: filter 0.3s ease;
+}
+
+#board.move-selection-active .square:not(.available-square):not(.empty),
+#board.move-selection-active .place:not(.available-zone) {
+  filter: grayscale(1);
+}

@@ -53,9 +53,12 @@ function playerPosition(player: GamePlayer, players: GamePlayer[]): CSSPropertie
 }
 
 export default function Board({ players, game }: BoardProps) {
+  const { status } = game.gameShift();
+  const isSelectingMove = status === 'in-progress';
+
   return (
     <div id="board-frame">
-      <section id="board">
+      <section id="board" className={isSelectingMove ? 'move-selection-active' : undefined}>
         {GRID.map((list, row) => buildSquares(list, row, game))}
         <Places game={game} />
         <div id="players" style={{ '--piece-size': `${PIECE_SIZE}px` } as CSSProperties}>
