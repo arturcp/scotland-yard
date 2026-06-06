@@ -1,11 +1,7 @@
+import { SQUARE_SIZE, BOARD_PADDING, pieceCenterOffsetX } from '../board/layout';
 import type { Player, Position } from '../types/game';
 
 export const STEP_DURATION_MS = 200;
-
-const SQUARE_WIDTH = 49;
-const SQUARE_HEIGHT = 49;
-const PADDING_TOP = 7;
-const PADDING_LEFT = 3;
 
 export function parseNotation(notation: string): Position {
   if (notation.includes(',')) {
@@ -34,9 +30,8 @@ function getCenteredOffset(player: Player, players: Player[], position: Position
 
   const idx = playersAtSamePos.findIndex((p) => p.id === player.id);
   const N = playersAtSamePos.length;
-  const spacing = 8;
 
-  return 9.5 - 4 * (N - 1) + spacing * idx;
+  return pieceCenterOffsetX(idx, N);
 }
 
 function movePinTo(pin: HTMLElement, player: Player, players: Player[], position: Position) {
@@ -44,9 +39,14 @@ function movePinTo(pin: HTMLElement, player: Player, players: Player[], position
     return;
   }
 
-  const offset = getCenteredOffset(player, players, position);
-  pin.style.top = `${(position.row ?? 0) * SQUARE_WIDTH + PADDING_TOP}px`;
-  pin.style.left = `${(position.column ?? 0) * SQUARE_HEIGHT + PADDING_LEFT + offset}px`;
+  const row = position.row ?? 0;
+  const column = position.column ?? 0;
+  const offsetX = getCenteredOffset(player, players, position);
+  const originTop = row * SQUARE_SIZE + BOARD_PADDING;
+  const originLeft = column * SQUARE_SIZE + BOARD_PADDING;
+
+  pin.style.top = `${originTop + SQUARE_SIZE / 2}px`;
+  pin.style.left = `${originLeft + SQUARE_SIZE / 2 + offsetX}px`;
 }
 
 export function movePlayer(player: Player, players: Player[], path: string[]): Position {

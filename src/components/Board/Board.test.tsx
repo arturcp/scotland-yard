@@ -50,4 +50,20 @@ describe('Board', () => {
     const { container } = render(<Board players={players} game={game} />);
     expect(container.querySelector('.available-square')).toBeInTheDocument();
   });
+
+  test('applies move-selection-active class while choosing a move', () => {
+    const availableSquares = [{ id: '0,10', row: 0, column: 10, path: ['0,10'] }];
+    const game: GameController = {
+      gameShift: () => ({ player: players[0], availableSquares, status: 'in-progress', players, diceResult: 3 }),
+      updatePlayerPosition: vi.fn(),
+      updateAvailableSquares: vi.fn(),
+    };
+    const { container } = render(<Board players={players} game={game} />);
+    expect(container.querySelector('#board')).toHaveClass('move-selection-active');
+  });
+
+  test('does not apply move-selection-active class while waiting', () => {
+    const { container } = render(<Board players={players} game={makeGame()} />);
+    expect(container.querySelector('#board')).not.toHaveClass('move-selection-active');
+  });
 });

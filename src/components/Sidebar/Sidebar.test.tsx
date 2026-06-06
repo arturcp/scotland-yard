@@ -11,7 +11,10 @@ const players: Player[] = [
   { id: 1, name: 'John', color: 'blue', position: { row: 0, column: 0, place: null } },
 ];
 
-const makeGame = (status: GameShiftStatus = 'waiting', diceResult: number | null = null): GameController => ({
+const makeGame = (
+  status: GameShiftStatus = 'waiting',
+  diceResult: number | null = null,
+): GameController => ({
   gameShift: () => ({ player: players[0], availableSquares: [], status, players, diceResult }),
   updateAvailableSquares: vi.fn(),
   updatePlayerPosition: vi.fn(),
@@ -32,9 +35,9 @@ describe('Sidebar', () => {
       expect(container.querySelector('#sidebar')).toBeInTheDocument();
     });
 
-    test('renders the search icon', () => {
+    test('renders the home icon', () => {
       const { container } = render(<Sidebar players={players} game={makeGame()} />);
-      expect(container.querySelector('.fa-magnifying-glass')).toBeInTheDocument();
+      expect(container.querySelector('.fa-house')).toBeInTheDocument();
     });
 
     test('renders the notes icon', () => {
@@ -47,10 +50,22 @@ describe('Sidebar', () => {
       expect(container.querySelector('.fa-user-secret')).toBeInTheDocument();
     });
 
+    test('renders the help icon', () => {
+      const { container } = render(<Sidebar players={players} game={makeGame()} />);
+      expect(container.querySelector('.fa-circle-question')).toBeInTheDocument();
+    });
+
     test('renders the dice roll trigger', () => {
       render(<Sidebar players={players} game={makeGame()} />);
       expect(screen.getByTestId('dice-roll-trigger')).toBeInTheDocument();
-      expect(screen.getByTestId('dice-roll-trigger').querySelector('.sidebar-dice-icon')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('dice-roll-trigger').querySelector('.sidebar-dice-icon'),
+      ).toBeInTheDocument();
+    });
+
+    test('renders the Scotland Yard title', () => {
+      render(<Sidebar players={players} game={makeGame()} />);
+      expect(screen.getByText('Scotland Yard')).toBeInTheDocument();
     });
   });
 
@@ -86,7 +101,10 @@ describe('Sidebar', () => {
       });
 
       expect(game.updateAvailableSquares).toHaveBeenCalledTimes(1);
-      expect(game.updateAvailableSquares).toHaveBeenCalledWith(expect.any(Array), expect.any(Number));
+      expect(game.updateAvailableSquares).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.any(Number),
+      );
     });
   });
 

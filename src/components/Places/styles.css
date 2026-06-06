@@ -12,14 +12,11 @@
 
 .place.available-zone {
   cursor: pointer;
-  outline: 3px solid #f5d742;
-  outline-offset: -3px;
-  filter: brightness(1.8) saturate(1.1);
-  transition: filter 0.2s ease;
-}
 
-.place.available-zone:hover {
-  filter: brightness(1.3) saturate(1.2);
+  filter: brightness(1.52);
+  outline: 2px solid rgba(212, 175, 55, 0.5);
+  outline-offset: -2px;
+  transition: filter 0.2s ease, outline-color 0.2s ease;
 }
 
 .holmes-house {
@@ -46,21 +43,21 @@
 
 .big-bang {
   right: 52px;
-  top: 480px;
+  top: 485px;
   background-image: url(images/big-bang.jpg);
   background-size: 295px 130px;
 }
 
 .drugstore {
   right: 52px;
-  top: 609px;
+  top: 608px;
   background-image: url(images/drugstore.jpg);
   background-size: 295px 130px;
 }
 
 .book-store {
   left: 298px;
-  top: 1px;
+  top: 2px;
   background-image: url(images/book-store.jpg);
   background-size: 218px 156px;
   background-position: -12px 0px;
@@ -68,7 +65,7 @@
 
 .locksmith {
   left: 150px;
-  top: 1px;
+  top: 2px;
   background-image: url(images/locksmith.jpg);
   background-size: 148px 147px;
 }

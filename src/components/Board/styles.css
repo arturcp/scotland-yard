@@ -1,22 +1,41 @@
+#board-frame {
+  border: 2px solid var(--color-gold);
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(212, 175, 55, 0.08),
+    inset 0 0 0 1px var(--color-gold);
+
+  background-color: #000;
+}
+
 #board {
   position: relative;
-  width: 1127px;
-  height: 930px;
-  border: 1px solid #000;
+  width: 1133px;
+  height: 937px;
   margin: 0 auto;
 
   display: flex;
   flex-wrap: wrap;
   align-content: start;
   padding: 3px;
-
-  background-color: #ba7039;
 }
 
 #players {
   position: absolute;
-  width: 1128px;
-  height: 931px;
+  width: 1133px;
+  height: 937px;
   z-index: 20;
   pointer-events: none;
+}
+
+#board .square,
+#board .place {
+  transition: filter 0.3s ease;
+}
+
+#board.move-selection-active .square:not(.available-square):not(.empty),
+#board.move-selection-active .place:not(.available-zone) {
+  filter: grayscale(1);
 }

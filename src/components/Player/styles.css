@@ -1,12 +1,23 @@
 .player {
-  width: 30px;
-  height: 30px;
+  width: var(--piece-size, 22px);
+  height: var(--piece-size, 22px);
   position: absolute;
-  top: 145px;
-  right: 0;
-  font-size: 30px;
+  font-size: var(--piece-size, 22px);
   z-index: 3;
 
-  transition: all 0.2s linear;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+
+  transition: top 0.2s linear, left 0.2s linear;
   /* transition: top 1s linear; */
+}
+
+.player--anchor-center {
+  transform: translate(-50%, -50%);
+}
+
+.player--anchor-center.player--solo {
+  transform: translate(-55%, -55%);
 }

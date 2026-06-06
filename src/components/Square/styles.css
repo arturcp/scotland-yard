@@ -1,9 +1,9 @@
 .square {
-  width: 47px;
-  height: 47px;
-  background-color: #d6d2a9;
+  width: 49px;
+  height: 49px;
+  background-color: var(--color-tile);
   border-radius: 5px;
-  border: 1px solid #000;
+  border: 1px solid var(--color-tile-border);
   z-index: 2;
 }
 
@@ -56,17 +56,11 @@
 }
 
 .available-square {
-  -webkit-animation: pulsate-fwd 1.5s ease-in-out infinite both;
-  animation: pulsate-fwd 1.5s ease-in-out infinite both;
-  border: 1px solid #ba7039;
-  background-color: #dad068;
+  outline: 2px solid var(--color-gold);
+  outline-offset: -2px;
   cursor: pointer;
   position: relative;
   z-index: 10;
-}
-
-.available-square i {
-  display: none;
 }
 
 /* ----------------------------------------------
