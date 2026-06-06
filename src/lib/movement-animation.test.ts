@@ -54,8 +54,8 @@ describe('movement animation', () => {
       vi.runAllTimers();
 
       const pin = document.querySelector('#player-1') as HTMLElement;
-      expect(pin.style.top).toBe('64.5px');
-      expect(pin.style.left).toBe('113.5px');
+      expect(pin.style.top).toBe('76.5px');
+      expect(pin.style.left).toBe('125.5px');
     });
 
     test('animates each step with a STEP_DURATION_MS delay', () => {
@@ -65,10 +65,10 @@ describe('movement animation', () => {
       movePlayer(makePlayer(), [makePlayer()], ['1,0', '2,0']);
 
       vi.advanceTimersByTime(0);
-      expect(pin.style.top).toBe('64.5px');
+      expect(pin.style.top).toBe('76.5px');
 
       vi.advanceTimersByTime(STEP_DURATION_MS);
-      expect(pin.style.top).toBe('113.5px');
+      expect(pin.style.top).toBe('125.5px');
     });
 
     test('returns zone destination keeping the traversed path', () => {

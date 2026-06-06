@@ -6,13 +6,19 @@ import './styles.css';
 interface PlayerProps {
   player: GamePlayer;
   style: CSSProperties;
+  anchorCenter?: boolean;
+  solo?: boolean;
 }
 
-export default function Player({ player, style }: PlayerProps) {
+export default function Player({ player, style, anchorCenter = false, solo = false }: PlayerProps) {
+  const classes = ['player', player.color, anchorCenter && 'player--anchor-center', solo && 'player--solo']
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <div
       id={`player-${player.id}`}
-      className={`player ${player.color}`}
+      className={classes}
       style={{ ...style, color: player.color }}
     >
       <i className="fa-solid fa-user"></i>

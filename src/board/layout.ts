@@ -1,8 +1,8 @@
 export const SQUARE_SIZE = 49;
 export const BOARD_PADDING = 3;
-export const PIECE_SIZE = 24;
-
-const PIECE_CENTER_OFFSET = (SQUARE_SIZE - PIECE_SIZE) / 2;
+export const PIECE_SIZE = 22;
+export const PIECE_SPACING = 8;
+export const PIECE_CENTER_OFFSET = (SQUARE_SIZE - PIECE_SIZE) / 2;
 
 export function tileOrigin(row: number, column: number) {
   return {
@@ -11,9 +11,12 @@ export function tileOrigin(row: number, column: number) {
   };
 }
 
+export function pieceCenterOffsetX(playerIndex: number, playersAtTile: number): number {
+  return PIECE_SPACING * playerIndex - (PIECE_SPACING * (playersAtTile - 1)) / 2;
+}
+
 export function pieceOffset(playerIndex: number, playersAtTile: number): number {
-  const spacing = 8;
-  return PIECE_CENTER_OFFSET - 4 * (playersAtTile - 1) + spacing * playerIndex;
+  return PIECE_CENTER_OFFSET + pieceCenterOffsetX(playerIndex, playersAtTile);
 }
 
 export function piecePosition(
@@ -23,11 +26,10 @@ export function piecePosition(
   playersAtTile: number,
 ) {
   const origin = tileOrigin(row, column);
-  const offset = pieceOffset(playerIndex, playersAtTile);
 
   return {
-    top: origin.top + PIECE_CENTER_OFFSET,
-    left: origin.left + offset,
+    top: origin.top + SQUARE_SIZE / 2,
+    left: origin.left + SQUARE_SIZE / 2 + pieceCenterOffsetX(playerIndex, playersAtTile),
   };
 }
 
