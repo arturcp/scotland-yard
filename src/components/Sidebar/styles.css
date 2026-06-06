@@ -2,7 +2,7 @@
   width: var(--sidebar-width);
   background-color: var(--color-sidebar);
   color: var(--color-gold);
-  border-right: 1px solid var(--color-gold-dim);
+  border-right: 1px solid var(--sidebar-border);
   height: 100%;
   position: fixed;
   top: 0;
@@ -25,9 +25,9 @@
 }
 
 .detective-logo {
-  width: 40px;
-  height: 40px;
-  color: var(--color-gold);
+  display: block;
+  width: 48px;
+  height: auto;
 }
 
 .sidebar-title {

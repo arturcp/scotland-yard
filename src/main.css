@@ -1,12 +1,13 @@
 :root {
   --color-bg: #1c1c1c;
-  --color-sidebar: #262626;
+  --color-sidebar: #0e0c0c;
   --color-gold: #d4af37;
   --color-gold-dim: #9a7b2c;
   --color-board-wood: #3d2b1f;
   --color-tile: #e8e0c8;
   --color-tile-border: #2a1f14;
-  --sidebar-width: 130px;
+  --sidebar-width: 150px;
+  --sidebar-border: #61563a;
 }
 
 *,

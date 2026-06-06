@@ -32,9 +32,8 @@
 }
 
 .mobile-warning__content .detective-logo {
-  width: 48px;
-  height: 48px;
-  color: var(--color-gold);
+  width: 64px;
+  height: auto;
   margin: 0 auto 12px;
 }
 
