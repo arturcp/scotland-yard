@@ -9,7 +9,8 @@
     "canvas-confetti": "^1.9.4",
     "micromodal": "^0.7.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.17.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

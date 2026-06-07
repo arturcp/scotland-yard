@@ -1,12 +1,19 @@
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './main.css';
+import JogoPage from './jogo/[id]/index';
 
-import Game from './components/Game';
+function HomePage() {
+  return <div className="App">Home page</div>;
+}
 
 function App() {
   return (
-    <div className="App">
-      <Game />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/jogo/:id" element={<JogoPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
