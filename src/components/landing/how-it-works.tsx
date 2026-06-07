@@ -1,4 +1,4 @@
-import { DoorOpen, UserSearch, Footprints } from 'lucide-react'
+import { DoorOpen, UserSearch, Footprints } from 'lucide-react';
 
 const steps = [
   {
@@ -11,7 +11,7 @@ const steps = [
     icon: UserSearch,
     number: 'II',
     title: 'Escolha seu papel',
-    text: 'Jogue como Mr. X, o fugitivo, ou como um dos detetives.',
+    text: 'Jogue como um dos detetives da Scotland Yard.',
   },
   {
     icon: Footprints,
@@ -19,20 +19,17 @@ const steps = [
     title: 'Investigue',
     text: 'Analise pistas, acompanhe trajetos e monte sua estratégia.',
   },
-]
+];
 
 export function HowItWorks() {
   return (
     <section id="como-funciona" className="bg-background py-24">
       <div className="mx-auto max-w-6xl px-6">
-        <SectionHeading
-          eyebrow="O Procedimento"
-          title="Como funciona"
-        />
+        <SectionHeading eyebrow="O Procedimento" title="Como funciona" />
 
         <div className="mt-16 grid gap-8 md:grid-cols-3">
           {steps.map((step) => {
-            const Icon = step.icon
+            const Icon = step.icon;
             return (
               <article
                 key={step.number}
@@ -44,19 +41,15 @@ export function HowItWorks() {
                 <span className="mb-6 flex size-12 items-center justify-center rounded-full border border-gold/40 text-gold">
                   <Icon className="size-5" />
                 </span>
-                <h3 className="font-heading text-2xl font-semibold text-ivory">
-                  {step.title}
-                </h3>
-                <p className="mt-3 font-body leading-relaxed text-muted-foreground">
-                  {step.text}
-                </p>
+                <h3 className="font-heading text-2xl font-semibold text-ivory">{step.title}</h3>
+                <p className="mt-3 font-body leading-relaxed text-muted-foreground">{step.text}</p>
               </article>
-            )
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 export function SectionHeading({
@@ -64,19 +57,17 @@ export function SectionHeading({
   title,
   center = true,
 }: {
-  eyebrow: string
-  title: string
-  center?: boolean
+  eyebrow: string;
+  title: string;
+  center?: boolean;
 }) {
   return (
     <div className={center ? 'text-center' : ''}>
-      <p className="mb-4 font-body text-sm tracking-[0.35em] text-gold uppercase">
-        {eyebrow}
-      </p>
+      <p className="mb-4 font-body text-sm tracking-[0.35em] text-gold uppercase">{eyebrow}</p>
       <h2 className="font-heading text-4xl font-semibold text-balance text-ivory sm:text-5xl">
         {title}
       </h2>
       {center && <div className="gold-divider mx-auto mt-6 w-24" />}
     </div>
-  )
+  );
 }

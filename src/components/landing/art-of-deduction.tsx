@@ -14,8 +14,8 @@ export function ArtOfDeduction() {
             Caderno de anotações
           </p>
           <blockquote className="mt-6 font-heading text-3xl leading-snug text-balance text-wood">
-            “Na arte da dedução é fundamental distinguir, dentre todos os fatos,
-            quais são os essenciais e quais são os circunstanciais.”
+            “Na arte da dedução é fundamental distinguir, dentre todos os fatos, quais são os
+            essenciais e quais são os circunstanciais.”
           </blockquote>
         </div>
 
@@ -27,14 +27,11 @@ export function ArtOfDeduction() {
             A arte da dedução
           </h2>
           <p className="mt-6 font-body text-lg leading-relaxed text-pretty text-ivory/75">
-            Cada movimento importa. Observe padrões, acompanhe os meios de
-            transporte utilizados e descubra onde seu adversário pretende
-            aparecer.
+            Cada movimento importa. Observe padrões, acompanhe as ruas e descubra onde seu
+            adversário pretende aparecer.
           </p>
           <p className="mt-4 font-body text-lg leading-relaxed text-pretty text-muted-foreground">
-            Os detetives veem os rastros de Mr. X apenas em momentos
-            específicos. Entre uma aparição e outra, resta a dedução: para onde
-            ele foi, e para onde irá?
+            Cada caso é único. Será que você tem o que precisa para desvendar o mistério?
           </p>
 
           <p className="mt-8 font-heading text-2xl text-gold/80 italic">
@@ -43,5 +40,5 @@ export function ArtOfDeduction() {
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react';
 
 export function Hero() {
   return (
@@ -8,10 +8,7 @@ export function Hero() {
         style={{ backgroundImage: 'url(/images/london-map-dark.png)' }}
         aria-hidden="true"
       />
-      <div
-        className="absolute inset-0 bg-background/55"
-        aria-hidden="true"
-      />
+      <div className="absolute inset-0 bg-background/55" aria-hidden="true" />
 
       <div className="relative z-20 mx-auto w-full max-w-6xl px-6 pt-28 pb-16">
         <div className="max-w-2xl">
@@ -20,13 +17,12 @@ export function Hero() {
           </p>
 
           <h1 className="text-shadow-noir font-heading text-5xl leading-[1.05] font-semibold text-balance text-ivory sm:text-6xl lg:text-7xl">
-            Londres está novamente à procura de Mr. X.
+            Londres precisa novamente de você.
           </h1>
 
           <p className="mt-6 max-w-xl font-body text-lg leading-relaxed text-pretty text-ivory/75">
-            Reúna seus amigos, assuma o papel dos detetives de Scotland Yard e
-            use lógica, observação e dedução para capturar o criminoso mais
-            procurado de Londres.
+            Reúna seus amigos, assuma o papel dos detetives de Scotland Yard e use lógica,
+            observação e dedução para desvendar os crimes mais recentes de Londres.
           </p>
 
           <div className="mt-10 flex flex-col items-start gap-6 sm:flex-row sm:items-center">
@@ -43,7 +39,7 @@ export function Hero() {
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 function RoomTicket() {
@@ -53,7 +49,7 @@ function RoomTicket() {
         type="text"
         placeholder="Código da sala"
         aria-label="Código da sala"
-        className="w-36 bg-transparent px-4 py-3 font-body text-sm tracking-widest text-ivory uppercase placeholder:text-ivory/40 focus:outline-none"
+        className="w-42 bg-transparent px-4 py-3 font-body text-sm tracking-widest text-ivory uppercase placeholder:text-ivory/40 focus:outline-none"
       />
       <button
         type="submit"
@@ -62,5 +58,5 @@ function RoomTicket() {
         Entrar
       </button>
     </form>
-  )
+  );
 }

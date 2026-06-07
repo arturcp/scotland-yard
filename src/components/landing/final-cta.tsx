@@ -1,11 +1,8 @@
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react';
 
 export function FinalCta() {
   return (
-    <section
-      id="cta-final"
-      className="vignette relative overflow-hidden py-28"
-    >
+    <section id="cta-final" className="vignette relative overflow-hidden py-28">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: 'url(/images/london-map-dark.png)' }}
@@ -15,7 +12,7 @@ export function FinalCta() {
 
       <div className="relative z-20 mx-auto max-w-3xl px-6 text-center">
         <h2 className="text-shadow-noir font-heading text-5xl font-semibold text-balance text-ivory sm:text-6xl">
-          Mr. X já está em movimento.
+          A investigação começou
         </h2>
         <p className="mt-6 font-body text-xl leading-relaxed text-pretty text-ivory/80">
           Os detetives estão reunidos. Falta apenas você.
@@ -51,5 +48,5 @@ export function FinalCta() {
         </p>
       </div>
     </section>
-  )
+  );
 }

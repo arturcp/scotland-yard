@@ -15,7 +15,7 @@ const reasons = [
   {
     icon: VenetianMask,
     title: 'Blefe',
-    text: 'Mr. X pode enganar e despistar os detetives.',
+    text: 'Valorize pistas inúteis e esconda o seu verdadeiro destino.',
   },
   {
     icon: Users,
