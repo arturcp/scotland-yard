@@ -1,3 +1,4 @@
+import { Monitor } from 'lucide-react';
 import DetectiveLogo from '../Sidebar/DetectiveLogo';
 
 import './MobileWarning.css';
@@ -14,7 +15,7 @@ export default function MobileWarning() {
           Este jogo foi desenvolvido para ser jogado em computadores. Por favor, acesse em um
           desktop ou notebook para ter a melhor experiência.
         </p>
-        <i className="fa-solid fa-desktop mobile-warning__icon" aria-hidden="true" />
+        <Monitor aria-hidden="true" className="mobile-warning__icon" size={32} strokeWidth={1.75} />
       </div>
     </div>
   );

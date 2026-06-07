@@ -18,11 +18,13 @@ import type {
 
 import './styles.css';
 
+const STARTING_POSITION: Position = { place: 'holmes-house' };
+
 const INITIAL_PLAYERS: Player[] = [
-  { id: 1, name: 'John', color: 'blue', position: { row: 10, column: 10, place: null } },
-  { id: 2, name: 'Jane', color: 'yellow', position: { row: 10, column: 10, place: null } },
-  { id: 3, name: 'Josh', color: 'brown', position: { row: 10, column: 10, place: null } },
-  { id: 4, name: 'Joan', color: 'lightpink', position: { row: 10, column: 10, place: null } },
+  { id: 1, name: 'John', color: 'blue', position: STARTING_POSITION },
+  { id: 2, name: 'Jane', color: 'yellow', position: STARTING_POSITION },
+  { id: 3, name: 'Josh', color: 'brown', position: STARTING_POSITION },
+  { id: 4, name: 'Joan', color: 'lightpink', position: STARTING_POSITION },
 ];
 
 const INITIAL_GAME_SHIFT: GameShiftState = {

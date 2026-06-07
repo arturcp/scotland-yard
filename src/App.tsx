@@ -1,12 +1,22 @@
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './main.css';
-
-import Game from './components/Game';
+import JogoPage from './pages/JogoPage';
+import HomePage from './pages/HomePage';
+import CreditosPage from './pages/CreditosPage';
+import PrivacidadePage from './pages/PrivacidadePage';
+import TermosPage from './pages/TermosPage';
 
 function App() {
   return (
-    <div className="App">
-      <Game />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/jogo/:id" element={<JogoPage />} />
+        <Route path="/termos" element={<TermosPage />} />
+        <Route path="/privacidade" element={<PrivacidadePage />} />
+        <Route path="/creditos" element={<CreditosPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

@@ -4,6 +4,10 @@
   --color-gold: #d4af37;
   --color-gold-dim: #9a7b2c;
   --color-board-wood: #3d2b1f;
+  --color-wood-light: #6b4c3b;
+  --color-wood-mid: #4a3528;
+  --color-wood-dark: #2a1f14;
+  --color-wood-shadow: #1a120c;
   --color-tile: #e8e0c8;
   --color-tile-border: #2a1f14;
   --sidebar-width: 150px;
@@ -31,4 +35,14 @@ body {
 #root,
 .App {
   min-height: 100vh;
+}
+
+.game-app {
+  --sidebar-border: #61563a;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
 }
