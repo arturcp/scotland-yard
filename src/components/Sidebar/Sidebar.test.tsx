@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import MicroModal from 'micromodal';
 import type { GameController, GameShiftStatus, Player } from '../../types/game';
 import Sidebar from './index';
@@ -23,35 +24,39 @@ const defaultProps = {
   onRollStart: vi.fn(),
 };
 
+function renderSidebar(ui: React.ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
+
 describe('Sidebar', () => {
   describe('rendering', () => {
     test('renders the sidebar element', () => {
-      const { container } = render(<Sidebar game={makeGame()} {...defaultProps} />);
+      const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(container.querySelector('#sidebar')).toBeInTheDocument();
     });
 
     test('renders the home icon', () => {
-      const { container } = render(<Sidebar game={makeGame()} {...defaultProps} />);
+      const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(container.querySelector('.fa-house')).toBeInTheDocument();
     });
 
     test('renders the notes icon', () => {
-      const { container } = render(<Sidebar game={makeGame()} {...defaultProps} />);
+      const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(container.querySelector('.fa-file-lines')).toBeInTheDocument();
     });
 
     test('renders the detective icon', () => {
-      const { container } = render(<Sidebar game={makeGame()} {...defaultProps} />);
+      const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(container.querySelector('.fa-user-secret')).toBeInTheDocument();
     });
 
     test('renders the help icon', () => {
-      const { container } = render(<Sidebar game={makeGame()} {...defaultProps} />);
+      const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(container.querySelector('.fa-circle-question')).toBeInTheDocument();
     });
 
     test('renders the dice roll trigger', () => {
-      render(<Sidebar game={makeGame()} {...defaultProps} />);
+      renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(screen.getByTestId('dice-roll-trigger')).toBeInTheDocument();
       expect(
         screen.getByTestId('dice-roll-trigger').querySelector('.sidebar-dice-icon'),
@@ -59,26 +64,34 @@ describe('Sidebar', () => {
     });
 
     test('renders the Scotland Yard title', () => {
-      render(<Sidebar game={makeGame()} {...defaultProps} />);
+      renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(screen.getByText('Scotland Yard')).toBeInTheDocument();
+    });
+
+    test('links the header to the home page', () => {
+      renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
+      expect(screen.getByRole('link', { name: 'Voltar para a página inicial' })).toHaveAttribute(
+        'href',
+        '/',
+      );
     });
   });
 
   describe('MicroModal', () => {
     test('initializes MicroModal on mount', () => {
-      render(<Sidebar game={makeGame()} {...defaultProps} />);
+      renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(MicroModal.init).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('dice button classes', () => {
     test('has pulsate-fwd class when game status is waiting', () => {
-      render(<Sidebar game={makeGame('waiting')} {...defaultProps} />);
+      renderSidebar(<Sidebar game={makeGame('waiting')} {...defaultProps} />);
       expect(screen.getByTestId('dice-roll-trigger')).toHaveClass('pulsate-fwd');
     });
 
     test('does not have pulsate-fwd class when game status is in-progress', () => {
-      render(<Sidebar game={makeGame('in-progress')} {...defaultProps} />);
+      renderSidebar(<Sidebar game={makeGame('in-progress')} {...defaultProps} />);
       expect(screen.getByTestId('dice-roll-trigger')).not.toHaveClass('pulsate-fwd');
     });
   });
@@ -86,7 +99,9 @@ describe('Sidebar', () => {
   describe('dice button click', () => {
     test('calls onRollStart when clicked', () => {
       const onRollStart = vi.fn();
-      render(<Sidebar game={makeGame('waiting')} rolling={false} onRollStart={onRollStart} />);
+      renderSidebar(
+        <Sidebar game={makeGame('waiting')} rolling={false} onRollStart={onRollStart} />,
+      );
       fireEvent.click(screen.getByTestId('dice-roll-trigger'));
       expect(onRollStart).toHaveBeenCalledTimes(1);
     });
@@ -94,12 +109,12 @@ describe('Sidebar', () => {
 
   describe('dice result badge', () => {
     test('shows the rolled value on the dice icon', () => {
-      render(<Sidebar game={makeGame('in-progress', 4)} {...defaultProps} />);
+      renderSidebar(<Sidebar game={makeGame('in-progress', 4)} {...defaultProps} />);
       expect(screen.getByTestId('dice-result-badge')).toHaveTextContent('4');
     });
 
     test('hides the badge when there is no active dice result', () => {
-      render(<Sidebar game={makeGame('waiting', null)} {...defaultProps} />);
+      renderSidebar(<Sidebar game={makeGame('waiting', null)} {...defaultProps} />);
       expect(screen.queryByTestId('dice-result-badge')).not.toBeInTheDocument();
     });
   });

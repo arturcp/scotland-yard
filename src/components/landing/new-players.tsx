@@ -1,10 +1,10 @@
-import { BookOpen, ScrollText, GraduationCap } from 'lucide-react'
+import { BookOpen, ScrollText, GraduationCap } from 'lucide-react';
 
 const helpers = [
   { icon: BookOpen, label: 'Como jogar', href: '#' },
   { icon: ScrollText, label: 'Regras rápidas', href: '#' },
   { icon: GraduationCap, label: 'Tutorial', href: '#' },
-]
+];
 
 export function NewPlayers() {
   return (
@@ -22,7 +22,7 @@ export function NewPlayers() {
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           {helpers.map((h) => {
-            const Icon = h.icon
+            const Icon = h.icon;
             return (
               <a
                 key={h.label}
@@ -32,10 +32,10 @@ export function NewPlayers() {
                 <Icon className="size-4" />
                 {h.label}
               </a>
-            )
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }

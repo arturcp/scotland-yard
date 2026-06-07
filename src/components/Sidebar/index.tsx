@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import MicroModal from 'micromodal';
 import DiceIcon from './DiceIcon';
 import DetectiveLogo from './DetectiveLogo';
@@ -31,10 +32,10 @@ export default function Sidebar({ game, rolling, onRollStart }: SidebarProps) {
 
   return (
     <aside id="sidebar">
-      <div className="sidebar-header">
+      <Link to="/" className="sidebar-header" aria-label="Voltar para a página inicial">
         <DetectiveLogo />
         <span className="sidebar-title">Scotland Yard</span>
-      </div>
+      </Link>
 
       <nav className="sidebar-nav">
         <ul>

@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import Game from './index';
 
 vi.mock('micromodal', () => ({ default: { init: vi.fn() } }));
@@ -17,44 +18,52 @@ function mockDesktopViewport(isDesktop: boolean) {
   });
 }
 
+function renderGame() {
+  return render(
+    <MemoryRouter>
+      <Game />
+    </MemoryRouter>,
+  );
+}
+
 describe('Game', () => {
   beforeEach(() => {
     mockDesktopViewport(true);
   });
 
   test('renders the main container', () => {
-    const { container } = render(<Game />);
+    const { container } = renderGame();
     expect(container.querySelector('#container')).toBeInTheDocument();
   });
 
   test('renders the board', () => {
-    const { container } = render(<Game />);
+    const { container } = renderGame();
     expect(container.querySelector('#board')).toBeInTheDocument();
   });
 
   test('renders the sidebar', () => {
-    const { container } = render(<Game />);
+    const { container } = renderGame();
     expect(container.querySelector('#sidebar')).toBeInTheDocument();
   });
 
   test('renders the notes modal', () => {
-    const { container } = render(<Game />);
+    const { container } = renderGame();
     expect(container.querySelector('#modal-notes')).toBeInTheDocument();
   });
 
   test('renders all 4 players', () => {
-    const { container } = render(<Game />);
+    const { container } = renderGame();
     expect(container.querySelectorAll('[id^="player-"]')).toHaveLength(4);
   });
 
   test('dice button starts with pulsate-fwd class', () => {
-    const { container } = render(<Game />);
+    const { container } = renderGame();
     expect(container.querySelector('.dice-roll-trigger')).toHaveClass('pulsate-fwd');
   });
 
   test('shows mobile warning on small viewports', () => {
     mockDesktopViewport(false);
-    const { container } = render(<Game />);
+    const { container } = renderGame();
 
     expect(container.querySelector('#mobile-warning')).toBeInTheDocument();
     expect(container.querySelector('#container')).not.toBeInTheDocument();

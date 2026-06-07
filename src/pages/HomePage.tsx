@@ -4,7 +4,6 @@ import { Hero } from '@/components/landing/hero';
 import { QuoteBanner } from '@/components/landing/quote-banner';
 import { HowItWorks } from '@/components/landing/how-it-works';
 import { ArtOfDeduction } from '@/components/landing/art-of-deduction';
-import { TransportSection } from '@/components/landing/transport-section';
 import { WhyPlay } from '@/components/landing/why-play';
 import { Ambiance } from '@/components/landing/ambiance';
 import { CaseStats } from '@/components/landing/case-stats';
@@ -20,7 +19,6 @@ export default function HomePage() {
       <QuoteBanner />
       <HowItWorks />
       <ArtOfDeduction />
-      <TransportSection />
       <WhyPlay />
       <Ambiance />
       <CaseStats />

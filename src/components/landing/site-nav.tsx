@@ -1,11 +1,10 @@
-import { Search } from 'lucide-react'
+import { Search } from 'lucide-react';
 
 const links = [
   { label: 'Como Jogar', href: '#como-funciona' },
   { label: 'A Dedução', href: '#deducao' },
-  { label: 'Transportes', href: '#transportes' },
   { label: 'Ambientação', href: '#ambientacao' },
-]
+];
 
 export function SiteNav() {
   return (
@@ -41,5 +40,5 @@ export function SiteNav() {
         </a>
       </nav>
     </header>
-  )
+  );
 }
