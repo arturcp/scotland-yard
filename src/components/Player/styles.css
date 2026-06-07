@@ -17,7 +17,3 @@
 .player--anchor-center {
   transform: translate(-50%, -50%);
 }
-
-.player--anchor-center.player--solo {
-  transform: translate(-60%, -60%);
-}
