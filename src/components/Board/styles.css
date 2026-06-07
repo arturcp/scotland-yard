@@ -76,6 +76,10 @@
   filter: grayscale(1);
 }
 
+#board.board--locked {
+  pointer-events: none;
+}
+
 #board.board--locked .available-square,
 #board.board--locked .available-zone {
   pointer-events: none;

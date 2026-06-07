@@ -36,11 +36,6 @@ describe('Sidebar', () => {
       expect(container.querySelector('#sidebar')).toBeInTheDocument();
     });
 
-    test('renders the home icon', () => {
-      const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
-      expect(container.querySelector('.lucide-house')).toBeInTheDocument();
-    });
-
     test('renders the notes icon', () => {
       const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(container.querySelector('.lucide-file-text')).toBeInTheDocument();

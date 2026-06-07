@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { CircleHelp, FileText, Home, ScrollText, Users } from 'lucide-react';
+import { CircleHelp, FileText, ScrollText, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MicroModal from 'micromodal';
 import DiceIcon from './DiceIcon';
@@ -50,12 +50,6 @@ export default function Sidebar({
 
       <nav className="sidebar-nav">
         <ul>
-          <li>
-            <button type="button" className="nav-item active" aria-current="page">
-              <Home aria-hidden="true" size={28} strokeWidth={1.75} />
-              <span>Inicio</span>
-            </button>
-          </li>
           <li>
             <button type="button" className="nav-item" data-micromodal-trigger="modal-notes">
               <FileText aria-hidden="true" size={28} strokeWidth={1.75} />

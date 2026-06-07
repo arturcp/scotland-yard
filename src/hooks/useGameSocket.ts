@@ -177,9 +177,15 @@ export function useGameSocket(roomCode: string) {
         caseFields: payload.caseFields,
         turnOrderRolls: payload.state.turnOrderRolls,
         pendingClue:
-          payload.state.shift.status === 'awaiting-clue' ? prev.pendingClue : null,
+          payload.state.shift.status === 'awaiting-clue' &&
+          payload.you.playerId === payload.state.shift.playerId
+            ? prev.pendingClue
+            : null,
         pendingLockedZone:
-          payload.state.shift.status === 'awaiting-locked-zone' ? prev.pendingLockedZone : null,
+          payload.state.shift.status === 'awaiting-locked-zone' &&
+          payload.you.playerId === payload.state.shift.playerId
+            ? prev.pendingLockedZone
+            : null,
         turnBanner:
           payload.state.phase === 'turnOrder'
             ? null
@@ -362,58 +368,70 @@ export function useGameSocket(roomCode: string) {
             }));
             break;
           case 'clueAdded':
-            setState((prev) => ({
-              ...prev,
-              notes: [
-                ...prev.notes,
-                {
-                  kind: 'clue' as const,
-                  zoneId: message.zoneId as NoteEntry extends { kind: 'clue'; zoneId: infer Z }
-                    ? Z
-                    : never,
-                  zoneName: message.zoneName,
-                  text: message.clueText,
-                  at: new Date().toISOString(),
-                },
-              ],
-              pendingClue: {
-                zoneId: message.zoneId as PendingClue['zoneId'],
-                zoneName: message.zoneName,
-                text: message.clueText,
-              },
-              room: prev.room
-                ? {
-                    ...prev.room,
-                    shift: {
-                      ...prev.room.shift,
-                      status: 'awaiting-clue',
-                      availableSquares: [],
-                      diceResult: null,
-                    },
-                  }
-                : prev.room,
-            }));
+            setState((prev) => {
+              const isActivePlayer = prev.playerId === prev.room?.shift.playerId;
+
+              return {
+                ...prev,
+                notes: [
+                  ...prev.notes,
+                  {
+                    kind: 'clue' as const,
+                    zoneId: message.zoneId as NoteEntry extends { kind: 'clue'; zoneId: infer Z }
+                      ? Z
+                      : never,
+                    zoneName: message.zoneName,
+                    text: message.clueText,
+                    at: new Date().toISOString(),
+                  },
+                ],
+                pendingClue: isActivePlayer
+                  ? {
+                      zoneId: message.zoneId as PendingClue['zoneId'],
+                      zoneName: message.zoneName,
+                      text: message.clueText,
+                    }
+                  : null,
+                room: prev.room
+                  ? {
+                      ...prev.room,
+                      shift: {
+                        ...prev.room.shift,
+                        status: 'awaiting-clue',
+                        availableSquares: [],
+                        diceResult: null,
+                      },
+                    }
+                  : prev.room,
+              };
+            });
             break;
           case 'lockedZoneEncountered':
-            setState((prev) => ({
-              ...prev,
-              pendingLockedZone: {
-                zoneId: message.zoneId as PendingLockedZone['zoneId'],
-                zoneName: message.zoneName,
-                hasMasterKey: message.hasMasterKey,
-              },
-              room: prev.room
-                ? {
-                    ...prev.room,
-                    shift: {
-                      ...prev.room.shift,
-                      status: 'awaiting-locked-zone',
-                      availableSquares: [],
-                      diceResult: null,
-                    },
-                  }
-                : prev.room,
-            }));
+            setState((prev) => {
+              const isActivePlayer = prev.playerId === prev.room?.shift.playerId;
+
+              return {
+                ...prev,
+                pendingLockedZone: isActivePlayer
+                  ? {
+                      zoneId: message.zoneId as PendingLockedZone['zoneId'],
+                      zoneName: message.zoneName,
+                      hasMasterKey: message.hasMasterKey,
+                    }
+                  : null,
+                room: prev.room
+                  ? {
+                      ...prev.room,
+                      shift: {
+                        ...prev.room.shift,
+                        status: 'awaiting-locked-zone',
+                        availableSquares: [],
+                        diceResult: null,
+                      },
+                    }
+                  : prev.room,
+              };
+            });
             break;
           case 'verifying':
             setState((prev) => ({

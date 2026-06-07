@@ -377,7 +377,7 @@ export default function Game({ roomCode }: GameProps) {
         customText={customNoteText}
         onCustomNotesChange={updateNotes}
       />
-      <PlayersModal players={room.players} />
+      <PlayersModal players={room.players} turnOrder={room.turnOrder} />
       <SolutionModal
         open={solutionOpen && phase !== 'finished'}
         caseFields={caseFields}
@@ -498,7 +498,7 @@ export default function Game({ roomCode }: GameProps) {
           </div>
         </div>
       )}
-      {pendingClue && (
+      {pendingClue && isMyTurn && (
         <ClueModal
           clue={pendingClue}
           masterKeysRemaining={masterKeysRemaining}
@@ -512,7 +512,7 @@ export default function Game({ roomCode }: GameProps) {
           }}
         />
       )}
-      {pendingLockedZone && (
+      {pendingLockedZone && isMyTurn && (
         <LockedZoneModal
           zoneName={pendingLockedZone.zoneName}
           hasMasterKey={pendingLockedZone.hasMasterKey}

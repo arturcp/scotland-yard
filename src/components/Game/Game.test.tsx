@@ -275,6 +275,7 @@ describe('Game', () => {
       connected: true,
       phase: 'playing',
       playerId: 1,
+      isMyTurn: true,
       pendingClue: {
         zoneId: 'museum',
         zoneName: 'Museu',
@@ -315,6 +316,107 @@ describe('Game', () => {
     expect(screen.getByText('Uma pista importante.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Passar turno' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Trancar zona' })).toBeInTheDocument();
+  });
+
+  test('does not show the clue modal while waiting for another player', () => {
+    mockUseGameSocket.mockReturnValue({
+      ...defaultSocketState(),
+      connected: true,
+      phase: 'playing',
+      playerId: 2,
+      isMyTurn: false,
+      pendingClue: {
+        zoneId: 'museum',
+        zoneName: 'Museu',
+        text: 'Uma pista importante.',
+      },
+      room: {
+        code: 'ABC123',
+        phase: 'playing',
+        creatorId: 1,
+        caseTitle: 'O Mistério',
+        caseIntro: 'Um caso intrigante.',
+        turnOrderPendingIds: [],
+        turnOrderRolls: [],
+        turnOrder: [1, 2],
+        players: [
+          {
+            id: 1,
+            name: 'Alice',
+            color: 'blue',
+            connected: true,
+            eliminated: false,
+            position: { row: 0, column: 0, place: 'museum' },
+          },
+          {
+            id: 2,
+            name: 'Bob',
+            color: 'yellow',
+            connected: true,
+            eliminated: false,
+            position: { row: 0, column: 0, place: 'holmes-house' },
+          },
+        ],
+        visitedZonesByPlayer: { 1: ['museum'] },
+        shift: { status: 'awaiting-clue', playerId: 1, availableSquares: [], diceResult: null },
+      },
+    });
+
+    renderGame();
+
+    expect(screen.queryByRole('heading', { name: 'Museu' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Passar turno' })).not.toBeInTheDocument();
+  });
+
+  test('allows sidebar navigation while another player is on their turn', async () => {
+    const user = userEvent.setup();
+
+    mockUseGameSocket.mockReturnValue({
+      ...defaultSocketState(),
+      connected: true,
+      phase: 'playing',
+      playerId: 2,
+      isMyTurn: false,
+      turnBanner: 'Alice está jogando',
+      caseFields: [{ key: 'who', label: 'Quem cometeu o crime?' }],
+      room: {
+        code: 'ABC123',
+        phase: 'playing',
+        creatorId: 1,
+        caseTitle: 'O Mistério',
+        caseIntro: 'Um caso intrigante.',
+        turnOrderPendingIds: [],
+        turnOrderRolls: [],
+        turnOrder: [1, 2],
+        players: [
+          {
+            id: 1,
+            name: 'Alice',
+            color: 'blue',
+            connected: true,
+            eliminated: false,
+            position: { row: 0, column: 0, place: 'museum' },
+          },
+          {
+            id: 2,
+            name: 'Bob',
+            color: 'yellow',
+            connected: true,
+            eliminated: false,
+            position: { row: 0, column: 0, place: 'holmes-house' },
+          },
+        ],
+        visitedZonesByPlayer: {},
+        shift: { status: 'in-progress', playerId: 1, availableSquares: [], diceResult: 4 },
+      },
+    });
+
+    renderGame();
+
+    await user.click(screen.getByTestId('show-case-trigger'));
+
+    expect(screen.getByText('Um caso intrigante.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fechar' })).toBeInTheDocument();
   });
 
   test('shows mobile warning on small viewports', () => {
