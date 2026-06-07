@@ -240,6 +240,20 @@ describe('AvailableSquares', () => {
       expect(results).toHaveLength(2);
     });
 
+    test('when inside a zone, does not offer the current zone as a destination', () => {
+      const playerInZone = {
+        id: 1,
+        name: 'John',
+        color: 'blue',
+        position: { place: 'hotel', id: 'hotel', path: ['7,2', 'hotel'] },
+      };
+
+      for (let dice = 1; dice <= 6; dice += 1) {
+        const results = getAvailableSquares(playerInZone, dice);
+        expect(results.some((result) => result.place === 'hotel')).toBe(false);
+      }
+    });
+
     test('when inside carriage-station, offers teleport to every other zone', () => {
       const playerInZone = {
         id: 1,
