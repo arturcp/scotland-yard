@@ -5,5 +5,7 @@ vi.mock('micromodal', () => ({ default: { init: vi.fn() } }));
 
 test('renders home page', () => {
   const { getByText } = render(<App />);
-  expect(getByText('Home page')).toBeInTheDocument();
+  expect(
+    getByText(/Londres está novamente à procura de Mr\. X/),
+  ).toBeInTheDocument();
 });

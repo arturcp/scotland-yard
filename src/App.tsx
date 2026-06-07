@@ -1,10 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './main.css';
-import JogoPage from './jogo/[id]/index';
-
-function HomePage() {
-  return <div className="App">Home page</div>;
-}
+import JogoPage from './pages/JogoPage';
+import HomePage from './pages/HomePage';
 
 function App() {
   return (

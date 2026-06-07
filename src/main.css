@@ -32,3 +32,12 @@ body {
 .App {
   min-height: 100vh;
 }
+
+.game-app {
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}

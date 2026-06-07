@@ -1,8 +1,8 @@
-import Game from '../../components/Game';
+import Game from '../components/Game';
 
 function JogoPage() {
   return (
-    <div className="App">
+    <div className="App game-app">
       <Game />
     </div>
   );
