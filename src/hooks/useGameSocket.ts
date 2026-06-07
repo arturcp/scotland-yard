@@ -91,6 +91,13 @@ type ServerMessage =
       solutionNarrative: string;
     }
   | { type: 'solutionFailed'; playerId: number; playerName: string }
+  | {
+      type: 'solutionRevealed';
+      playerId: number;
+      officialSolution: CaseField[];
+      solutionNarrative: string;
+      playerAnswers: Record<string, string>;
+    }
   | { type: 'left' }
   | { type: 'roomClosed' };
 
@@ -114,6 +121,11 @@ export interface GameSocketState {
   officialSolution: CaseField[] | null;
   solutionNarrative: string | null;
   lastSubmittedAnswers: Record<string, string> | null;
+  solutionReveal: {
+    officialSolution: CaseField[];
+    solutionNarrative: string;
+    playerAnswers: Record<string, string>;
+  } | null;
   leftGame: boolean;
   roomClosed: boolean;
 }
@@ -138,6 +150,7 @@ const INITIAL_STATE: GameSocketState = {
   officialSolution: null,
   solutionNarrative: null,
   lastSubmittedAnswers: null,
+  solutionReveal: null,
   leftGame: false,
   roomClosed: false,
 };
@@ -456,13 +469,29 @@ export function useGameSocket(roomCode: string) {
             setState((prev) => ({
               ...prev,
               verifyingMessage: null,
+              solutionReveal: null,
               error: `${message.playerName} errou a solução e foi eliminado.`,
             }));
+            break;
+          case 'solutionRevealed':
+            setState((prev) =>
+              prev.playerId === message.playerId
+                ? {
+                    ...prev,
+                    solutionReveal: {
+                      officialSolution: message.officialSolution,
+                      solutionNarrative: message.solutionNarrative,
+                      playerAnswers: message.playerAnswers,
+                    },
+                  }
+                : prev,
+            );
             break;
           case 'gameOver':
             setState((prev) => ({
               ...prev,
               verifyingMessage: null,
+              solutionReveal: null,
               officialSolution: message.officialSolution,
               solutionNarrative: message.solutionNarrative,
               lastSubmittedAnswers: message.playerAnswer,
@@ -599,6 +628,10 @@ export function useGameSocket(roomCode: string) {
     [send],
   );
   const revealSolution = useCallback(() => send({ type: 'revealSolution' }), [send]);
+  const confirmSolution = useCallback(
+    (correct: boolean) => send({ type: 'confirmSolution', correct }),
+    [send],
+  );
   const leaveGame = useCallback(() => {
     intentionalCloseRef.current = true;
     clearReconnectTimer();
@@ -677,6 +710,7 @@ export function useGameSocket(roomCode: string) {
     updateNotes,
     submitSolution,
     revealSolution,
+    confirmSolution,
     leaveGame,
     clearRemoteMove,
     clearTurnBanner,

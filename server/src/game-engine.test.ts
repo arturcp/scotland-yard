@@ -12,13 +12,14 @@ import {
   movePlayer,
   passTurn,
   resolveLockedZoneEntry,
+  beginSolutionVerification,
+  confirmSolution,
   revealSolution,
   rollDice,
   rollTurnOrderDice,
   roomExists,
   setMasterKeysPerPlayer,
   startGame,
-  beginSolutionVerification,
   updatePlayerColor,
 } from './game-engine.js';
 import { closeDb, saveRoom } from './persistence.js';
@@ -355,7 +356,7 @@ describe('game engine', () => {
     expect(updated.state.masterKeysPerPlayer).toBe(3);
   });
 
-  test('eliminates player on wrong solution', () => {
+  test('reveals solution before player confirms', () => {
     const room = createRoom('002');
     const first = joinRoom(room.code, 'Alice', 'blue');
     const second = joinRoom(room.code, 'Bob', 'yellow');
@@ -373,8 +374,61 @@ describe('game engine', () => {
       motive: 'wrong',
     });
 
-    const result = revealSolution(room.code, first.playerId);
+    const reveal = revealSolution(room.code, first.playerId);
+    expect(reveal.error).toBeUndefined();
+    expect(reveal.events?.some((event) => event.type === 'solutionRevealed')).toBe(true);
+    expect(reveal.state.phase).toBe('verifying');
+    expect(reveal.state.players.find((p) => p.id === first.playerId)?.eliminated).toBe(false);
+  });
+
+  test('eliminates player on wrong solution confirmation', () => {
+    const room = createRoom('002');
+    const first = joinRoom(room.code, 'Alice', 'blue');
+    const second = joinRoom(room.code, 'Bob', 'yellow');
+    startGame(room.code, first.playerId);
+    rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+
+    const player = started.state.players.find((p) => p.id === first.playerId)!;
+    player.position = { place: 'holmes-house' };
+    saveRoom(started.state);
+
+    beginSolutionVerification(room.code, first.playerId, {
+      culprit: 'wrong',
+      method: 'wrong',
+      motive: 'wrong',
+    });
+
+    revealSolution(room.code, first.playerId);
+
+    const result = confirmSolution(room.code, first.playerId, false);
     expect(result.events?.some((event) => event.type === 'solutionFailed')).toBe(true);
     expect(result.state.players.find((p) => p.id === first.playerId)?.eliminated).toBe(true);
+  });
+
+  test('ends game when player confirms correct solution', () => {
+    const room = createRoom('002');
+    const first = joinRoom(room.code, 'Alice', 'blue');
+    const second = joinRoom(room.code, 'Bob', 'yellow');
+    startGame(room.code, first.playerId);
+    rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+
+    const player = started.state.players.find((p) => p.id === first.playerId)!;
+    player.position = { place: 'holmes-house' };
+    saveRoom(started.state);
+
+    beginSolutionVerification(room.code, first.playerId, {
+      culprit: 'My guess',
+      method: 'My method',
+      motive: 'My motive',
+    });
+
+    revealSolution(room.code, first.playerId);
+
+    const result = confirmSolution(room.code, first.playerId, true);
+    expect(result.state.phase).toBe('finished');
+    expect(result.state.winnerId).toBe(first.playerId);
+    expect(result.events?.some((event) => event.type === 'gameOver')).toBe(true);
   });
 });

@@ -45,34 +45,6 @@ function parseDiceValue(value: unknown): number | null {
   return value;
 }
 
-function normalizeText(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-    .replace(/\s+/g, ' ');
-}
-
-function normalizeAnswers(answers: Record<string, string>): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(answers).map(([key, value]) => [key, normalizeText(value)]),
-  );
-}
-
-function answersMatch(
-  submitted: Record<string, string>,
-  caseDef: CaseDefinition,
-): boolean {
-  const normalized = normalizeAnswers(submitted);
-  return caseDef.fields.every((field) => {
-    const expected = normalizeText(field.answer ?? '');
-    const actual = normalized[field.key] ?? '';
-    return actual === expected;
-  });
-}
-
 function nextActivePlayerIndex(state: GameRoomState): number {
   const { turnOrder, currentPlayerIndex, players } = state;
   if (!turnOrder.length) {
@@ -654,7 +626,14 @@ export type ServerGameEvent =
       officialSolution: CaseDefinition['fields'];
       solutionNarrative: string;
     }
-  | { type: 'solutionFailed'; playerId: number; playerName: string };
+  | { type: 'solutionFailed'; playerId: number; playerName: string }
+  | {
+      type: 'solutionRevealed';
+      playerId: number;
+      officialSolution: CaseDefinition['fields'];
+      solutionNarrative: string;
+      playerAnswers: Record<string, string>;
+    };
 
 export function updatePlayerColor(
   code: string,
@@ -1158,10 +1137,39 @@ export function revealSolution(code: string, playerId: number): EngineResult {
     return { state, error: 'Verificação inválida.' };
   }
 
+  const caseDef = getCase(state);
+  const answers = state.lastSubmittedAnswers ?? {};
+
+  return {
+    state,
+    events: [
+      {
+        type: 'solutionRevealed',
+        playerId,
+        officialSolution: caseDef.fields,
+        solutionNarrative: caseDef.solutionNarrative,
+        playerAnswers: answers,
+      },
+    ],
+  };
+}
+
+export function confirmSolution(
+  code: string,
+  playerId: number,
+  correct: boolean,
+): EngineResult {
+  const state = getMutableRoom(code);
+  if (!state) {
+    return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
+  }
+  if (state.phase !== 'verifying' || state.verifyingPlayerId !== playerId) {
+    return { state, error: 'Verificação inválida.' };
+  }
+
   const player = state.players.find((p) => p.id === playerId)!;
   const caseDef = getCase(state);
   const answers = state.lastSubmittedAnswers ?? {};
-  const correct = answersMatch(answers, caseDef);
 
   state.officialSolution = caseDef.fields;
 

@@ -4,6 +4,7 @@ import { cellKey } from './grid';
 /** Arrow cell → zone (verify against physical board if needed). */
 export const ENTRANCES: Entrance[] = [
   { at: { row: 0, column: 14 }, direction: 'down', zoneId: 'museum' },
+  { at: { row: 2, column: 18 }, direction: 'left', zoneId: 'museum' },
   { at: { row: 3, column: 7 }, direction: 'up', zoneId: 'book-store' },
   { at: { row: 3, column: 4 }, direction: 'up', zoneId: 'locksmith' },
   { at: { row: 4, column: 21 }, direction: 'up', zoneId: 'holmes-house' },

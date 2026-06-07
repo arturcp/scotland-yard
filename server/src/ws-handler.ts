@@ -2,6 +2,7 @@ import type { WebSocket } from 'ws';
 import type { CaseDefinition, GameRoomState, NoteEntry, Position } from '../../src/types/game.js';
 import {
   beginSolutionVerification,
+  confirmSolution,
   getCaseForRoom,
   getPlayerNotes,
   getPublicRoomState,
@@ -38,6 +39,7 @@ type ClientMessage =
   | { type: 'updateNotes'; customText: string }
   | { type: 'submitSolution'; answers: Record<string, string> }
   | { type: 'revealSolution' }
+  | { type: 'confirmSolution'; correct: boolean }
   | { type: 'leave' };
 
 export type ServerMessage =
@@ -123,7 +125,11 @@ function registerClient(ws: WebSocket, roomCode: string, sessionToken: string, p
 function handleEvents(code: string, events: ServerGameEvent[] | undefined, state: GameRoomState): void {
   if (events?.length) {
     for (const event of events) {
-      if (event.type === 'clueAdded' || event.type === 'lockedZoneEncountered') {
+      if (
+        event.type === 'clueAdded' ||
+        event.type === 'lockedZoneEncountered' ||
+        event.type === 'solutionRevealed'
+      ) {
         for (const client of getClients(code)) {
           const ctx = clientContext.get(client);
           if (ctx?.playerId === event.playerId) {
@@ -291,6 +297,15 @@ export function handleConnection(ws: WebSocket): void {
           }
           case 'revealSolution': {
             const result = revealSolution(ctx.roomCode, ctx.playerId);
+            if (result.error) {
+              sendError(ws, result.error);
+              return;
+            }
+            handleEvents(ctx.roomCode, result.events, result.state);
+            break;
+          }
+          case 'confirmSolution': {
+            const result = confirmSolution(ctx.roomCode, ctx.playerId, message.correct);
             if (result.error) {
               sendError(ws, result.error);
               return;

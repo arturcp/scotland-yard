@@ -53,10 +53,12 @@ export default function Game({ roomCode }: GameProps) {
     showDice,
     turnBanner,
     verifyingMessage,
+    error,
     gameOverMessage,
     officialSolution,
     solutionNarrative,
     lastSubmittedAnswers,
+    solutionReveal,
     turnOrderRolls,
     pendingClue,
     pendingLockedZone,
@@ -73,6 +75,7 @@ export default function Game({ roomCode }: GameProps) {
     updateNotes,
     submitSolution,
     revealSolution,
+    confirmSolution,
     leaveGame,
     roomClosed,
     clearRemoteMove,
@@ -209,6 +212,16 @@ export default function Game({ roomCode }: GameProps) {
       setSolutionSubmitted(true);
     }
   }, [phase]);
+
+  useEffect(() => {
+    if (phase === 'playing' && playerId !== null) {
+      const player = room?.players.find((entry) => entry.id === playerId);
+      if (player?.eliminated) {
+        setSolutionSubmitted(false);
+        setSolutionOpen(false);
+      }
+    }
+  }, [phase, playerId, room?.players]);
 
   const players = useMemo(
     () => visiblePlayers as Player[],
@@ -348,7 +361,9 @@ export default function Game({ roomCode }: GameProps) {
       />
       <main id="main-content">
         <TurnBanner message={bannerMessage} />
-        {verifyingMessage && <div className="game-status-banner">{verifyingMessage}</div>}
+        {(verifyingMessage || error) && (
+          <div className="game-status-banner">{verifyingMessage ?? error}</div>
+        )}
         {gameOverMessage && officialSolution && (
           <div className="game-over-overlay">
             <div className="game-over-overlay__panel">
@@ -382,11 +397,21 @@ export default function Game({ roomCode }: GameProps) {
         open={solutionOpen && phase !== 'finished'}
         caseFields={caseFields}
         submitted={solutionSubmitted}
+        revealed={solutionReveal !== null}
+        officialSolution={solutionReveal?.officialSolution ?? null}
+        playerAnswers={solutionReveal?.playerAnswers ?? null}
+        solutionNarrative={solutionReveal?.solutionNarrative ?? null}
         onSubmit={(answers) => {
           submitSolution(answers);
-          setSolutionSubmitted(true);
         }}
         onReveal={revealSolution}
+        onConfirm={(correct) => {
+          confirmSolution(correct);
+          if (!correct) {
+            setSolutionOpen(false);
+            setSolutionSubmitted(false);
+          }
+        }}
         onContinue={() => {
           solutionDismissedRef.current = true;
           setSolutionOpen(false);
