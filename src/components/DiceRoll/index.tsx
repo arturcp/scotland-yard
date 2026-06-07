@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import DiceBox from '@3d-dice/dice-box';
 import '@3d-dice/dice-box/dist/style.css';
 import confetti from 'canvas-confetti';
@@ -41,22 +41,28 @@ async function waitForAnimationFrames(count = 2): Promise<void> {
 
 interface DiceRollProps {
   onComplete: (result: number) => void;
-  forcedResult?: number | null;
   resultMessage?: string;
+  showConfetti?: boolean;
 }
 
 export default function DiceRoll({
   onComplete,
-  forcedResult = null,
   resultMessage,
+  showConfetti = true,
 }: DiceRollProps) {
   const diceCanvasId = useId().replace(/:/g, '');
   const containerId = `dice-box-container-${diceCanvasId}`;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const onCompleteRef = useRef(onComplete);
   const [result, setResult] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
 
   useEffect(() => {
-    const container = document.getElementById(containerId);
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    const container = containerRef.current;
     if (!container) {
       return;
     }
@@ -88,11 +94,11 @@ export default function DiceRoll({
             return;
           }
 
-          const value = forcedResult ?? getDiceResult(results);
+          const value = getDiceResult(results);
           setResult(value);
           setShowResult(true);
 
-          if (value === 6) {
+          if (showConfetti && value === 6) {
             confetti({
               particleCount: 120,
               spread: 80,
@@ -101,7 +107,7 @@ export default function DiceRoll({
           }
 
           completeTimer = window.setTimeout(() => {
-            onComplete(value);
+            onCompleteRef.current(value);
           }, RESULT_HOLD_MS);
         },
       });
@@ -120,8 +126,7 @@ export default function DiceRoll({
       await waitForAnimationFrames();
 
       if (!cancelled) {
-        const notation = forcedResult !== null ? `1d6@${forcedResult}` : '1d6';
-        diceBox.roll(notation);
+        diceBox.roll('1d6');
       }
     })();
 
@@ -133,11 +138,11 @@ export default function DiceRoll({
         diceBox.clear();
       }
     };
-  }, [containerId, diceCanvasId, forcedResult, onComplete]);
+  }, [containerId, diceCanvasId, showConfetti]);
 
   return (
     <div className="dice-roll-overlay" role="status" aria-live="polite">
-      <div id={containerId} className="dice-box-container" />
+      <div id={containerId} ref={containerRef} className="dice-box-container" />
       {showResult && result !== null && (
         <p className="dice-roll-result">
           {resultMessage ?? `Você tirou o número ${result}!`}

@@ -9,7 +9,7 @@ import type {
   RoomSummary,
   TurnOrderRoll,
 } from '../../src/types/game.js';
-import { MAX_PLAYERS, MIN_PLAYERS, PLAYER_COLORS } from '../../src/types/game.js';
+import { MAX_PLAYERS, MIN_PLAYERS, PLAYER_COLORS, DEFAULT_MASTER_KEYS_PER_PLAYER, MAX_MASTER_KEYS_PER_PLAYER } from '../../src/types/game.js';
 import type { ZoneId } from '../../src/board/types.js';
 import { getAvailableSquares } from '../../src/lib/available-squares.js';
 import {
@@ -38,8 +38,11 @@ function generateSessionToken(): string {
   return randomBytes(16).toString('hex');
 }
 
-function rollD6(): number {
-  return Math.floor(Math.random() * 6) + 1;
+function parseDiceValue(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 6) {
+    return null;
+  }
+  return value;
 }
 
 function normalizeText(value: string): string {
@@ -127,6 +130,10 @@ function emptyRoomState(code: string): GameRoomState {
     lastSubmittedAnswers: null,
     officialSolution: null,
     sessionTokens: {},
+    masterKeysPerPlayer: DEFAULT_MASTER_KEYS_PER_PLAYER,
+    masterKeysRemainingByPlayer: {},
+    lockedZones: {},
+    pendingLockedZoneEntry: null,
   };
 }
 
@@ -156,7 +163,85 @@ function createInitialState(code: string, caseDef: CaseDefinition): GameRoomStat
     lastSubmittedAnswers: null,
     officialSolution: null,
     sessionTokens: {},
+    masterKeysPerPlayer: DEFAULT_MASTER_KEYS_PER_PLAYER,
+    masterKeysRemainingByPlayer: {},
+    lockedZones: {},
+    pendingLockedZoneEntry: null,
   };
+}
+
+function getMasterKeysRemaining(state: GameRoomState, playerId: number): number {
+  return state.masterKeysRemainingByPlayer[playerId] ?? 0;
+}
+
+function initializeMasterKeys(state: GameRoomState): void {
+  state.masterKeysRemainingByPlayer = {};
+  for (const player of state.players.filter((entry) => entry.connected)) {
+    state.masterKeysRemainingByPlayer[player.id] = state.masterKeysPerPlayer;
+  }
+}
+
+function advanceTurn(state: GameRoomState): ServerGameEvent {
+  state.pendingLockedZoneEntry = null;
+  state.shift = {
+    status: 'waiting',
+    availableSquares: [],
+    playerId: state.shift.playerId,
+    diceResult: null,
+  };
+  state.currentPlayerIndex = nextActivePlayerIndex(state);
+  const nextPlayerId = state.turnOrder[state.currentPlayerIndex]!;
+  state.shift.playerId = nextPlayerId;
+  const nextPlayer = state.players.find((player) => player.id === nextPlayerId)!;
+  return {
+    type: 'turnStarted',
+    playerId: nextPlayerId,
+    playerName: nextPlayer.name,
+  };
+}
+
+function finishMoveWithClueCheck(
+  state: GameRoomState,
+  playerId: number,
+  newPosition: Position,
+  events: ServerGameEvent[],
+): boolean {
+  const zoneId = newPosition.place as ZoneId | undefined;
+  if (!zoneId || zoneId === 'holmes-house') {
+    return false;
+  }
+
+  const visited = state.visitedZonesByPlayer[playerId] ?? [];
+  const clueText = getCaseClue(state.caseId, zoneId);
+  if (!clueText || visited.includes(zoneId)) {
+    return false;
+  }
+
+  const zoneName = getZoneLabel(zoneId);
+  state.visitedZonesByPlayer[playerId] = [...visited, zoneId];
+  const entry: NoteEntry = {
+    kind: 'clue',
+    zoneId,
+    zoneName,
+    text: clueText,
+    at: new Date().toISOString(),
+  };
+  state.notesByPlayer[playerId] = [...(state.notesByPlayer[playerId] ?? []), entry];
+  events.push({
+    type: 'clueAdded',
+    playerId,
+    zoneId,
+    zoneName,
+    clueText,
+  });
+  state.shift = {
+    status: 'awaiting-clue',
+    availableSquares: [],
+    playerId,
+    diceResult: null,
+  };
+  state.pendingLockedZoneEntry = null;
+  return true;
 }
 
 function persist(state: GameRoomState): GameRoomState {
@@ -278,6 +363,10 @@ export function joinRoom(
         lastSubmittedAnswers: null,
         officialSolution: null,
         sessionTokens: {},
+        masterKeysPerPlayer: DEFAULT_MASTER_KEYS_PER_PLAYER,
+        masterKeysRemainingByPlayer: {},
+        lockedZones: {},
+        pendingLockedZoneEntry: null,
       },
       sessionToken: '',
       playerId: 0,
@@ -397,6 +486,10 @@ export function reconnectRoom(code: string, sessionToken: string): JoinResult {
         lastSubmittedAnswers: null,
         officialSolution: null,
         sessionTokens: {},
+        masterKeysPerPlayer: DEFAULT_MASTER_KEYS_PER_PLAYER,
+        masterKeysRemainingByPlayer: {},
+        lockedZones: {},
+        pendingLockedZoneEntry: null,
       },
       sessionToken: '',
       playerId: 0,
@@ -434,6 +527,7 @@ function removePlayerFromGameState(state: GameRoomState, playerId: number): Serv
   delete state.sessionTokens[playerId];
   delete state.notesByPlayer[playerId];
   delete state.visitedZonesByPlayer[playerId];
+  delete state.masterKeysRemainingByPlayer[playerId];
   state.players = state.players.filter((player) => player.id !== playerId);
 
   if (state.creatorId === playerId) {
@@ -541,6 +635,15 @@ export type ServerGameEvent =
   | { type: 'diceRolled'; playerId: number; playerName: string; value: number; availableSquares: AvailableSquare[] }
   | { type: 'playerMoved'; playerId: number; position: Position; path: string[] }
   | { type: 'clueAdded'; playerId: number; zoneId: ZoneId; zoneName: string; clueText: string }
+  | {
+      type: 'lockedZoneEncountered';
+      playerId: number;
+      zoneId: ZoneId;
+      zoneName: string;
+      hasMasterKey: boolean;
+    }
+  | { type: 'zoneLocked'; playerId: number; playerName: string; zoneId: ZoneId }
+  | { type: 'zoneUnlocked'; zoneId: ZoneId }
   | { type: 'verifying'; playerName: string }
   | { type: 'playerEliminated'; playerId: number; playerName: string }
   | {
@@ -614,6 +717,9 @@ export function startGame(code: string, playerId: number): EngineResult {
   state.turnOrderRolls = [];
   state.turnOrder = [];
   state.currentPlayerIndex = 0;
+  state.lockedZones = {};
+  state.pendingLockedZoneEntry = null;
+  initializeMasterKeys(state);
   state.shift = {
     status: 'waiting',
     availableSquares: [],
@@ -679,7 +785,34 @@ function finalizeTurnOrder(state: GameRoomState): ServerGameEvent[] {
   ];
 }
 
-export function rollTurnOrderDice(code: string, playerId: number): EngineResult {
+export function setMasterKeysPerPlayer(
+  code: string,
+  playerId: number,
+  count: number,
+): EngineResult {
+  const state = getMutableRoom(code);
+  if (!state) {
+    return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
+  }
+  if (state.creatorId !== playerId) {
+    return { state, error: 'Apenas o criador pode alterar as chaves-mestras.' };
+  }
+  if (state.phase !== 'lobby') {
+    return { state, error: 'As chaves-mestras só podem ser definidas no lobby.' };
+  }
+  if (!Number.isInteger(count) || count < 0 || count > MAX_MASTER_KEYS_PER_PLAYER) {
+    return {
+      state,
+      error: `Informe um valor entre 0 e ${MAX_MASTER_KEYS_PER_PLAYER}.`,
+    };
+  }
+
+  state.masterKeysPerPlayer = count;
+  persist(state);
+  return { state };
+}
+
+export function rollTurnOrderDice(code: string, playerId: number, value: number): EngineResult {
   const state = getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
@@ -696,8 +829,12 @@ export function rollTurnOrderDice(code: string, playerId: number): EngineResult 
     return { state, error: 'Jogador inválido.' };
   }
 
-  const value = rollD6();
-  const roll: TurnOrderRoll = { playerId, playerName: player.name, value };
+  const diceValue = parseDiceValue(value);
+  if (diceValue === null) {
+    return { state, error: 'Valor de dado inválido.' };
+  }
+
+  const roll: TurnOrderRoll = { playerId, playerName: player.name, value: diceValue };
   state.turnOrderRolls = [...state.turnOrderRolls, roll];
   state.turnOrderPendingIds = state.turnOrderPendingIds.filter((id) => id !== playerId);
 
@@ -706,7 +843,7 @@ export function rollTurnOrderDice(code: string, playerId: number): EngineResult 
       type: 'turnOrderDiceRolled',
       playerId,
       playerName: player.name,
-      value,
+      value: diceValue,
       rolls: [...state.turnOrderRolls],
     },
   ];
@@ -719,7 +856,7 @@ export function rollTurnOrderDice(code: string, playerId: number): EngineResult 
   return { state, events };
 }
 
-export function rollDice(code: string, playerId: number): EngineResult {
+export function rollDice(code: string, playerId: number, value: number): EngineResult {
   const state = getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
@@ -739,19 +876,31 @@ export function rollDice(code: string, playerId: number): EngineResult {
     return { state, error: 'Jogador inválido.' };
   }
 
-  const value = rollD6();
-  const availableSquares = getAvailableSquares(player, value);
+  const diceValue = parseDiceValue(value);
+  if (diceValue === null) {
+    return { state, error: 'Valor de dado inválido.' };
+  }
+
+  const availableSquares = getAvailableSquares(player, diceValue);
   state.shift = {
     status: 'in-progress',
     availableSquares,
     playerId,
-    diceResult: value,
+    diceResult: diceValue,
   };
   persist(state);
 
   return {
     state,
-    events: [{ type: 'diceRolled', playerId, playerName: player.name, value, availableSquares }],
+    events: [
+      {
+        type: 'diceRolled',
+        playerId,
+        playerName: player.name,
+        value: diceValue,
+        availableSquares,
+      },
+    ],
   };
 }
 
@@ -784,6 +933,31 @@ export function movePlayer(code: string, playerId: number, destination: Position
     ? { place: match.place, id: match.id, path: match.path }
     : { row: match.row, column: match.column, place: null, id: match.id, path: match.path };
 
+  const zoneId = newPosition.place as ZoneId | undefined;
+  const lock = zoneId ? state.lockedZones[zoneId] : undefined;
+  if (zoneId && lock && lock.lockedBy !== playerId) {
+    state.shift.status = 'awaiting-locked-zone';
+    state.pendingLockedZoneEntry = {
+      zoneId,
+      zoneName: getZoneLabel(zoneId),
+      destination: newPosition,
+      path: match.path,
+    };
+    persist(state);
+    return {
+      state,
+      events: [
+        {
+          type: 'lockedZoneEncountered',
+          playerId,
+          zoneId,
+          zoneName: getZoneLabel(zoneId),
+          hasMasterKey: getMasterKeysRemaining(state, playerId) > 0,
+        },
+      ],
+    };
+  }
+
   player.position = newPosition;
 
   const events: ServerGameEvent[] = [
@@ -795,50 +969,130 @@ export function movePlayer(code: string, playerId: number, destination: Position
     },
   ];
 
-  const zoneId = newPosition.place as ZoneId | undefined;
-  if (zoneId && zoneId !== 'holmes-house') {
-    const visited = state.visitedZonesByPlayer[playerId] ?? [];
-    const clueText = getCaseClue(state.caseId, zoneId);
-    if (clueText && !visited.includes(zoneId)) {
-      const zoneName = getZoneLabel(zoneId);
-      state.visitedZonesByPlayer[playerId] = [...visited, zoneId];
-      const entry: NoteEntry = {
-        kind: 'clue',
-        zoneId,
-        zoneName,
-        text: clueText,
-        at: new Date().toISOString(),
-      };
-      state.notesByPlayer[playerId] = [...(state.notesByPlayer[playerId] ?? []), entry];
-      events.push({
-        type: 'clueAdded',
-        playerId,
-        zoneId,
-        zoneName,
-        clueText,
-      });
-    }
+  if (finishMoveWithClueCheck(state, playerId, newPosition, events)) {
+    persist(state);
+    return { state, events };
   }
 
-  state.shift = {
-    status: 'waiting',
-    availableSquares: [],
-    playerId,
-    diceResult: null,
-  };
-
-  state.currentPlayerIndex = nextActivePlayerIndex(state);
-  const nextPlayerId = state.turnOrder[state.currentPlayerIndex]!;
-  state.shift.playerId = nextPlayerId;
+  events.push(advanceTurn(state));
   persist(state);
+  return { state, events };
+}
 
-  const nextPlayer = state.players.find((p) => p.id === nextPlayerId)!;
-  events.push({
-    type: 'turnStarted',
-    playerId: nextPlayerId,
-    playerName: nextPlayer.name,
-  });
+export function passTurn(code: string, playerId: number): EngineResult {
+  const state = getMutableRoom(code);
+  if (!state) {
+    return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
+  }
+  if (state.phase !== 'playing') {
+    return { state, error: 'Não é possível passar o turno agora.' };
+  }
+  if (state.shift.playerId !== playerId) {
+    return { state, error: 'Não é a sua vez.' };
+  }
+  if (state.shift.status !== 'awaiting-clue' && state.shift.status !== 'awaiting-locked-zone') {
+    return { state, error: 'Não há ação pendente para concluir.' };
+  }
 
+  state.pendingLockedZoneEntry = null;
+  const events = [advanceTurn(state)];
+  persist(state);
+  return { state, events };
+}
+
+export function lockZoneFromClue(code: string, playerId: number, zoneId: ZoneId): EngineResult {
+  const state = getMutableRoom(code);
+  if (!state) {
+    return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
+  }
+  if (state.phase !== 'playing') {
+    return { state, error: 'Não é possível trancar a zona agora.' };
+  }
+  if (state.shift.playerId !== playerId || state.shift.status !== 'awaiting-clue') {
+    return { state, error: 'Só é possível trancar após descobrir uma pista.' };
+  }
+  if (getMasterKeysRemaining(state, playerId) <= 0) {
+    return { state, error: 'Você não possui chaves-mestras disponíveis.' };
+  }
+
+  const player = state.players.find((entry) => entry.id === playerId);
+  if (!player) {
+    return { state, error: 'Jogador inválido.' };
+  }
+  if (player.position.place !== zoneId) {
+    return { state, error: 'Você só pode trancar a zona em que está.' };
+  }
+
+  state.masterKeysRemainingByPlayer[playerId] = getMasterKeysRemaining(state, playerId) - 1;
+  state.lockedZones[zoneId] = { lockedBy: playerId };
+  const events: ServerGameEvent[] = [
+    {
+      type: 'zoneLocked',
+      playerId,
+      playerName: player.name,
+      zoneId,
+    },
+    advanceTurn(state),
+  ];
+  persist(state);
+  return { state, events };
+}
+
+export function resolveLockedZoneEntry(
+  code: string,
+  playerId: number,
+  unlock: boolean,
+): EngineResult {
+  const state = getMutableRoom(code);
+  if (!state) {
+    return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
+  }
+  if (state.phase !== 'playing') {
+    return { state, error: 'Não é possível resolver a entrada agora.' };
+  }
+  if (state.shift.playerId !== playerId || state.shift.status !== 'awaiting-locked-zone') {
+    return { state, error: 'Não há zona trancada aguardando resposta.' };
+  }
+
+  const pending = state.pendingLockedZoneEntry;
+  if (!pending) {
+    return { state, error: 'Não há zona trancada aguardando resposta.' };
+  }
+
+  const hasKey = getMasterKeysRemaining(state, playerId) > 0;
+  if (!unlock || !hasKey) {
+    state.pendingLockedZoneEntry = null;
+    const events = [advanceTurn(state)];
+    persist(state);
+    return { state, events };
+  }
+
+  const player = state.players.find((entry) => entry.id === playerId)!;
+  state.masterKeysRemainingByPlayer[playerId] = getMasterKeysRemaining(state, playerId) - 1;
+  delete state.lockedZones[pending.zoneId];
+  player.position = pending.destination;
+
+  const events: ServerGameEvent[] = [
+    {
+      type: 'zoneUnlocked',
+      zoneId: pending.zoneId,
+    },
+    {
+      type: 'playerMoved',
+      playerId,
+      position: pending.destination,
+      path: pending.path,
+    },
+  ];
+  state.pendingLockedZoneEntry = null;
+
+  if (finishMoveWithClueCheck(state, playerId, pending.destination, events)) {
+    persist(state);
+    return { state, events };
+  }
+
+  events.push(advanceTurn(state));
+  persist(state);
   return { state, events };
 }
 

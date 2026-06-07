@@ -10,6 +10,8 @@ import PlayersModal from '../PlayersModal';
 import Sidebar from '../Sidebar';
 import SolutionModal from '../SolutionModal';
 import TurnBanner from '../TurnBanner';
+import ClueModal from '../ClueModal';
+import LockedZoneModal from '../LockedZoneModal';
 import DiceRoll from '../DiceRoll';
 import MobileWarning from './MobileWarning';
 import TopBar from './TopBar';
@@ -27,14 +29,17 @@ export default function Game({ roomCode }: GameProps) {
   const isDesktop = useIsDesktop();
   const gameSocket = useGameSocket(roomCode);
   const [rolling, setRolling] = useState(false);
+  const [localDiceRoll, setLocalDiceRoll] = useState<'turnOrder' | 'playing' | null>(null);
   const [solutionOpen, setSolutionOpen] = useState(false);
   const [solutionSubmitted, setSolutionSubmitted] = useState(false);
   const [showTurnOrder, setShowTurnOrder] = useState(false);
+  const [showTurnOrderSummary, setShowTurnOrderSummary] = useState(false);
   const [showCaseIntro, setShowCaseIntro] = useState(false);
   const [isInitialCaseIntro, setIsInitialCaseIntro] = useState(false);
   const hasLeftHolmesHouseRef = useRef(false);
   const solutionDismissedRef = useRef(false);
   const prevHolmesVisitRef = useRef<string | null | undefined>(undefined);
+  const localDiceRollRef = useRef<'turnOrder' | 'playing' | null>(null);
 
   const {
     room,
@@ -53,20 +58,26 @@ export default function Game({ roomCode }: GameProps) {
     solutionNarrative,
     lastSubmittedAnswers,
     turnOrderRolls,
-    lastDiceRoll,
+    pendingClue,
+    pendingLockedZone,
+    masterKeysRemaining,
     remoteMove,
     caseFields,
     rollTurnOrderDice,
     rollDice,
     showTurnOrderDice,
     move,
+    passTurn,
+    lockZone,
+    resolveLockedZone,
     updateNotes,
     submitSolution,
     revealSolution,
     leaveGame,
     roomClosed,
     clearRemoteMove,
-    clearLastDiceRoll,
+    clearPendingClue,
+    clearPendingLockedZone,
   } = gameSocket;
 
   const handleLeaveGame = useCallback(() => {
@@ -85,13 +96,41 @@ export default function Game({ roomCode }: GameProps) {
       setShowCaseIntro(true);
       setIsInitialCaseIntro(true);
       setShowTurnOrder(true);
-    }
-    if (phase === 'playing') {
-      setShowTurnOrder(false);
-      setShowCaseIntro(false);
-      setIsInitialCaseIntro(false);
+      setShowTurnOrderSummary(false);
     }
   }, [phase]);
+
+  useEffect(() => {
+    if (phase === 'playing' && showTurnOrder && !showTurnOrderSummary) {
+      setShowTurnOrderSummary(true);
+    }
+  }, [phase, showTurnOrder, showTurnOrderSummary]);
+
+  const dismissTurnOrderSummary = useCallback(() => {
+    setShowTurnOrderSummary(false);
+    setShowTurnOrder(false);
+  }, []);
+
+  const startLocalRoll = useCallback((context: 'turnOrder' | 'playing') => {
+    localDiceRollRef.current = context;
+    setLocalDiceRoll(context);
+    setRolling(true);
+  }, []);
+
+  const handleLocalDiceComplete = useCallback(
+    (value: number) => {
+      const context = localDiceRollRef.current;
+      if (context === 'turnOrder') {
+        rollTurnOrderDice(value);
+      } else if (context === 'playing') {
+        rollDice(value);
+      }
+      localDiceRollRef.current = null;
+      setLocalDiceRoll(null);
+      setRolling(false);
+    },
+    [rollDice, rollTurnOrderDice],
+  );
 
   const dismissCaseIntro = useCallback(() => {
     setShowCaseIntro(false);
@@ -103,24 +142,6 @@ export default function Game({ roomCode }: GameProps) {
   }, []);
 
   const canShowCase = !!room?.caseIntro && phase !== null && phase !== 'lobby';
-
-  const diceResultMessage = useMemo(() => {
-    if (!lastDiceRoll) {
-      return null;
-    }
-
-    if (lastDiceRoll.playerId === playerId) {
-      return `Você tirou o número ${lastDiceRoll.value}!`;
-    }
-
-    return `${lastDiceRoll.playerName} tirou o número ${lastDiceRoll.value}!`;
-  }, [lastDiceRoll, playerId]);
-
-  useEffect(() => {
-    if (lastDiceRoll !== null) {
-      setRolling(true);
-    }
-  }, [lastDiceRoll]);
 
   useEffect(() => {
     if (!remoteMove || !room) {
@@ -196,6 +217,8 @@ export default function Game({ roomCode }: GameProps) {
 
   const activePlayer = room?.players.find((player) => player.id === shift?.playerId);
 
+  const hideMovementOptions = rolling && phase === 'playing';
+
   const handleMove = (destination: Position, path: string[]) => {
     if (!canInteract || playerId === null) {
       return;
@@ -214,12 +237,13 @@ export default function Game({ roomCode }: GameProps) {
   };
 
   const game: GameController = {
-    canInteract,
+    canInteract: canInteract && !hideMovementOptions,
+    lockedZones: room?.lockedZones ?? {},
     gameShift: () => ({
       player: activePlayer ?? players[0]!,
-      availableSquares: shift?.availableSquares ?? [],
+      availableSquares: hideMovementOptions ? [] : (shift?.availableSquares ?? []),
       status: shift?.status ?? 'waiting',
-      diceResult: shift?.diceResult ?? null,
+      diceResult: hideMovementOptions ? null : (shift?.diceResult ?? null),
       players: room?.players ?? [],
     }),
     updatePlayerPosition: () => {},
@@ -235,9 +259,29 @@ export default function Game({ roomCode }: GameProps) {
 
   const clueNotes = notes.filter((entry) => entry.kind === 'clue');
 
+  const turnOrderSequence = useMemo(() => {
+    if (!room?.turnOrder?.length) {
+      return [];
+    }
+
+    const rollsByPlayer = new Map(turnOrderRolls.map((roll) => [roll.playerId, roll]));
+    return room.turnOrder.map((id, index) => {
+      const player = room.players.find((entry) => entry.id === id);
+      const roll = rollsByPlayer.get(id);
+      return {
+        rank: index + 1,
+        playerId: id,
+        name: player?.name ?? 'Jogador',
+        value: roll?.value ?? null,
+      };
+    });
+  }, [room, turnOrderRolls]);
+
+  const firstTurnPlayerName = turnOrderSequence[0]?.name;
+
   const bannerMessage = useMemo(() => {
     if (phase === 'turnOrder') {
-      if (showCaseIntro || rolling) {
+      if (showCaseIntro || rolling || showTurnOrderSummary) {
         return null;
       }
       if (showTurnOrderDice) {
@@ -248,7 +292,14 @@ export default function Game({ roomCode }: GameProps) {
       }
       return null;
     }
-    if (phase === 'playing' && isMyTurn && shift?.status === 'waiting' && !rolling) {
+    if (
+      phase === 'playing' &&
+      isMyTurn &&
+      (shift?.status === 'waiting' ||
+        shift?.status === 'awaiting-clue' ||
+        shift?.status === 'awaiting-locked-zone') &&
+      !rolling
+    ) {
       return 'Seu turno';
     }
     return turnBanner;
@@ -260,6 +311,7 @@ export default function Game({ roomCode }: GameProps) {
     shift?.status,
     showCaseIntro,
     showTurnOrderDice,
+    showTurnOrderSummary,
     turnBanner,
   ]);
 
@@ -288,9 +340,9 @@ export default function Game({ roomCode }: GameProps) {
         onShowCase={showCaseFromSidebar}
         onRollStart={() => {
           if (showTurnOrderDice) {
-            rollTurnOrderDice();
+            startLocalRoll('turnOrder');
           } else {
-            rollDice();
+            startLocalRoll('playing');
           }
         }}
       />
@@ -370,7 +422,7 @@ export default function Game({ roomCode }: GameProps) {
           </div>
         </div>
       )}
-      {showTurnOrder && phase === 'turnOrder' && !showCaseIntro && (
+      {showTurnOrder && phase === 'turnOrder' && !showCaseIntro && !showTurnOrderSummary && (
         <div className="turn-order-overlay">
           <div className="turn-order-overlay__panel">
             <h2>Ordem de jogada</h2>
@@ -387,7 +439,7 @@ export default function Game({ roomCode }: GameProps) {
                   type="button"
                   className="lobby__submit turn-order-overlay__roll-btn"
                   disabled={rolling}
-                  onClick={rollTurnOrderDice}
+                  onClick={() => startLocalRoll('turnOrder')}
                 >
                   Rolar dado
                 </button>
@@ -420,14 +472,65 @@ export default function Game({ roomCode }: GameProps) {
           </div>
         </div>
       )}
-      {rolling && lastDiceRoll !== null && (
-        <DiceRoll
-          forcedResult={lastDiceRoll.value}
-          resultMessage={diceResultMessage ?? undefined}
-          onComplete={() => {
-            setRolling(false);
-            clearLastDiceRoll();
+      {showTurnOrderSummary && phase === 'playing' && (
+        <div className="turn-order-overlay">
+          <div className="turn-order-overlay__panel">
+            <h2>Ordem de jogada definida</h2>
+            <p>
+              {firstTurnPlayerName
+                ? `${firstTurnPlayerName} começa a investigação.`
+                : 'A ordem de jogada foi definida.'}
+            </p>
+            <ol className="turn-order-overlay__sequence">
+              {turnOrderSequence.map((entry) => (
+                <li key={entry.playerId} className="turn-order-overlay__sequence-item">
+                  <span className="turn-order-overlay__sequence-rank">{entry.rank}º</span>
+                  <span className="turn-order-overlay__sequence-name">{entry.name}</span>
+                  <strong className="turn-order-overlay__sequence-value">
+                    {entry.value ?? '—'}
+                  </strong>
+                </li>
+              ))}
+            </ol>
+            <button type="button" className="lobby__submit" onClick={dismissTurnOrderSummary}>
+              Começar investigação
+            </button>
+          </div>
+        </div>
+      )}
+      {pendingClue && (
+        <ClueModal
+          clue={pendingClue}
+          masterKeysRemaining={masterKeysRemaining}
+          onPassTurn={() => {
+            passTurn();
+            clearPendingClue();
           }}
+          onLockZone={() => {
+            lockZone(pendingClue.zoneId);
+            clearPendingClue();
+          }}
+        />
+      )}
+      {pendingLockedZone && (
+        <LockedZoneModal
+          zoneName={pendingLockedZone.zoneName}
+          hasMasterKey={pendingLockedZone.hasMasterKey}
+          onUnlock={() => {
+            resolveLockedZone(true);
+            clearPendingLockedZone();
+          }}
+          onPassTurn={() => {
+            resolveLockedZone(false);
+            clearPendingLockedZone();
+          }}
+        />
+      )}
+      {rolling && localDiceRoll && (
+        <DiceRoll
+          key={localDiceRoll}
+          showConfetti
+          onComplete={handleLocalDiceComplete}
         />
       )}
     </div>

@@ -19,6 +19,22 @@
   transition: filter 0.2s ease, outline-color 0.2s ease;
 }
 
+.place.place--locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  font-size: 1rem;
+  line-height: 1;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+.place.place--locked {
+  filter: brightness(0.72) saturate(0.85);
+}
+
 .holmes-house {
   right: 2px;
   top: 2px;

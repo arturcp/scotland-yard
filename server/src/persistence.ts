@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import type { GameRoomState } from '../../src/types/game.js';
+import { DEFAULT_MASTER_KEYS_PER_PLAYER } from '../../src/types/game.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = process.env.DB_PATH ?? path.join(__dirname, '..', 'data', 'rooms.db');
@@ -58,6 +59,18 @@ export function loadRoom(code: string): GameRoomState | null {
   }
   if (!state.caseIntro) {
     state.caseIntro = '';
+  }
+  if (state.masterKeysPerPlayer === undefined) {
+    state.masterKeysPerPlayer = DEFAULT_MASTER_KEYS_PER_PLAYER;
+  }
+  if (!state.masterKeysRemainingByPlayer) {
+    state.masterKeysRemainingByPlayer = {};
+  }
+  if (!state.lockedZones) {
+    state.lockedZones = {};
+  }
+  if (state.pendingLockedZoneEntry === undefined) {
+    state.pendingLockedZoneEntry = null;
   }
   return state;
 }

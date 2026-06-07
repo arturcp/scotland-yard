@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, Copy } from 'lucide-react';
-import { PLAYER_COLORS, MIN_PLAYERS, type Player, type PlayerColor } from '../../types/game';
+import { PLAYER_COLORS, MIN_PLAYERS, DEFAULT_MASTER_KEYS_PER_PLAYER, MAX_MASTER_KEYS_PER_PLAYER, type Player, type PlayerColor } from '../../types/game';
 import type { UseGameSocketReturn } from '../../hooks/useGameSocket';
 
 import './styles.css';
@@ -46,6 +46,7 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
   const [color, setColor] = useState<PlayerColor>('blue');
   const [joining, setJoining] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [masterKeys, setMasterKeys] = useState(DEFAULT_MASTER_KEYS_PER_PLAYER);
 
   const inviteUrl = useMemo(() => buildInviteUrl(roomCode), [roomCode]);
   const whatsAppUrl = useMemo(() => buildWhatsAppUrl(roomCode, inviteUrl), [roomCode, inviteUrl]);
@@ -53,6 +54,11 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
   const takenColors = new Set(game.players.map((player) => player.color));
   const connectedCount = game.players.filter((player) => player.connected).length;
   const canStart = game.isCreator && connectedCount >= MIN_PLAYERS && game.phase === 'lobby';
+
+  function handleMasterKeysChange(value: number) {
+    setMasterKeys(value);
+    game.setMasterKeysPerPlayer(value);
+  }
 
   function handleJoin(event: React.FormEvent) {
     event.preventDefault();
@@ -173,6 +179,19 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
                   Enviar no WhatsApp
                 </a>
               </section>
+            )}
+
+            {game.isCreator && (
+              <label className="lobby__field">
+                <span>Chaves-mestras por jogador</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={MAX_MASTER_KEYS_PER_PLAYER}
+                  value={masterKeys}
+                  onChange={(event) => handleMasterKeysChange(Number(event.target.value))}
+                />
+              </label>
             )}
 
             {game.isCreator && (

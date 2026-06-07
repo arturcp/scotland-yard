@@ -8,10 +8,15 @@ import {
   createRoom,
   joinRoom,
   leaveRoom,
+  lockZoneFromClue,
+  movePlayer,
+  passTurn,
+  resolveLockedZoneEntry,
   revealSolution,
   rollDice,
   rollTurnOrderDice,
   roomExists,
+  setMasterKeysPerPlayer,
   startGame,
   beginSolutionVerification,
   updatePlayerColor,
@@ -114,12 +119,12 @@ describe('game engine', () => {
     expect(started.events?.some((event) => event.type === 'turnOrderStarted')).toBe(true);
     expect(started.events?.some((event) => event.type === 'turnStarted')).toBe(false);
 
-    const aliceRoll = rollTurnOrderDice(room.code, first.playerId);
+    const aliceRoll = rollTurnOrderDice(room.code, first.playerId, 4);
     expect(aliceRoll.error).toBeUndefined();
     expect(aliceRoll.state.phase).toBe('turnOrder');
     expect(aliceRoll.events?.some((event) => event.type === 'turnOrderDiceRolled')).toBe(true);
 
-    const bobRoll = rollTurnOrderDice(room.code, second.playerId);
+    const bobRoll = rollTurnOrderDice(room.code, second.playerId, 6);
     expect(bobRoll.error).toBeUndefined();
     expect(bobRoll.state.phase).toBe('playing');
     expect(bobRoll.state.turnOrder).toHaveLength(2);
@@ -149,10 +154,20 @@ describe('game engine', () => {
     const second = joinRoom(room.code, 'Bob', 'yellow');
     startGame(room.code, first.playerId);
 
-    const partial = rollTurnOrderDice(room.code, first.playerId);
+    const partial = rollTurnOrderDice(room.code, first.playerId, 4);
     expect(partial.state.phase).toBe('turnOrder');
     expect(partial.state.turnOrderPendingIds).toEqual([second.playerId]);
     expect(partial.events?.some((event) => event.type === 'turnStarted')).toBe(false);
+  });
+
+  test('rejects invalid dice values', () => {
+    const room = createRoom('002');
+    const first = joinRoom(room.code, 'Alice', 'blue');
+    joinRoom(room.code, 'Bob', 'yellow');
+    startGame(room.code, first.playerId);
+
+    expect(rollTurnOrderDice(room.code, first.playerId, 0).error).toBe('Valor de dado inválido.');
+    expect(rollTurnOrderDice(room.code, first.playerId, 7).error).toBe('Valor de dado inválido.');
   });
 
   test('rejects duplicate turn order rolls', () => {
@@ -161,10 +176,10 @@ describe('game engine', () => {
     joinRoom(room.code, 'Bob', 'yellow');
     startGame(room.code, first.playerId);
 
-    const firstRoll = rollTurnOrderDice(room.code, first.playerId);
+    const firstRoll = rollTurnOrderDice(room.code, first.playerId, 4);
     expect(firstRoll.error).toBeUndefined();
 
-    const duplicateRoll = rollTurnOrderDice(room.code, first.playerId);
+    const duplicateRoll = rollTurnOrderDice(room.code, first.playerId, 4);
     expect(duplicateRoll.error).toBe('Você já rolou o dado para a ordem de jogada.');
   });
 
@@ -196,20 +211,148 @@ describe('game engine', () => {
     const first = joinRoom(room.code, 'Alice', 'blue');
     const second = joinRoom(room.code, 'Bob', 'yellow');
     startGame(room.code, first.playerId);
-    rollTurnOrderDice(room.code, first.playerId);
-    const started = rollTurnOrderDice(room.code, second.playerId);
+    rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = rollTurnOrderDice(room.code, second.playerId, 6);
     const activeId = started.state.shift.playerId;
 
     const wrong = rollDice(
       room.code,
       activeId === first.playerId ? second.playerId : first.playerId,
+      3,
     );
     expect(wrong.error).toBe('Não é a sua vez.');
 
-    const rolled = rollDice(room.code, activeId);
+    const rolled = rollDice(room.code, activeId, 5);
     expect(rolled.error).toBeUndefined();
-    expect(rolled.state.shift.diceResult).toBeGreaterThanOrEqual(1);
-    expect(rolled.state.shift.diceResult).toBeLessThanOrEqual(6);
+    expect(rolled.state.shift.diceResult).toBe(5);
+  });
+
+  test('keeps turn when discovering a clue', () => {
+    const room = createRoom('002');
+    const first = joinRoom(room.code, 'Alice', 'blue');
+    const second = joinRoom(room.code, 'Bob', 'yellow');
+    startGame(room.code, first.playerId);
+    rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+
+    const state = started.state;
+    state.shift = {
+      status: 'in-progress',
+      playerId: first.playerId,
+      diceResult: 6,
+      availableSquares: [{ id: 'hotel', place: 'hotel', path: ['hotel'] }],
+    };
+    saveRoom(state);
+
+    const moved = movePlayer(room.code, first.playerId, {
+      place: 'hotel',
+      id: 'hotel',
+      path: ['hotel'],
+    });
+
+    expect(moved.error).toBeUndefined();
+    expect(moved.state.shift.status).toBe('awaiting-clue');
+    expect(moved.state.shift.playerId).toBe(first.playerId);
+    expect(moved.events?.some((event) => event.type === 'clueAdded')).toBe(true);
+    expect(moved.events?.some((event) => event.type === 'turnStarted')).toBe(false);
+  });
+
+  test('passTurn advances to the next player after a clue', () => {
+    const room = createRoom('002');
+    const first = joinRoom(room.code, 'Alice', 'blue');
+    const second = joinRoom(room.code, 'Bob', 'yellow');
+    startGame(room.code, first.playerId);
+    rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+
+    const state = started.state;
+    state.currentPlayerIndex = state.turnOrder.indexOf(first.playerId);
+    state.shift = {
+      status: 'awaiting-clue',
+      playerId: first.playerId,
+      availableSquares: [],
+      diceResult: null,
+    };
+    saveRoom(state);
+
+    const passed = passTurn(room.code, first.playerId);
+    expect(passed.error).toBeUndefined();
+    expect(passed.state.shift.status).toBe('waiting');
+    const nextPlayerId =
+      state.turnOrder[(state.turnOrder.indexOf(first.playerId) + 1) % state.turnOrder.length]!;
+    expect(passed.state.shift.playerId).toBe(nextPlayerId);
+    expect(passed.events?.some((event) => event.type === 'turnStarted')).toBe(true);
+  });
+
+  test('lockZoneFromClue consumes a key and locks the zone', () => {
+    const room = createRoom('002');
+    const first = joinRoom(room.code, 'Alice', 'blue');
+    joinRoom(room.code, 'Bob', 'yellow');
+    const started = startGame(room.code, first.playerId);
+
+    const state = started.state;
+    state.phase = 'playing';
+    state.turnOrder = [first.playerId, state.players.find((p) => p.id !== first.playerId)!.id];
+    state.currentPlayerIndex = 0;
+    state.shift = {
+      status: 'awaiting-clue',
+      playerId: first.playerId,
+      availableSquares: [],
+      diceResult: null,
+    };
+    state.players.find((player) => player.id === first.playerId)!.position = { place: 'hotel' };
+    state.masterKeysRemainingByPlayer[first.playerId] = 2;
+    saveRoom(state);
+
+    const locked = lockZoneFromClue(room.code, first.playerId, 'hotel');
+    expect(locked.error).toBeUndefined();
+    expect(locked.state.lockedZones.hotel?.lockedBy).toBe(first.playerId);
+    expect(locked.state.masterKeysRemainingByPlayer[first.playerId]).toBe(1);
+    expect(locked.events?.some((event) => event.type === 'zoneLocked')).toBe(true);
+  });
+
+  test('entering a locked zone without a key passes the turn', () => {
+    const room = createRoom('002');
+    const first = joinRoom(room.code, 'Alice', 'blue');
+    const second = joinRoom(room.code, 'Bob', 'yellow');
+    startGame(room.code, first.playerId);
+    rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+
+    const state = started.state;
+    state.currentPlayerIndex = state.turnOrder.indexOf(first.playerId);
+    state.shift = {
+      status: 'in-progress',
+      playerId: first.playerId,
+      diceResult: 4,
+      availableSquares: [{ id: 'museum', place: 'museum', path: ['museum'] }],
+    };
+    state.lockedZones = { museum: { lockedBy: second.playerId } };
+    state.masterKeysRemainingByPlayer[first.playerId] = 0;
+    saveRoom(state);
+
+    const blocked = movePlayer(room.code, first.playerId, {
+      place: 'museum',
+      id: 'museum',
+      path: ['museum'],
+    });
+    expect(blocked.state.shift.status).toBe('awaiting-locked-zone');
+    expect(blocked.events?.some((event) => event.type === 'lockedZoneEncountered')).toBe(true);
+
+    const resolved = resolveLockedZoneEntry(room.code, first.playerId, false);
+    const nextPlayerId =
+      state.turnOrder[(state.turnOrder.indexOf(first.playerId) + 1) % state.turnOrder.length]!;
+    expect(resolved.state.shift.playerId).toBe(nextPlayerId);
+    expect(resolved.events?.some((event) => event.type === 'turnStarted')).toBe(true);
+  });
+
+  test('creator can configure master keys in the lobby', () => {
+    const room = createRoom('002');
+    const creator = joinRoom(room.code, 'Alice', 'blue');
+
+    const updated = setMasterKeysPerPlayer(room.code, creator.playerId, 3);
+    expect(updated.error).toBeUndefined();
+    expect(updated.state.masterKeysPerPlayer).toBe(3);
   });
 
   test('eliminates player on wrong solution', () => {
@@ -217,8 +360,8 @@ describe('game engine', () => {
     const first = joinRoom(room.code, 'Alice', 'blue');
     const second = joinRoom(room.code, 'Bob', 'yellow');
     startGame(room.code, first.playerId);
-    rollTurnOrderDice(room.code, first.playerId);
-    const started = rollTurnOrderDice(room.code, second.playerId);
+    rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = rollTurnOrderDice(room.code, second.playerId, 6);
 
     const player = started.state.players.find((p) => p.id === first.playerId)!;
     player.position = { place: 'holmes-house' };

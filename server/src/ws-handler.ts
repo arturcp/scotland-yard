@@ -8,10 +8,14 @@ import {
   joinRoom,
   leaveRoom,
   movePlayer,
+  passTurn,
+  lockZoneFromClue,
+  resolveLockedZoneEntry,
   reconnectRoom,
   revealSolution,
   rollDice,
   rollTurnOrderDice,
+  setMasterKeysPerPlayer,
   setPlayerConnected,
   startGame,
   updateNotes,
@@ -24,9 +28,13 @@ type ClientMessage =
   | { type: 'reconnect'; code: string; sessionToken: string }
   | { type: 'updateColor'; targetPlayerId: number; color: string }
   | { type: 'start' }
-  | { type: 'rollDice' }
-  | { type: 'rollTurnOrderDice' }
+  | { type: 'setMasterKeysPerPlayer'; count: number }
+  | { type: 'rollDice'; value: number }
+  | { type: 'rollTurnOrderDice'; value: number }
   | { type: 'move'; destination: Position }
+  | { type: 'passTurn' }
+  | { type: 'lockZone'; zoneId: string }
+  | { type: 'resolveLockedZone'; unlock: boolean }
   | { type: 'updateNotes'; customText: string }
   | { type: 'submitSolution'; answers: Record<string, string> }
   | { type: 'revealSolution' }
@@ -97,11 +105,12 @@ function sendRoomState(
   send(ws, {
     type: 'roomState',
     state: getPublicRoomState(state),
-    you: {
-      playerId,
-      sessionToken,
-      notes: getPlayerNotes(state, playerId),
-    },
+      you: {
+        playerId,
+        sessionToken,
+        notes: getPlayerNotes(state, playerId),
+        masterKeysRemaining: state.masterKeysRemainingByPlayer[playerId] ?? 0,
+      },
     caseFields: caseDef?.fields.map(({ key, label }) => ({ key, label })) ?? [],
   });
 }
@@ -114,7 +123,7 @@ function registerClient(ws: WebSocket, roomCode: string, sessionToken: string, p
 function handleEvents(code: string, events: ServerGameEvent[] | undefined, state: GameRoomState): void {
   if (events?.length) {
     for (const event of events) {
-      if (event.type === 'clueAdded') {
+      if (event.type === 'clueAdded' || event.type === 'lockedZoneEncountered') {
         for (const client of getClients(code)) {
           const ctx = clientContext.get(client);
           if (ctx?.playerId === event.playerId) {
@@ -196,7 +205,7 @@ export function handleConnection(ws: WebSocket): void {
             break;
           }
           case 'rollDice': {
-            const result = rollDice(ctx.roomCode, ctx.playerId);
+            const result = rollDice(ctx.roomCode, ctx.playerId, message.value);
             if (result.error) {
               sendError(ws, result.error);
               return;
@@ -205,7 +214,7 @@ export function handleConnection(ws: WebSocket): void {
             break;
           }
           case 'rollTurnOrderDice': {
-            const result = rollTurnOrderDice(ctx.roomCode, ctx.playerId);
+            const result = rollTurnOrderDice(ctx.roomCode, ctx.playerId, message.value);
             if (result.error) {
               sendError(ws, result.error);
               return;
@@ -220,6 +229,42 @@ export function handleConnection(ws: WebSocket): void {
               return;
             }
             handleEvents(ctx.roomCode, result.events, result.state);
+            break;
+          }
+          case 'passTurn': {
+            const result = passTurn(ctx.roomCode, ctx.playerId);
+            if (result.error) {
+              sendError(ws, result.error);
+              return;
+            }
+            handleEvents(ctx.roomCode, result.events, result.state);
+            break;
+          }
+          case 'lockZone': {
+            const result = lockZoneFromClue(ctx.roomCode, ctx.playerId, message.zoneId);
+            if (result.error) {
+              sendError(ws, result.error);
+              return;
+            }
+            handleEvents(ctx.roomCode, result.events, result.state);
+            break;
+          }
+          case 'resolveLockedZone': {
+            const result = resolveLockedZoneEntry(ctx.roomCode, ctx.playerId, message.unlock);
+            if (result.error) {
+              sendError(ws, result.error);
+              return;
+            }
+            handleEvents(ctx.roomCode, result.events, result.state);
+            break;
+          }
+          case 'setMasterKeysPerPlayer': {
+            const result = setMasterKeysPerPlayer(ctx.roomCode, ctx.playerId, message.count);
+            if (result.error) {
+              sendError(ws, result.error);
+              return;
+            }
+            broadcastRoomState(ctx.roomCode, result.state);
             break;
           }
           case 'updateNotes': {

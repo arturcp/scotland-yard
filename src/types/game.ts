@@ -22,7 +22,18 @@ export interface AvailableSquare extends Position {
   path: string[];
 }
 
-export type GameShiftStatus = 'waiting' | 'in-progress';
+export type GameShiftStatus = 'waiting' | 'in-progress' | 'awaiting-clue' | 'awaiting-locked-zone';
+
+export interface LockedZone {
+  lockedBy: number;
+}
+
+export interface PendingLockedZoneEntry {
+  zoneId: ZoneId;
+  zoneName: string;
+  destination: Position;
+  path: string[];
+}
 
 export interface GameShiftState {
   status: GameShiftStatus;
@@ -43,6 +54,7 @@ export interface GameController {
   gameShift: () => GameShiftView;
   updatePlayerPosition: (playerId: number, position: Position) => void;
   updateAvailableSquares: (availableSquares: AvailableSquare[], diceResult: number) => void;
+  lockedZones?: Partial<Record<ZoneId, LockedZone>>;
   canInteract?: boolean;
   onMove?: (destination: Position, path: string[]) => void;
 }
@@ -90,6 +102,19 @@ export interface LastDiceRoll {
   value: number;
   playerId: number;
   playerName: string;
+  context: 'turnOrder' | 'playing';
+}
+
+export interface PendingClue {
+  zoneId: ZoneId;
+  zoneName: string;
+  text: string;
+}
+
+export interface PendingLockedZone {
+  zoneId: ZoneId;
+  zoneName: string;
+  hasMasterKey: boolean;
 }
 
 export interface GameRoomState {
@@ -106,6 +131,10 @@ export interface GameRoomState {
   turnOrderRolls: TurnOrderRoll[];
   turnOrderPendingIds: number[];
   shift: GameShiftState;
+  masterKeysPerPlayer: number;
+  masterKeysRemainingByPlayer: Record<number, number>;
+  lockedZones: Partial<Record<ZoneId, LockedZone>>;
+  pendingLockedZoneEntry: PendingLockedZoneEntry | null;
   visitedZonesByPlayer: Record<number, ZoneId[]>;
   notesByPlayer: Record<number, NoteEntry[]>;
   verifyingPlayerId: number | null;
@@ -140,5 +169,7 @@ export type PlayerColor = (typeof PLAYER_COLORS)[number];
 
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 6;
+export const DEFAULT_MASTER_KEYS_PER_PLAYER = 2;
+export const MAX_MASTER_KEYS_PER_PLAYER = 5;
 
 export const SESSION_STORAGE_KEY = 'scotland-yard-session';

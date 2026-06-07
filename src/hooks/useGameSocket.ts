@@ -7,11 +7,25 @@ import type {
   GameRoomState,
   LastDiceRoll,
   NoteEntry,
+  PendingClue,
+  PendingLockedZone,
   Position,
   TurnOrderRoll,
 } from '../types/game';
 
 type PublicRoomState = Omit<GameRoomState, 'sessionTokens'>;
+
+function resolvePlayerName(
+  room: PublicRoomState | null,
+  rollerId: number,
+  playerName?: string,
+): string {
+  if (playerName) {
+    return playerName;
+  }
+
+  return room?.players.find((player) => player.id === rollerId)?.name ?? 'Jogador';
+}
 
 function buildTurnBanner(state: PublicRoomState, playerId: number | null): string | null {
   if (state.phase !== 'playing' || state.shift.playerId === 0) {
@@ -34,7 +48,7 @@ type ServerMessage =
   | {
       type: 'roomState';
       state: PublicRoomState;
-      you: { playerId: number; sessionToken: string; notes: NoteEntry[] };
+      you: { playerId: number; sessionToken: string; notes: NoteEntry[]; masterKeysRemaining: number };
       caseFields: CaseField[];
     }
   | { type: 'error'; message: string }
@@ -57,6 +71,15 @@ type ServerMessage =
     }
   | { type: 'playerMoved'; playerId: number; position: Position; path: string[] }
   | { type: 'clueAdded'; playerId: number; zoneId: string; zoneName: string; clueText: string }
+  | {
+      type: 'lockedZoneEncountered';
+      playerId: number;
+      zoneId: string;
+      zoneName: string;
+      hasMasterKey: boolean;
+    }
+  | { type: 'zoneLocked'; playerId: number; playerName: string; zoneId: string }
+  | { type: 'zoneUnlocked'; zoneId: string }
   | { type: 'verifying'; playerName: string }
   | { type: 'playerEliminated'; playerId: number; playerName: string }
   | {
@@ -84,6 +107,9 @@ export interface GameSocketState {
   verifyingMessage: string | null;
   gameOverMessage: string | null;
   lastDiceRoll: LastDiceRoll | null;
+  pendingClue: PendingClue | null;
+  pendingLockedZone: PendingLockedZone | null;
+  masterKeysRemaining: number;
   remoteMove: { playerId: number; path: string[] } | null;
   officialSolution: CaseField[] | null;
   solutionNarrative: string | null;
@@ -105,6 +131,9 @@ const INITIAL_STATE: GameSocketState = {
   verifyingMessage: null,
   gameOverMessage: null,
   lastDiceRoll: null,
+  pendingClue: null,
+  pendingLockedZone: null,
+  masterKeysRemaining: 0,
   remoteMove: null,
   officialSolution: null,
   solutionNarrative: null,
@@ -144,8 +173,13 @@ export function useGameSocket(roomCode: string) {
         room: payload.state,
         playerId: payload.you.playerId,
         notes: payload.you.notes,
+        masterKeysRemaining: payload.you.masterKeysRemaining,
         caseFields: payload.caseFields,
         turnOrderRolls: payload.state.turnOrderRolls,
+        pendingClue:
+          payload.state.shift.status === 'awaiting-clue' ? prev.pendingClue : null,
+        pendingLockedZone:
+          payload.state.shift.status === 'awaiting-locked-zone' ? prev.pendingLockedZone : null,
         turnBanner:
           payload.state.phase === 'turnOrder'
             ? null
@@ -262,11 +296,6 @@ export function useGameSocket(roomCode: string) {
             setState((prev) => ({
               ...prev,
               turnOrderRolls: message.rolls,
-              lastDiceRoll: {
-                value: message.value,
-                playerId: message.playerId,
-                playerName: message.playerName,
-              },
             }));
             break;
           case 'turnStarted':
@@ -281,31 +310,37 @@ export function useGameSocket(roomCode: string) {
                   prev.playerId === message.playerId
                     ? 'Seu turno'
                     : `${message.playerName} está jogando`,
-                lastDiceRoll: null,
               };
             });
             break;
           case 'diceRolled':
-            setState((prev) => ({
-              ...prev,
-              lastDiceRoll: {
-                value: message.value,
-                playerId: message.playerId,
-                playerName: message.playerName,
-              },
-              room: prev.room
-                ? {
-                    ...prev.room,
-                    shift: {
-                      ...prev.room.shift,
-                      status: 'in-progress',
-                      diceResult: message.value,
-                      availableSquares: message.availableSquares,
-                      playerId: message.playerId,
-                    },
-                  }
-                : prev.room,
-            }));
+            setState((prev) => {
+              const playerName = resolvePlayerName(
+                prev.room,
+                message.playerId,
+                message.playerName,
+              );
+
+              return {
+                ...prev,
+                turnBanner:
+                  prev.playerId === message.playerId
+                    ? prev.turnBanner
+                    : `${playerName} tirou o número ${message.value}!`,
+                room: prev.room
+                  ? {
+                      ...prev.room,
+                      shift: {
+                        ...prev.room.shift,
+                        status: 'in-progress',
+                        diceResult: message.value,
+                        availableSquares: message.availableSquares,
+                        playerId: message.playerId,
+                      },
+                    }
+                  : prev.room,
+              };
+            });
             break;
           case 'playerMoved':
             setState((prev) => ({
@@ -317,15 +352,6 @@ export function useGameSocket(roomCode: string) {
               room: prev.room
                 ? {
                     ...prev.room,
-                    shift:
-                      prev.playerId === message.playerId
-                        ? {
-                            ...prev.room.shift,
-                            status: 'waiting',
-                            availableSquares: [],
-                            diceResult: null,
-                          }
-                        : prev.room.shift,
                     players: prev.room.players.map((player) =>
                       player.id === message.playerId
                         ? { ...player, position: message.position }
@@ -350,6 +376,43 @@ export function useGameSocket(roomCode: string) {
                   at: new Date().toISOString(),
                 },
               ],
+              pendingClue: {
+                zoneId: message.zoneId as PendingClue['zoneId'],
+                zoneName: message.zoneName,
+                text: message.clueText,
+              },
+              room: prev.room
+                ? {
+                    ...prev.room,
+                    shift: {
+                      ...prev.room.shift,
+                      status: 'awaiting-clue',
+                      availableSquares: [],
+                      diceResult: null,
+                    },
+                  }
+                : prev.room,
+            }));
+            break;
+          case 'lockedZoneEncountered':
+            setState((prev) => ({
+              ...prev,
+              pendingLockedZone: {
+                zoneId: message.zoneId as PendingLockedZone['zoneId'],
+                zoneName: message.zoneName,
+                hasMasterKey: message.hasMasterKey,
+              },
+              room: prev.room
+                ? {
+                    ...prev.room,
+                    shift: {
+                      ...prev.room.shift,
+                      status: 'awaiting-locked-zone',
+                      availableSquares: [],
+                      diceResult: null,
+                    },
+                  }
+                : prev.room,
             }));
             break;
           case 'verifying':
@@ -487,10 +550,26 @@ export function useGameSocket(roomCode: string) {
     [send],
   );
   const startGame = useCallback(() => send({ type: 'start' }), [send]);
-  const rollTurnOrderDice = useCallback(() => send({ type: 'rollTurnOrderDice' }), [send]);
-  const rollDice = useCallback(() => send({ type: 'rollDice' }), [send]);
+  const rollTurnOrderDice = useCallback(
+    (value: number) => send({ type: 'rollTurnOrderDice', value }),
+    [send],
+  );
+  const rollDice = useCallback((value: number) => send({ type: 'rollDice', value }), [send]);
   const move = useCallback(
     (destination: Position) => send({ type: 'move', destination }),
+    [send],
+  );
+  const passTurn = useCallback(() => send({ type: 'passTurn' }), [send]);
+  const lockZone = useCallback(
+    (zoneId: string) => send({ type: 'lockZone', zoneId }),
+    [send],
+  );
+  const resolveLockedZone = useCallback(
+    (unlock: boolean) => send({ type: 'resolveLockedZone', unlock }),
+    [send],
+  );
+  const setMasterKeysPerPlayer = useCallback(
+    (count: number) => send({ type: 'setMasterKeysPerPlayer', count }),
     [send],
   );
   const updateNotes = useCallback(
@@ -535,6 +614,14 @@ export function useGameSocket(roomCode: string) {
     setState((prev) => ({ ...prev, lastDiceRoll: null }));
   }, []);
 
+  const clearPendingClue = useCallback(() => {
+    setState((prev) => ({ ...prev, pendingClue: null }));
+  }, []);
+
+  const clearPendingLockedZone = useCallback(() => {
+    setState((prev) => ({ ...prev, pendingLockedZone: null }));
+  }, []);
+
   const players = state.room?.players ?? [];
   const phase = state.room?.phase ?? null;
   const shift = state.room?.shift;
@@ -565,6 +652,10 @@ export function useGameSocket(roomCode: string) {
     rollTurnOrderDice,
     rollDice,
     move,
+    passTurn,
+    lockZone,
+    resolveLockedZone,
+    setMasterKeysPerPlayer,
     updateNotes,
     submitSolution,
     revealSolution,
@@ -572,6 +663,8 @@ export function useGameSocket(roomCode: string) {
     clearRemoteMove,
     clearTurnBanner,
     clearLastDiceRoll,
+    clearPendingClue,
+    clearPendingLockedZone,
     phase,
     shift,
     players,

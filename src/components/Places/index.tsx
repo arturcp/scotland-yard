@@ -1,4 +1,3 @@
-import { movePlayer, STEP_DURATION_MS } from '../../lib/movement-animation';
 import { ZONE_IDS as zoneIds } from '../../board';
 import type { ZoneId } from '../../board/types';
 import type { GameController } from '../../types/game';
@@ -36,6 +35,7 @@ const PLACE_CLASSES: Record<ZoneId, string> = {
 export default function Places({ game }: PlacesProps) {
   const { availableSquares } = game.gameShift();
   const canInteract = game.canInteract ?? true;
+  const lockedZones = game.lockedZones ?? {};
 
   function handleZoneClick(zoneId: ZoneId, path: string[]) {
     if (!canInteract || !game.onMove) {
@@ -50,7 +50,8 @@ export default function Places({ game }: PlacesProps) {
     <div>
       {zoneIds.map((zoneId) => {
         const available = availableSquares.find((s) => s.place === zoneId);
-        const className = `place ${PLACE_CLASSES[zoneId]}${available && canInteract ? ' available-zone' : ''}`;
+        const isLocked = !!lockedZones[zoneId as ZoneId];
+        const className = `place ${PLACE_CLASSES[zoneId]}${available && canInteract ? ' available-zone' : ''}${isLocked ? ' place--locked' : ''}`;
 
         return (
           <div

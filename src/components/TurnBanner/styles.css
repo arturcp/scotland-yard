@@ -81,6 +81,39 @@
   padding: 0.35rem 0;
 }
 
+.turn-order-overlay__sequence {
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.turn-order-overlay__sequence-item {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.turn-order-overlay__sequence-item:last-child {
+  border-bottom: none;
+}
+
+.turn-order-overlay__sequence-rank {
+  color: #d4af37;
+  font-weight: 700;
+}
+
+.turn-order-overlay__sequence-name {
+  color: #f5f0e6;
+}
+
+.turn-order-overlay__sequence-value {
+  color: #d4af37;
+  font-size: 1.1rem;
+}
+
 .game-over-overlay {
   position: fixed;
   inset: 0;

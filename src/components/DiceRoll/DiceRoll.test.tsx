@@ -75,43 +75,41 @@ describe('DiceRoll', () => {
     expect(confetti).not.toHaveBeenCalled();
   });
 
-  test('uses predetermined notation when a forced result is provided', async () => {
-    mockRollValue = 2;
+  test('uses a standard d6 roll', async () => {
+    renderDiceRoll(vi.fn());
 
+    await waitFor(() => {
+      expect(mockRoll).toHaveBeenCalledWith('1d6');
+    });
+  });
+
+  test('shows a custom result message when provided', async () => {
     render(
       <div style={{ position: 'relative', width: 1133, height: 937 }}>
-        <DiceRoll
-          forcedResult={4}
-          resultMessage="Kátia tirou o número 4!"
-          onComplete={vi.fn()}
-        />
+        <DiceRoll resultMessage="Kátia tirou o número 6!" onComplete={vi.fn()} />
       </div>,
     );
 
     await waitFor(() => {
-      expect(mockRoll).toHaveBeenCalledWith('1d6@4');
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('Kátia tirou o número 4!')).toBeInTheDocument();
+      expect(screen.getByText('Kátia tirou o número 6!')).toBeInTheDocument();
     });
   });
 
-  test('shows the server value even when the animation reports a different result', async () => {
-    mockRollValue = 2;
-
+  test('does not fire confetti when showConfetti is false', async () => {
     render(
       <div style={{ position: 'relative', width: 1133, height: 937 }}>
-        <DiceRoll forcedResult={5} onComplete={vi.fn()} />
+        <DiceRoll showConfetti={false} onComplete={vi.fn()} />
       </div>,
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Você tirou o número 5!')).toBeInTheDocument();
+      expect(screen.getByText('Você tirou o número 6!')).toBeInTheDocument();
     });
+
+    expect(confetti).not.toHaveBeenCalled();
   });
 
-  test('calls onComplete after showing the result', async () => {
+  test('calls onComplete with the animation result', async () => {
     const onComplete = vi.fn();
     renderDiceRoll(onComplete);
 
