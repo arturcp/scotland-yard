@@ -220,3 +220,30 @@
 .legal-content li + li {
   margin-top: 0.375rem;
 }
+
+.github-ribbon {
+  position: fixed;
+  top: 42px;
+  right: -46px;
+  z-index: 50;
+  width: 200px;
+  padding: 8px 0;
+  background: var(--gold);
+  color: var(--background);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-decoration: none;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+  transform: rotate(45deg);
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.github-ribbon:hover {
+  background: var(--ivory);
+  color: var(--background);
+}

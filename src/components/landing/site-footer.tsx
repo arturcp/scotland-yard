@@ -5,7 +5,7 @@ const links = [
   { label: 'Regras', href: '#regras' },
   { label: 'Termos', href: '/termos' },
   { label: 'Privacidade', href: '/privacidade' },
-  { label: 'Créditos', href: '#' },
+  { label: 'Créditos', href: '/creditos' },
 ];
 
 export function SiteFooter() {
