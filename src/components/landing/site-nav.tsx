@@ -4,6 +4,7 @@ const links = [
   { label: 'Como Jogar', href: '#como-funciona' },
   { label: 'A Dedução', href: '#deducao' },
   { label: 'Ambientação', href: '#ambientacao' },
+  { label: 'Regras', href: '#regras' },
 ];
 
 export function SiteNav() {

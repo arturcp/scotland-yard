@@ -1,12 +1,12 @@
-import { Search } from 'lucide-react'
+import { Search } from 'lucide-react';
 
 const links = [
-  { label: 'Como jogar', href: '#' },
-  { label: 'Regras', href: '#' },
+  { label: 'Como jogar', href: '#como-funciona' },
+  { label: 'Regras', href: '#regras' },
   { label: 'Termos', href: '#' },
   { label: 'Privacidade', href: '#' },
   { label: 'Créditos', href: '#' },
-]
+];
 
 export function SiteFooter() {
   return (
@@ -44,10 +44,9 @@ export function SiteFooter() {
         <div className="gold-divider my-8" />
 
         <p className="text-center font-body text-xs tracking-wide text-muted-foreground">
-          “Cada pista conta uma história.” — Documento confidencial de Scotland
-          Yard
+          “Cada pista conta uma história.” — Documento confidencial de Scotland Yard
         </p>
       </div>
     </footer>
-  )
+  );
 }

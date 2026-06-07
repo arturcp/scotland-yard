@@ -24,7 +24,7 @@ export function NewPlayers() {
   const [openModal, setOpenModal] = useState<'how-to-play' | null>(null);
 
   return (
-    <section className="bg-background py-24">
+    <section id="regras" className="bg-background py-24">
       <div className="mx-auto max-w-3xl px-6 text-center">
         <p className="mb-4 font-body text-sm tracking-[0.35em] text-gold uppercase">
           Para iniciantes
