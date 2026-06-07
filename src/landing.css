@@ -180,3 +180,26 @@
     transparent
   );
 }
+
+.scrollbar-noir {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-muted) var(--card);
+}
+
+.scrollbar-noir::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-noir::-webkit-scrollbar-track {
+  background: var(--card);
+}
+
+.scrollbar-noir::-webkit-scrollbar-thumb {
+  background: var(--gold-muted);
+  border-radius: 4px;
+  border: 2px solid var(--card);
+}
+
+.scrollbar-noir::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
