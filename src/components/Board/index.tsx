@@ -1,5 +1,4 @@
 import type { CSSProperties } from 'react';
-import DiceRoll from '../DiceRoll';
 import Places from '../Places';
 import Player from '../Player';
 import type { GameController, Player as GamePlayer } from '../../types/game';
@@ -13,8 +12,6 @@ import './styles.css';
 interface BoardProps {
   players: GamePlayer[];
   game: GameController;
-  rolling: boolean;
-  onRollComplete: (result: number) => void;
 }
 
 const PLACE_PINS = zonePins();
@@ -55,13 +52,16 @@ function playerPosition(player: GamePlayer, players: GamePlayer[]): CSSPropertie
   return { top, left };
 }
 
-export default function Board({ players, game, rolling, onRollComplete }: BoardProps) {
+export default function Board({ players, game }: BoardProps) {
   const { status } = game.gameShift();
-  const isSelectingMove = status === 'in-progress';
+  const isSelectingMove = status === 'in-progress' && game.canInteract;
 
   return (
     <div id="board-frame">
-      <section id="board" className={isSelectingMove ? 'move-selection-active' : undefined}>
+      <section
+        id="board"
+        className={`${isSelectingMove ? 'move-selection-active' : ''}${game.canInteract ? '' : ' board--locked'}`}
+      >
         {GRID.map((list, row) => buildSquares(list, row, game))}
         <Places game={game} />
         <div id="players" style={{ '--piece-size': `${PIECE_SIZE}px` } as CSSProperties}>
@@ -80,7 +80,6 @@ export default function Board({ players, game, rolling, onRollComplete }: BoardP
             );
           })}
         </div>
-        {rolling && <DiceRoll onComplete={onRollComplete} />}
       </section>
     </div>
   );

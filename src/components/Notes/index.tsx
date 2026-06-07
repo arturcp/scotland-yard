@@ -1,12 +1,14 @@
 import './micromodal.css';
 import './styles.css';
+import type { NoteEntry } from '../../types/game';
 
 interface NotesProps {
-  notes: string;
-  onNotesChange: (notes: string) => void;
+  clueNotes: NoteEntry[];
+  customText: string;
+  onCustomNotesChange: (notes: string) => void;
 }
 
-export default function Notes({ notes, onNotesChange }: NotesProps) {
+export default function Notes({ clueNotes, customText, onCustomNotesChange }: NotesProps) {
   return (
     <div className="modal micromodal-slide" id="modal-notes" aria-hidden="true">
       <div className="modal__overlay" tabIndex={-1} data-micromodal-close>
@@ -20,28 +22,38 @@ export default function Notes({ notes, onNotesChange }: NotesProps) {
             <h2 className="modal__title" id="modal-notes-title">
               Notas
             </h2>
-            <button
-              className="modal__close"
-              aria-label="Close modal"
-              data-micromodal-close
-            ></button>
+            <button className="modal__close" aria-label="Fechar" data-micromodal-close />
           </header>
           <main className="modal__content" id="modal-notes-content">
+            {clueNotes.length > 0 && (
+              <section className="notes__clues">
+                <h3>Pistas coletadas</h3>
+                <ul>
+                  {clueNotes.map((entry, index) =>
+                    entry.kind === 'clue' ? (
+                      <li key={`${entry.zoneId}-${index}`}>
+                        <strong>{entry.zoneName}</strong>
+                        <p>{entry.text}</p>
+                      </li>
+                    ) : null,
+                  )}
+                </ul>
+              </section>
+            )}
+            <label className="notes__custom-label" htmlFor="notes-custom">
+              Anotações pessoais
+            </label>
             <textarea
-              value={notes}
-              onChange={(e) => onNotesChange(e.target.value)}
+              id="notes-custom"
+              value={customText}
+              onChange={(e) => onCustomNotesChange(e.target.value)}
               className="notes__editor"
               placeholder="Escreva suas notas aqui..."
             />
           </main>
           <footer className="modal__footer">
-            <button className="modal__btn modal__btn-primary">Salvar</button>
-            <button
-              className="modal__btn"
-              data-micromodal-close
-              aria-label="Close this dialog window"
-            >
-              Close
+            <button className="modal__btn" data-micromodal-close aria-label="Fechar">
+              Fechar
             </button>
           </footer>
         </div>

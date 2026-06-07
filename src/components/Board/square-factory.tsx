@@ -22,6 +22,8 @@ export function buildSquares(list: GridCell[], row: number, game: GameController
         available={isAvailable}
         gameShift={gameShift}
         path={availableEntry?.path ?? null}
+        canInteract={game.canInteract ?? true}
+        onMove={game.onMove}
       />
     );
   });

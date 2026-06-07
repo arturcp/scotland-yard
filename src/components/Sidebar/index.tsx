@@ -11,16 +11,17 @@ import './styles.css';
 interface SidebarProps {
   game: GameController;
   rolling: boolean;
+  showDice: boolean;
   onRollStart: () => void;
 }
 
-export default function Sidebar({ game, rolling, onRollStart }: SidebarProps) {
+export default function Sidebar({ game, rolling, showDice, onRollStart }: SidebarProps) {
   useEffect(() => {
     MicroModal.init();
   }, []);
 
   function handleDiceClick() {
-    if (rolling) {
+    if (rolling || !showDice) {
       return;
     }
 
@@ -29,7 +30,7 @@ export default function Sidebar({ game, rolling, onRollStart }: SidebarProps) {
 
   const { status, diceResult } = game.gameShift();
   const diceButtonClasses =
-    status === 'waiting' ? 'dice-roll-trigger pulsate-fwd' : 'dice-roll-trigger';
+    showDice && status === 'waiting' ? 'dice-roll-trigger pulsate-fwd' : 'dice-roll-trigger';
 
   return (
     <aside id="sidebar">
@@ -53,29 +54,31 @@ export default function Sidebar({ game, rolling, onRollStart }: SidebarProps) {
             </button>
           </li>
           <li>
-            <button type="button" className="nav-item">
+            <button type="button" className="nav-item" data-micromodal-trigger="modal-players">
               <Users aria-hidden="true" size={28} strokeWidth={1.75} />
               <span>Jogadores</span>
             </button>
           </li>
-          <li>
-            <button
-              type="button"
-              className={diceButtonClasses}
-              onClick={handleDiceClick}
-              data-testid="dice-roll-trigger"
-              aria-label="Rolar dados"
-              disabled={rolling}
-            >
-              <DiceIcon />
-              {diceResult !== null && (
-                <span className="dice-result-badge" data-testid="dice-result-badge">
-                  {diceResult}
-                </span>
-              )}
-              <span>Dados</span>
-            </button>
-          </li>
+          {showDice && (
+            <li>
+              <button
+                type="button"
+                className={diceButtonClasses}
+                onClick={handleDiceClick}
+                data-testid="dice-roll-trigger"
+                aria-label="Rolar dados"
+                disabled={rolling}
+              >
+                <DiceIcon />
+                {diceResult !== null && (
+                  <span className="dice-result-badge" data-testid="dice-result-badge">
+                    {diceResult}
+                  </span>
+                )}
+                <span>Dados</span>
+              </button>
+            </li>
+          )}
         </ul>
       </nav>
 

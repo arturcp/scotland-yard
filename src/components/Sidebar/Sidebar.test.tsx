@@ -21,6 +21,7 @@ const makeGame = (
 
 const defaultProps = {
   rolling: false,
+  showDice: true,
   onRollStart: vi.fn(),
 };
 
@@ -55,12 +56,14 @@ describe('Sidebar', () => {
       expect(container.querySelector('.lucide-circle-question-mark')).toBeInTheDocument();
     });
 
-    test('renders the dice roll trigger', () => {
+    test('renders the dice roll trigger when showDice is true', () => {
       renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(screen.getByTestId('dice-roll-trigger')).toBeInTheDocument();
-      expect(
-        screen.getByTestId('dice-roll-trigger').querySelector('.sidebar-dice-icon'),
-      ).toBeInTheDocument();
+    });
+
+    test('hides the dice roll trigger when showDice is false', () => {
+      renderSidebar(<Sidebar game={makeGame()} {...defaultProps} showDice={false} />);
+      expect(screen.queryByTestId('dice-roll-trigger')).not.toBeInTheDocument();
     });
 
     test('renders the Scotland Yard title', () => {
@@ -100,7 +103,7 @@ describe('Sidebar', () => {
     test('calls onRollStart when clicked', () => {
       const onRollStart = vi.fn();
       renderSidebar(
-        <Sidebar game={makeGame('waiting')} rolling={false} onRollStart={onRollStart} />,
+        <Sidebar game={makeGame('waiting')} rolling={false} showDice onRollStart={onRollStart} />,
       );
       fireEvent.click(screen.getByTestId('dice-roll-trigger'));
       expect(onRollStart).toHaveBeenCalledTimes(1);

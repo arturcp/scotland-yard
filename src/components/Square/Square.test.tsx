@@ -105,63 +105,35 @@ describe('Square', () => {
       expect(updateFn).not.toHaveBeenCalled();
     });
 
-    test('calls updatePlayerPosition after the animation when available', () => {
-      vi.useFakeTimers();
-      const updateFn = vi.fn();
-      const newPosition = { row: 5, column: 4, place: null };
-      document.body.innerHTML = '<div id="player-1"></div>';
-      vi.mocked(movePlayer).mockReturnValue(newPosition);
-
+    test('calls onMove when available', () => {
+      const onMove = vi.fn();
       const path = ['5,3', '5,4'];
-      const gameShift: GameShiftView = {
-        player,
-        availableSquares: [],
-        status: 'in-progress',
-        players: [player],
-        diceResult: 2,
-      };
 
       const { container } = render(
         <Square
-          {...makeProps({ available: true, path, gameShift, updatePlayerPosition: updateFn })}
+          {...makeProps({ available: true, path, canInteract: true, onMove })}
         />,
       );
       fireEvent.click(container.querySelector('.square')!);
-      vi.runAllTimers();
 
-      expect(updateFn).toHaveBeenCalledWith(player.id, newPosition);
-      vi.useRealTimers();
+      expect(onMove).toHaveBeenCalledWith(
+        { row: 5, column: 3, place: null, id: '5,3', path },
+        path,
+      );
     });
 
-    test('animation timeout scales with path length', () => {
-      vi.useFakeTimers();
-      const updateFn = vi.fn();
-      const newPosition = { row: 5, column: 5, place: null };
-      document.body.innerHTML = '<div id="player-1"></div>';
-      vi.mocked(movePlayer).mockReturnValue(newPosition);
-
-      const path = ['5,3', '5,4', '5,5'];
-      const gameShift: GameShiftView = {
-        player,
-        availableSquares: [],
-        status: 'in-progress',
-        players: [player],
-        diceResult: 2,
-      };
+    test('does not call onMove when interaction is disabled', () => {
+      const onMove = vi.fn();
+      const path = ['5,3', '5,4'];
 
       const { container } = render(
         <Square
-          {...makeProps({ available: true, path, gameShift, updatePlayerPosition: updateFn })}
+          {...makeProps({ available: true, path, canInteract: false, onMove })}
         />,
       );
       fireEvent.click(container.querySelector('.square')!);
 
-      vi.advanceTimersByTime(path.length * STEP_DURATION_MS - 1);
-      expect(updateFn).not.toHaveBeenCalled();
-
-      vi.advanceTimersByTime(1);
-      expect(updateFn).toHaveBeenCalledWith(player.id, newPosition);
-      vi.useRealTimers();
+      expect(onMove).not.toHaveBeenCalled();
     });
   });
 });

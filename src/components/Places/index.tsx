@@ -35,35 +35,35 @@ const PLACE_CLASSES: Record<ZoneId, string> = {
 
 export default function Places({ game }: PlacesProps) {
   const { availableSquares } = game.gameShift();
+  const canInteract = game.canInteract ?? true;
 
-  function handleZoneClick(_zoneId: ZoneId, path: string[]) {
-    const { player, players } = game.gameShift();
-    const newPosition = movePlayer(player, players, path);
-    const isTeleport = path.length === 1 && !path[0].includes(',');
-    const delay = isTeleport ? 0 : path.length * STEP_DURATION_MS;
-    setTimeout(() => {
-      game.updatePlayerPosition(player.id, newPosition);
-    }, delay);
+  function handleZoneClick(zoneId: ZoneId, path: string[]) {
+    if (!canInteract || !game.onMove) {
+      return;
+    }
+
+    const destination = { place: zoneId, id: zoneId, path };
+    game.onMove(destination, path);
   }
 
   return (
     <div>
       {zoneIds.map((zoneId) => {
         const available = availableSquares.find((s) => s.place === zoneId);
-        const className = `place ${PLACE_CLASSES[zoneId]}${available ? ' available-zone' : ''}`;
+        const className = `place ${PLACE_CLASSES[zoneId]}${available && canInteract ? ' available-zone' : ''}`;
 
         return (
           <div
             key={zoneId}
             className={className}
             data-zone-id={zoneId}
-            role={available ? 'button' : undefined}
-            tabIndex={available ? 0 : undefined}
+            role={available && canInteract ? 'button' : undefined}
+            tabIndex={available && canInteract ? 0 : undefined}
             onClick={() => {
               if (available?.path) handleZoneClick(zoneId, available.path);
             }}
             onKeyDown={(e) => {
-              if (available?.path && (e.key === 'Enter' || e.key === ' ')) {
+              if (available?.path && canInteract && (e.key === 'Enter' || e.key === ' ')) {
                 e.preventDefault();
                 handleZoneClick(zoneId, available.path);
               }

@@ -4,6 +4,47 @@ import Game from './index';
 
 vi.mock('micromodal', () => ({ default: { init: vi.fn() } }));
 
+vi.mock('../../hooks/useGameSocket', () => ({
+  useGameSocket: () => ({
+    connected: false,
+    connecting: false,
+    error: null,
+    room: null,
+    playerId: null,
+    notes: [],
+    caseFields: [],
+    turnOrderRolls: [],
+    turnBanner: null,
+    verifyingMessage: null,
+    gameOverMessage: null,
+    lastDiceRoll: null,
+    remoteMove: null,
+    officialSolution: null,
+    solutionNarrative: null,
+    lastSubmittedAnswers: null,
+    join: vi.fn(),
+    reconnect: vi.fn(),
+    startGame: vi.fn(),
+    rollDice: vi.fn(),
+    move: vi.fn(),
+    updateNotes: vi.fn(),
+    submitSolution: vi.fn(),
+    revealSolution: vi.fn(),
+    clearRemoteMove: vi.fn(),
+    clearTurnBanner: vi.fn(),
+    clearLastDiceRoll: vi.fn(),
+    phase: null,
+    shift: undefined,
+    players: [],
+    visiblePlayers: [],
+    isMyTurn: false,
+    canInteract: false,
+    showDice: false,
+    isCreator: false,
+    activePlayers: [],
+  }),
+}));
+
 function mockDesktopViewport(isDesktop: boolean) {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
@@ -21,7 +62,7 @@ function mockDesktopViewport(isDesktop: boolean) {
 function renderGame() {
   return render(
     <MemoryRouter>
-      <Game />
+      <Game roomCode="ABC123" />
     </MemoryRouter>,
   );
 }
@@ -31,34 +72,9 @@ describe('Game', () => {
     mockDesktopViewport(true);
   });
 
-  test('renders the main container', () => {
-    const { container } = renderGame();
-    expect(container.querySelector('#container')).toBeInTheDocument();
-  });
-
-  test('renders the board', () => {
-    const { container } = renderGame();
-    expect(container.querySelector('#board')).toBeInTheDocument();
-  });
-
-  test('renders the sidebar', () => {
-    const { container } = renderGame();
-    expect(container.querySelector('#sidebar')).toBeInTheDocument();
-  });
-
-  test('renders the notes modal', () => {
-    const { container } = renderGame();
-    expect(container.querySelector('#modal-notes')).toBeInTheDocument();
-  });
-
-  test('renders all 4 players', () => {
-    const { container } = renderGame();
-    expect(container.querySelectorAll('[id^="player-"]')).toHaveLength(4);
-  });
-
-  test('dice button starts with pulsate-fwd class', () => {
-    const { container } = renderGame();
-    expect(container.querySelector('.dice-roll-trigger')).toHaveClass('pulsate-fwd');
+  test('renders the lobby before joining a room', () => {
+    renderGame();
+    expect(screen.getByText('Sala ABC123')).toBeInTheDocument();
   });
 
   test('shows mobile warning on small viewports', () => {
@@ -66,7 +82,6 @@ describe('Game', () => {
     const { container } = renderGame();
 
     expect(container.querySelector('#mobile-warning')).toBeInTheDocument();
-    expect(container.querySelector('#container')).not.toBeInTheDocument();
     expect(screen.getByText('Apenas para desktop')).toBeInTheDocument();
     expect(
       screen.getByText(/Este jogo foi desenvolvido para ser jogado em computadores/i),

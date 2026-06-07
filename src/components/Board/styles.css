@@ -75,3 +75,14 @@
 #board.move-selection-active .place:not(.available-zone) {
   filter: grayscale(1);
 }
+
+#board.board--locked .available-square,
+#board.board--locked .available-zone {
+  pointer-events: none;
+  cursor: default;
+}
+
+#board.board--locked .place,
+#board.board--locked .square:not(.empty) {
+  pointer-events: none;
+}

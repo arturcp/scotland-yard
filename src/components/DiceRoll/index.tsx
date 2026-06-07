@@ -41,15 +41,23 @@ async function waitForAnimationFrames(count = 2): Promise<void> {
 
 interface DiceRollProps {
   onComplete: (result: number) => void;
+  forcedResult?: number | null;
 }
 
-export default function DiceRoll({ onComplete }: DiceRollProps) {
+export default function DiceRoll({ onComplete, forcedResult = null }: DiceRollProps) {
   const diceCanvasId = useId().replace(/:/g, '');
   const containerId = `dice-box-container-${diceCanvasId}`;
-  const [result, setResult] = useState<number | null>(null);
-  const [showResult, setShowResult] = useState(false);
+  const [result, setResult] = useState<number | null>(forcedResult);
+  const [showResult, setShowResult] = useState(forcedResult !== null);
 
   useEffect(() => {
+    if (forcedResult !== null) {
+      setResult(forcedResult);
+      setShowResult(true);
+      const timer = window.setTimeout(() => onComplete(forcedResult), RESULT_HOLD_MS);
+      return () => window.clearTimeout(timer);
+    }
+
     const container = document.getElementById(containerId);
     if (!container) {
       return;
@@ -126,11 +134,11 @@ export default function DiceRoll({ onComplete }: DiceRollProps) {
         diceBox.clear();
       }
     };
-  }, [containerId, diceCanvasId, onComplete]);
+  }, [containerId, diceCanvasId, forcedResult, onComplete]);
 
   return (
     <div className="dice-roll-overlay" role="status" aria-live="polite">
-      <div id={containerId} className="dice-box-container" />
+      {forcedResult === null && <div id={containerId} className="dice-box-container" />}
       {showResult && result !== null && (
         <p className="dice-roll-result">Você tirou o número {result}!</p>
       )}

@@ -11,37 +11,33 @@ const makeGame = (): GameController => ({
   gameShift: () => ({ player: players[0], availableSquares: [], status: 'waiting', players, diceResult: null }),
   updatePlayerPosition: vi.fn(),
   updateAvailableSquares: vi.fn(),
+  canInteract: false,
 });
-
-const defaultProps = {
-  rolling: false,
-  onRollComplete: vi.fn(),
-};
 
 describe('Board', () => {
   test('renders the board section', () => {
-    const { container } = render(<Board players={players} game={makeGame()} {...defaultProps} />);
+    const { container } = render(<Board players={players} game={makeGame()} />);
     expect(container.querySelector('#board')).toBeInTheDocument();
   });
 
   test('renders a players container', () => {
-    const { container } = render(<Board players={players} game={makeGame()} {...defaultProps} />);
+    const { container } = render(<Board players={players} game={makeGame()} />);
     expect(container.querySelector('#players')).toBeInTheDocument();
   });
 
   test('renders all provided players', () => {
-    const { container } = render(<Board players={players} game={makeGame()} {...defaultProps} />);
+    const { container } = render(<Board players={players} game={makeGame()} />);
     expect(container.querySelector('#player-1')).toBeInTheDocument();
     expect(container.querySelector('#player-2')).toBeInTheDocument();
   });
 
   test('renders board squares', () => {
-    const { container } = render(<Board players={players} game={makeGame()} {...defaultProps} />);
+    const { container } = render(<Board players={players} game={makeGame()} />);
     expect(container.querySelectorAll('.square').length).toBeGreaterThan(0);
   });
 
   test('renders place elements', () => {
-    const { container } = render(<Board players={players} game={makeGame()} {...defaultProps} />);
+    const { container } = render(<Board players={players} game={makeGame()} />);
     expect(container.querySelectorAll('.place').length).toBeGreaterThan(0);
   });
 
@@ -51,8 +47,9 @@ describe('Board', () => {
       gameShift: () => ({ player: players[0], availableSquares, status: 'in-progress', players, diceResult: 3 }),
       updatePlayerPosition: vi.fn(),
       updateAvailableSquares: vi.fn(),
+      canInteract: true,
     };
-    const { container } = render(<Board players={players} game={game} {...defaultProps} />);
+    const { container } = render(<Board players={players} game={game} />);
     expect(container.querySelector('.available-square')).toBeInTheDocument();
   });
 
@@ -62,13 +59,14 @@ describe('Board', () => {
       gameShift: () => ({ player: players[0], availableSquares, status: 'in-progress', players, diceResult: 3 }),
       updatePlayerPosition: vi.fn(),
       updateAvailableSquares: vi.fn(),
+      canInteract: true,
     };
-    const { container } = render(<Board players={players} game={game} {...defaultProps} />);
+    const { container } = render(<Board players={players} game={game} />);
     expect(container.querySelector('#board')).toHaveClass('move-selection-active');
   });
 
   test('does not apply move-selection-active class while waiting', () => {
-    const { container } = render(<Board players={players} game={makeGame()} {...defaultProps} />);
+    const { container } = render(<Board players={players} game={makeGame()} />);
     expect(container.querySelector('#board')).not.toHaveClass('move-selection-active');
   });
 });

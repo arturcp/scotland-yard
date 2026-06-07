@@ -1,8 +1,43 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import HomePage from './HomePage';
 
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((input: RequestInfo) => {
+      const url = String(input);
+      if (url.includes('/api/cases/001')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            id: '001',
+            number: 1,
+            title: 'O Homem Profano',
+            intro: 'História do caso para leitura.',
+            questions: [{ key: 'culprit', label: 'Quem matou o Pregador?' }],
+          }),
+        });
+      }
+      if (url.includes('/api/cases')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            cases: [{ id: '001', number: 1, title: 'O Homem Profano' }],
+          }),
+        });
+      }
+      return Promise.resolve({ ok: false, status: 404, json: async () => ({}) });
+    }),
+  );
+});
+
 function renderHomePage() {
-  return render(<HomePage />);
+  return render(
+    <MemoryRouter>
+      <HomePage />
+    </MemoryRouter>,
+  );
 }
 
 describe('HomePage', () => {
@@ -75,7 +110,8 @@ describe('HomePage', () => {
     test('renders create-room and join-room controls', () => {
       renderHomePage();
 
-      expect(screen.getAllByRole('link', { name: /Criar Sala/i }).length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByRole('button', { name: /Criar Sala/i }).length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByText('Escolha o caso').length).toBeGreaterThanOrEqual(2);
       expect(screen.getAllByLabelText('Código da sala')).toHaveLength(2);
       expect(screen.getAllByRole('button', { name: 'Entrar' })).toHaveLength(2);
     });
