@@ -28,12 +28,16 @@
 
 .turn-order-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: var(--sidebar-width);
   z-index: 80;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
 }
 
 .turn-order-overlay__panel {
@@ -42,12 +46,33 @@
   background: rgba(18, 14, 10, 0.95);
   border: 1px solid rgba(212, 175, 55, 0.45);
   color: #f5f0e6;
+  pointer-events: auto;
+}
+
+.turn-order-overlay__roll-btn {
+  width: 100%;
+  margin-bottom: 1rem;
 }
 
 .turn-order-overlay__list {
   margin: 1rem 0 0;
   padding: 0;
   list-style: none;
+}
+
+.turn-order-overlay__prompt {
+  margin: 0 0 1rem;
+  color: #d4af37;
+  font-weight: 600;
+}
+
+.turn-order-overlay__prompt--waiting {
+  color: rgba(245, 240, 230, 0.75);
+  font-weight: 500;
+}
+
+.turn-order-overlay__pending {
+  opacity: 0.65;
 }
 
 .turn-order-overlay__list li {
@@ -93,4 +118,87 @@
   margin-top: 1rem;
   line-height: 1.6;
   white-space: pre-wrap;
+}
+
+.case-intro-overlay {
+  padding: 1.5rem 2rem;
+}
+
+.case-intro-overlay__panel {
+  width: 100%;
+  max-width: 36rem;
+  min-width: 0;
+  max-height: min(85vh, 40rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.case-intro-overlay__body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gold-dim) #120e0a;
+}
+
+.case-intro-overlay__body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.case-intro-overlay__body::-webkit-scrollbar-track {
+  background: #120e0a;
+}
+
+.case-intro-overlay__body::-webkit-scrollbar-thumb {
+  background: var(--color-gold-dim);
+  border-radius: 4px;
+  border: 2px solid #120e0a;
+}
+
+.case-intro-overlay__body::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold);
+}
+
+.case-intro-overlay__hint {
+  margin-top: 1.25rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 4px;
+  background: rgba(212, 175, 55, 0.06);
+  color: rgba(245, 240, 230, 0.8);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.case-intro-overlay__hint strong {
+  color: var(--color-gold);
+  font-weight: 600;
+}
+
+.case-intro-overlay__questions {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.case-intro-overlay__questions h3 {
+  margin: 0 0 0.75rem;
+  color: #d4af37;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.case-intro-overlay__questions ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  line-height: 1.6;
+}
+
+.case-intro-overlay__questions li + li {
+  margin-top: 0.35rem;
+}
+
+.case-intro-overlay__panel .lobby__submit {
+  flex-shrink: 0;
+  margin-top: 1.25rem;
 }

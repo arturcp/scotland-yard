@@ -6,10 +6,12 @@ import {
   getPlayerNotes,
   getPublicRoomState,
   joinRoom,
+  leaveRoom,
   movePlayer,
   reconnectRoom,
   revealSolution,
   rollDice,
+  rollTurnOrderDice,
   setPlayerConnected,
   startGame,
   updateNotes,
@@ -23,10 +25,12 @@ type ClientMessage =
   | { type: 'updateColor'; targetPlayerId: number; color: string }
   | { type: 'start' }
   | { type: 'rollDice' }
+  | { type: 'rollTurnOrderDice' }
   | { type: 'move'; destination: Position }
   | { type: 'updateNotes'; customText: string }
   | { type: 'submitSolution'; answers: Record<string, string> }
-  | { type: 'revealSolution' };
+  | { type: 'revealSolution' }
+  | { type: 'leave' };
 
 export type ServerMessage =
   | {
@@ -36,6 +40,8 @@ export type ServerMessage =
       caseFields: CaseDefinition['fields'];
     }
   | { type: 'error'; message: string }
+  | { type: 'left' }
+  | { type: 'roomClosed' }
   | ServerGameEvent;
 
 interface ClientContext {
@@ -106,20 +112,20 @@ function registerClient(ws: WebSocket, roomCode: string, sessionToken: string, p
 }
 
 function handleEvents(code: string, events: ServerGameEvent[] | undefined, state: GameRoomState): void {
-  if (!events?.length) return;
-
-  for (const event of events) {
-    if (event.type === 'clueAdded') {
-      for (const client of getClients(code)) {
-        const ctx = clientContext.get(client);
-        if (ctx?.playerId === event.playerId) {
-          send(client, event);
+  if (events?.length) {
+    for (const event of events) {
+      if (event.type === 'clueAdded') {
+        for (const client of getClients(code)) {
+          const ctx = clientContext.get(client);
+          if (ctx?.playerId === event.playerId) {
+            send(client, event);
+          }
         }
+        continue;
       }
-      continue;
-    }
 
-    broadcast(code, event);
+      broadcast(code, event);
+    }
   }
 
   broadcastRoomState(code, state);
@@ -198,6 +204,15 @@ export function handleConnection(ws: WebSocket): void {
             handleEvents(ctx.roomCode, result.events, result.state);
             break;
           }
+          case 'rollTurnOrderDice': {
+            const result = rollTurnOrderDice(ctx.roomCode, ctx.playerId);
+            if (result.error) {
+              sendError(ws, result.error);
+              return;
+            }
+            handleEvents(ctx.roomCode, result.events, result.state);
+            break;
+          }
           case 'move': {
             const result = movePlayer(ctx.roomCode, ctx.playerId, message.destination);
             if (result.error) {
@@ -236,6 +251,32 @@ export function handleConnection(ws: WebSocket): void {
               return;
             }
             handleEvents(ctx.roomCode, result.events, result.state);
+            break;
+          }
+          case 'leave': {
+            const roomCode = ctx.roomCode;
+            const result = leaveRoom(roomCode, ctx.playerId);
+            if (result.error && !result.roomDeleted) {
+              sendError(ws, result.error);
+              return;
+            }
+
+            getClients(roomCode).delete(ws);
+            clientContext.delete(ws);
+            send(ws, { type: 'left' });
+
+            if (result.roomDeleted) {
+              for (const client of getClients(roomCode)) {
+                send(client, { type: 'roomClosed' });
+                client.close();
+                clientContext.delete(client);
+              }
+              roomClients.delete(roomCode);
+            } else if (result.state) {
+              handleEvents(roomCode, result.events, result.state);
+            }
+
+            ws.close();
             break;
           }
         }

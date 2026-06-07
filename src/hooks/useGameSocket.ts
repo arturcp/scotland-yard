@@ -12,6 +12,23 @@ import type {
 
 type PublicRoomState = Omit<GameRoomState, 'sessionTokens'>;
 
+function buildTurnBanner(state: PublicRoomState, playerId: number | null): string | null {
+  if (state.phase !== 'playing' || state.shift.playerId === 0) {
+    return null;
+  }
+
+  const activePlayer = state.players.find((player) => player.id === state.shift.playerId);
+  if (!activePlayer) {
+    return null;
+  }
+
+  if (playerId === state.shift.playerId) {
+    return 'Seu turno';
+  }
+
+  return `${activePlayer.name} está jogando`;
+}
+
 type ServerMessage =
   | {
       type: 'roomState';
@@ -20,7 +37,15 @@ type ServerMessage =
       caseFields: CaseField[];
     }
   | { type: 'error'; message: string }
+  | { type: 'turnOrderStarted' }
   | { type: 'turnOrderRoll'; rolls: TurnOrderRoll[] }
+  | {
+      type: 'turnOrderDiceRolled';
+      playerId: number;
+      playerName: string;
+      value: number;
+      rolls: TurnOrderRoll[];
+    }
   | { type: 'turnStarted'; playerId: number; playerName: string }
   | {
       type: 'diceRolled';
@@ -40,7 +65,9 @@ type ServerMessage =
       officialSolution: CaseField[];
       solutionNarrative: string;
     }
-  | { type: 'solutionFailed'; playerId: number; playerName: string };
+  | { type: 'solutionFailed'; playerId: number; playerName: string }
+  | { type: 'left' }
+  | { type: 'roomClosed' };
 
 export interface GameSocketState {
   connected: boolean;
@@ -59,6 +86,8 @@ export interface GameSocketState {
   officialSolution: CaseField[] | null;
   solutionNarrative: string | null;
   lastSubmittedAnswers: Record<string, string> | null;
+  leftGame: boolean;
+  roomClosed: boolean;
 }
 
 const INITIAL_STATE: GameSocketState = {
@@ -78,6 +107,8 @@ const INITIAL_STATE: GameSocketState = {
   officialSolution: null,
   solutionNarrative: null,
   lastSubmittedAnswers: null,
+  leftGame: false,
+  roomClosed: false,
 };
 
 export function useGameSocket(roomCode: string) {
@@ -112,6 +143,13 @@ export function useGameSocket(roomCode: string) {
         playerId: payload.you.playerId,
         notes: payload.you.notes,
         caseFields: payload.caseFields,
+        turnOrderRolls: payload.state.turnOrderRolls,
+        turnBanner:
+          payload.state.phase === 'turnOrder'
+            ? null
+            : payload.state.phase === 'playing'
+              ? buildTurnBanner(payload.state, payload.you.playerId)
+              : prev.turnBanner,
         error: null,
         connecting: false,
       }));
@@ -207,16 +245,39 @@ export function useGameSocket(roomCode: string) {
             }
             setState((prev) => ({ ...prev, error: message.message, connecting: false }));
             break;
+          case 'turnOrderStarted':
+            setState((prev) => ({
+              ...prev,
+              turnBanner: null,
+              lastDiceRoll: null,
+              turnOrderRolls: [],
+            }));
+            break;
           case 'turnOrderRoll':
             setState((prev) => ({ ...prev, turnOrderRolls: message.rolls }));
             break;
-          case 'turnStarted':
+          case 'turnOrderDiceRolled':
             setState((prev) => ({
               ...prev,
-              turnBanner:
-                prev.playerId === message.playerId ? 'Seu turno' : `${message.playerName} está jogando`,
-              lastDiceRoll: null,
+              turnOrderRolls: message.rolls,
+              lastDiceRoll: message.value,
             }));
+            break;
+          case 'turnStarted':
+            setState((prev) => {
+              if (prev.room?.phase !== 'playing') {
+                return prev;
+              }
+
+              return {
+                ...prev,
+                turnBanner:
+                  prev.playerId === message.playerId
+                    ? 'Seu turno'
+                    : `${message.playerName} está jogando`,
+                lastDiceRoll: null,
+              };
+            });
             break;
           case 'diceRolled':
             setState((prev) => ({
@@ -318,6 +379,38 @@ export function useGameSocket(roomCode: string) {
               room: prev.room ? { ...prev.room, phase: 'finished', winnerId: message.winnerId } : prev.room,
             }));
             break;
+          case 'left':
+            intentionalCloseRef.current = true;
+            clearReconnectTimer();
+            clearSessionToken(roomCode);
+            if (wsRef.current) {
+              wsRef.current.onopen = null;
+              wsRef.current.onmessage = null;
+              wsRef.current.onerror = null;
+              wsRef.current.onclose = null;
+              wsRef.current.close();
+              wsRef.current = null;
+            }
+            setState({ ...INITIAL_STATE, leftGame: true });
+            break;
+          case 'roomClosed':
+            intentionalCloseRef.current = true;
+            clearReconnectTimer();
+            clearSessionToken(roomCode);
+            if (wsRef.current) {
+              wsRef.current.onopen = null;
+              wsRef.current.onmessage = null;
+              wsRef.current.onerror = null;
+              wsRef.current.onclose = null;
+              wsRef.current.close();
+              wsRef.current = null;
+            }
+            setState({
+              ...INITIAL_STATE,
+              roomClosed: true,
+              error: 'A sala foi encerrada porque não restam jogadores.',
+            });
+            break;
         }
       };
 
@@ -384,6 +477,7 @@ export function useGameSocket(roomCode: string) {
     [send],
   );
   const startGame = useCallback(() => send({ type: 'start' }), [send]);
+  const rollTurnOrderDice = useCallback(() => send({ type: 'rollTurnOrderDice' }), [send]);
   const rollDice = useCallback(() => send({ type: 'rollDice' }), [send]);
   const move = useCallback(
     (destination: Position) => send({ type: 'move', destination }),
@@ -398,6 +492,26 @@ export function useGameSocket(roomCode: string) {
     [send],
   );
   const revealSolution = useCallback(() => send({ type: 'revealSolution' }), [send]);
+  const leaveGame = useCallback(() => {
+    intentionalCloseRef.current = true;
+    clearReconnectTimer();
+    clearSessionToken(roomCode);
+
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'leave' }));
+    }
+
+    if (wsRef.current) {
+      wsRef.current.onopen = null;
+      wsRef.current.onmessage = null;
+      wsRef.current.onerror = null;
+      wsRef.current.onclose = null;
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    setState({ ...INITIAL_STATE, leftGame: true });
+  }, [clearReconnectTimer, roomCode]);
 
   const clearRemoteMove = useCallback(() => {
     setState((prev) => ({ ...prev, remoteMove: null }));
@@ -417,8 +531,13 @@ export function useGameSocket(roomCode: string) {
   const isMyTurn = !!state.playerId && shift?.playerId === state.playerId;
   const canInteract =
     phase === 'playing' && isMyTurn && shift?.status === 'in-progress' && !state.remoteMove;
+  const showTurnOrderDice =
+    phase === 'turnOrder' &&
+    state.playerId !== null &&
+    (state.room?.turnOrderPendingIds ?? []).includes(state.playerId);
   const showDice =
-    phase === 'playing' && isMyTurn && shift?.status === 'waiting' && !state.remoteMove;
+    showTurnOrderDice ||
+    (phase === 'playing' && isMyTurn && shift?.status === 'waiting' && !state.remoteMove);
   const isCreator = state.playerId !== null && state.room?.creatorId === state.playerId;
   const activePlayers = players.filter((p) => !p.eliminated);
 
@@ -433,11 +552,13 @@ export function useGameSocket(roomCode: string) {
     reconnect,
     updateColor,
     startGame,
+    rollTurnOrderDice,
     rollDice,
     move,
     updateNotes,
     submitSolution,
     revealSolution,
+    leaveGame,
     clearRemoteMove,
     clearTurnBanner,
     clearLastDiceRoll,
@@ -448,6 +569,7 @@ export function useGameSocket(roomCode: string) {
     isMyTurn,
     canInteract,
     showDice,
+    showTurnOrderDice,
     isCreator,
     activePlayers,
   };

@@ -420,6 +420,107 @@ export function reconnectRoom(code: string, sessionToken: string): JoinResult {
   return { state, sessionToken, playerId: player.id };
 }
 
+export interface LeaveRoomResult {
+  state: GameRoomState | null;
+  roomDeleted: boolean;
+  error?: string;
+  events?: ServerGameEvent[];
+}
+
+function removePlayerFromGameState(state: GameRoomState, playerId: number): ServerGameEvent[] {
+  const events: ServerGameEvent[] = [];
+  const wasActive = state.shift.playerId === playerId;
+
+  delete state.sessionTokens[playerId];
+  delete state.notesByPlayer[playerId];
+  delete state.visitedZonesByPlayer[playerId];
+  state.players = state.players.filter((player) => player.id !== playerId);
+
+  if (state.creatorId === playerId) {
+    state.creatorId = state.players[0]?.id ?? null;
+  }
+
+  if (state.verifyingPlayerId === playerId) {
+    state.verifyingPlayerId = null;
+    if (state.phase === 'verifying') {
+      state.phase = 'playing';
+    }
+  }
+
+  const leavingTurnIndex = state.turnOrder.indexOf(playerId);
+  state.turnOrder = state.turnOrder.filter((id) => id !== playerId);
+  state.turnOrderPendingIds = state.turnOrderPendingIds.filter((id) => id !== playerId);
+  state.turnOrderRolls = state.turnOrderRolls.filter((roll) => roll.playerId !== playerId);
+
+  if (state.phase === 'turnOrder') {
+    if (state.players.length < MIN_PLAYERS) {
+      state.phase = 'lobby';
+      state.turnOrder = [];
+      state.turnOrderRolls = [];
+      state.turnOrderPendingIds = state.players.map((player) => player.id);
+      return events;
+    }
+
+    const allRemainingRolled = state.players.every((player) =>
+      state.turnOrderRolls.some((roll) => roll.playerId === player.id),
+    );
+    if (state.turnOrderPendingIds.length === 0 && allRemainingRolled) {
+      events.push(...finalizeTurnOrder(state));
+    }
+    return events;
+  }
+
+  if (state.phase !== 'playing' && state.phase !== 'verifying') {
+    return events;
+  }
+
+  if (state.turnOrder.length === 0) {
+    return events;
+  }
+
+  if (wasActive || !state.turnOrder.includes(state.shift.playerId)) {
+    state.currentPlayerIndex =
+      leavingTurnIndex === -1 ? 0 : leavingTurnIndex % state.turnOrder.length;
+    const nextPlayerId = state.turnOrder[state.currentPlayerIndex]!;
+    state.shift = {
+      status: 'waiting',
+      availableSquares: [],
+      playerId: nextPlayerId,
+      diceResult: null,
+    };
+    const nextPlayer = state.players.find((player) => player.id === nextPlayerId)!;
+    events.push({
+      type: 'turnStarted',
+      playerId: nextPlayerId,
+      playerName: nextPlayer.name,
+    });
+  }
+
+  return events;
+}
+
+export function leaveRoom(code: string, playerId: number): LeaveRoomResult {
+  const state = getMutableRoom(code);
+  if (!state) {
+    return { state: null, roomDeleted: true, error: 'Sala não encontrada.' };
+  }
+
+  if (!state.players.some((player) => player.id === playerId)) {
+    return { state, roomDeleted: false, error: 'Jogador não encontrado.' };
+  }
+
+  const events = removePlayerFromGameState(state, playerId);
+
+  if (state.players.length === 0) {
+    deleteRoom(code);
+    activeRooms.delete(code.toUpperCase());
+    return { state: null, roomDeleted: true, events };
+  }
+
+  persist(state);
+  return { state, roomDeleted: false, events };
+}
+
 export interface EngineResult {
   state: GameRoomState;
   error?: string;
@@ -427,7 +528,15 @@ export interface EngineResult {
 }
 
 export type ServerGameEvent =
+  | { type: 'turnOrderStarted' }
   | { type: 'turnOrderRoll'; rolls: TurnOrderRoll[] }
+  | {
+      type: 'turnOrderDiceRolled';
+      playerId: number;
+      playerName: string;
+      value: number;
+      rolls: TurnOrderRoll[];
+    }
   | { type: 'turnStarted'; playerId: number; playerName: string }
   | { type: 'diceRolled'; playerId: number; value: number; availableSquares: AvailableSquare[] }
   | { type: 'playerMoved'; playerId: number; position: Position; path: string[] }
@@ -501,74 +610,112 @@ export function startGame(code: string, playerId: number): EngineResult {
   }
 
   state.phase = 'turnOrder';
-  state.turnOrderPendingIds = state.players.map((p) => p.id);
+  state.turnOrderPendingIds = state.players.filter((p) => p.connected).map((p) => p.id);
   state.turnOrderRolls = [];
+  state.turnOrder = [];
+  state.currentPlayerIndex = 0;
+  state.shift = {
+    status: 'waiting',
+    availableSquares: [],
+    playerId: 0,
+    diceResult: null,
+  };
   persist(state);
 
-  return resolveTurnOrderRolls(state);
+  return { state, events: [{ type: 'turnOrderStarted' }] };
 }
 
-function resolveTurnOrderRolls(state: GameRoomState): EngineResult {
-  const events: ServerGameEvent[] = [];
+function shuffleArray<T>(items: T[], random: () => number = Math.random): T[] {
+  const array = [...items];
+  for (let index = array.length - 1; index > 0; index--) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [array[index], array[swapIndex]] = [array[swapIndex]!, array[index]!];
+  }
+  return array;
+}
 
-  while (state.phase === 'turnOrder') {
-    const pending = state.turnOrderPendingIds;
-    const rolls: TurnOrderRoll[] = pending.map((playerId) => {
-      const player = state.players.find((p) => p.id === playerId)!;
-      const value = rollD6();
-      return { playerId, playerName: player.name, value };
-    });
+export function computeTurnOrderFromRolls(
+  rolls: TurnOrderRoll[],
+  random: () => number = Math.random,
+): number[] {
+  const byValue = new Map<number, TurnOrderRoll[]>();
+  for (const roll of rolls) {
+    const group = byValue.get(roll.value) ?? [];
+    group.push(roll);
+    byValue.set(roll.value, group);
+  }
 
-    state.turnOrderRolls = [
-      ...state.turnOrderRolls.filter((r) => !pending.includes(r.playerId)),
-      ...rolls,
-    ];
-    events.push({ type: 'turnOrderRoll', rolls });
+  const values = [...byValue.keys()].sort((a, b) => b - a);
+  const order: number[] = [];
+  for (const value of values) {
+    const shuffledGroup = shuffleArray(byValue.get(value)!, random);
+    order.push(...shuffledGroup.map((roll) => roll.playerId));
+  }
 
-    const valueGroups = new Map<number, number[]>();
-    for (const roll of rolls) {
-      const group = valueGroups.get(roll.value) ?? [];
-      group.push(roll.playerId);
-      valueGroups.set(roll.value, group);
-    }
+  return order;
+}
 
-    const tiedIds: number[] = [];
-    for (const ids of valueGroups.values()) {
-      if (ids.length > 1) {
-        tiedIds.push(...ids);
-      }
-    }
+function finalizeTurnOrder(state: GameRoomState): ServerGameEvent[] {
+  state.turnOrder = computeTurnOrderFromRolls(state.turnOrderRolls);
+  state.currentPlayerIndex = 0;
+  state.phase = 'playing';
+  state.turnOrderPendingIds = [];
 
-    if (tiedIds.length > 0) {
-      state.turnOrderPendingIds = tiedIds;
-      persist(state);
-      continue;
-    }
+  const firstPlayerId = state.turnOrder[0]!;
+  state.shift = {
+    status: 'waiting',
+    availableSquares: [],
+    playerId: firstPlayerId,
+    diceResult: null,
+  };
 
-    const allRolls = state.turnOrderRolls;
-    const sorted = [...allRolls].sort((a, b) => b.value - a.value);
-    state.turnOrder = sorted.map((r) => r.playerId);
-    state.currentPlayerIndex = 0;
-    state.phase = 'playing';
-    state.turnOrderPendingIds = [];
-    const firstPlayerId = state.turnOrder[0]!;
-    state.shift = {
-      status: 'waiting',
-      availableSquares: [],
-      playerId: firstPlayerId,
-      diceResult: null,
-    };
-    persist(state);
-
-    const firstPlayer = state.players.find((p) => p.id === firstPlayerId)!;
-    events.push({
+  const firstPlayer = state.players.find((player) => player.id === firstPlayerId)!;
+  return [
+    {
       type: 'turnStarted',
       playerId: firstPlayerId,
       playerName: firstPlayer.name,
-    });
-    break;
+    },
+  ];
+}
+
+export function rollTurnOrderDice(code: string, playerId: number): EngineResult {
+  const state = getMutableRoom(code);
+  if (!state) {
+    return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
+  }
+  if (state.phase !== 'turnOrder') {
+    return { state, error: 'Não é hora de rolar para a ordem de jogada.' };
+  }
+  if (!state.turnOrderPendingIds.includes(playerId)) {
+    return { state, error: 'Você já rolou o dado para a ordem de jogada.' };
   }
 
+  const player = state.players.find((entry) => entry.id === playerId);
+  if (!player) {
+    return { state, error: 'Jogador inválido.' };
+  }
+
+  const value = rollD6();
+  const roll: TurnOrderRoll = { playerId, playerName: player.name, value };
+  state.turnOrderRolls = [...state.turnOrderRolls, roll];
+  state.turnOrderPendingIds = state.turnOrderPendingIds.filter((id) => id !== playerId);
+
+  const events: ServerGameEvent[] = [
+    {
+      type: 'turnOrderDiceRolled',
+      playerId,
+      playerName: player.name,
+      value,
+      rolls: [...state.turnOrderRolls],
+    },
+  ];
+
+  if (state.turnOrderPendingIds.length === 0) {
+    events.push(...finalizeTurnOrder(state));
+  }
+
+  persist(state);
   return { state, events };
 }
 

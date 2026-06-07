@@ -33,6 +33,16 @@ Runs the Vitest test suite.
 
 Builds the frontend for production into the `dist` folder.
 
+## Clearing saved games
+
+Room state is persisted locally in `server/data/rooms.db`. To remove all saved games and start fresh (for example, after a server update or when a room is stuck in an old game phase), stop the server and delete that file:
+
+```bash
+rm server/data/rooms.db
+```
+
+The database is recreated automatically the next time you run `yarn dev` or `yarn server`.
+
 ## Learn More
 
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).

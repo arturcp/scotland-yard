@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { CircleHelp, FileText, Home, Users } from 'lucide-react';
+import { CircleHelp, FileText, Home, ScrollText, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MicroModal from 'micromodal';
 import DiceIcon from './DiceIcon';
@@ -12,10 +12,19 @@ interface SidebarProps {
   game: GameController;
   rolling: boolean;
   showDice: boolean;
+  showCase?: boolean;
   onRollStart: () => void;
+  onShowCase?: () => void;
 }
 
-export default function Sidebar({ game, rolling, showDice, onRollStart }: SidebarProps) {
+export default function Sidebar({
+  game,
+  rolling,
+  showDice,
+  showCase = false,
+  onRollStart,
+  onShowCase,
+}: SidebarProps) {
   useEffect(() => {
     MicroModal.init();
   }, []);
@@ -59,6 +68,19 @@ export default function Sidebar({ game, rolling, showDice, onRollStart }: Sideba
               <span>Jogadores</span>
             </button>
           </li>
+          {showCase && (
+            <li>
+              <button
+                type="button"
+                className="nav-item"
+                data-testid="show-case-trigger"
+                onClick={onShowCase}
+              >
+                <ScrollText aria-hidden="true" size={28} strokeWidth={1.75} />
+                <span>Caso</span>
+              </button>
+            </li>
+          )}
           {showDice && (
             <li>
               <button

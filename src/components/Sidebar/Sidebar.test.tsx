@@ -51,6 +51,20 @@ describe('Sidebar', () => {
       expect(container.querySelector('.lucide-users')).toBeInTheDocument();
     });
 
+    test('renders the case button when showCase is true', () => {
+      const onShowCase = vi.fn();
+      renderSidebar(
+        <Sidebar game={makeGame()} {...defaultProps} showCase onShowCase={onShowCase} />,
+      );
+      expect(screen.getByTestId('show-case-trigger')).toBeInTheDocument();
+      expect(screen.getByText('Caso')).toBeInTheDocument();
+    });
+
+    test('hides the case button when showCase is false', () => {
+      renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
+      expect(screen.queryByTestId('show-case-trigger')).not.toBeInTheDocument();
+    });
+
     test('renders the help icon', () => {
       const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(container.querySelector('.lucide-circle-question-mark')).toBeInTheDocument();
@@ -96,6 +110,17 @@ describe('Sidebar', () => {
     test('does not have pulsate-fwd class when game status is in-progress', () => {
       renderSidebar(<Sidebar game={makeGame('in-progress')} {...defaultProps} />);
       expect(screen.getByTestId('dice-roll-trigger')).not.toHaveClass('pulsate-fwd');
+    });
+  });
+
+  describe('case button click', () => {
+    test('calls onShowCase when clicked', () => {
+      const onShowCase = vi.fn();
+      renderSidebar(
+        <Sidebar game={makeGame()} {...defaultProps} showCase onShowCase={onShowCase} />,
+      );
+      fireEvent.click(screen.getByTestId('show-case-trigger'));
+      expect(onShowCase).toHaveBeenCalledTimes(1);
     });
   });
 
