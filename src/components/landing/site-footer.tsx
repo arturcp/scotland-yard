@@ -3,8 +3,8 @@ import { Search } from 'lucide-react';
 const links = [
   { label: 'Como jogar', href: '#como-funciona' },
   { label: 'Regras', href: '#regras' },
-  { label: 'Termos', href: '#' },
-  { label: 'Privacidade', href: '#' },
+  { label: 'Termos', href: '/termos' },
+  { label: 'Privacidade', href: '/privacidade' },
   { label: 'Créditos', href: '#' },
 ];
 
