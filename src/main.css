@@ -34,6 +34,7 @@ body {
 }
 
 .game-app {
+  --sidebar-border: #61563a;
   font-family:
     -apple-system,
     BlinkMacSystemFont,
