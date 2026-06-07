@@ -29,7 +29,7 @@
 
 .square.entrance,
 .square.start {
-  text-align: center;
+  display: flex;
 }
 
 .square.entrance svg,
@@ -37,16 +37,43 @@
   color: #000;
 }
 
-[data-direction='left'] {
+.square.entrance[data-direction='up'],
+.square.start[data-direction='up'] {
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.square.entrance[data-direction='down'],
+.square.start[data-direction='down'] {
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.square.entrance[data-direction='down'] svg,
+.square.start[data-direction='down'] svg {
+  transform: rotate(180deg);
+}
+
+.square.entrance[data-direction='left'],
+.square.start[data-direction='left'] {
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.square.entrance[data-direction='left'] svg,
+.square.start[data-direction='left'] svg {
   transform: rotate(-90deg);
 }
 
-[data-direction='right'] {
-  transform: rotate(90deg);
+.square.entrance[data-direction='right'],
+.square.start[data-direction='right'] {
+  justify-content: flex-end;
+  align-items: center;
 }
 
-[data-direction='down'] {
-  transform: rotate(180deg);
+.square.entrance[data-direction='right'] svg,
+.square.start[data-direction='right'] svg {
+  transform: rotate(90deg);
 }
 
 .pulsate-fwd {
