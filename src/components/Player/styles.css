@@ -18,6 +18,7 @@
   transform: translate(-50%, -50%);
 }
 
-.player--anchor-center.player--solo {
-  transform: translate(-55%, -55%);
+.player i {
+  display: block;
+  transform: translateY(-0.1em) translateX(-0.1em);
 }

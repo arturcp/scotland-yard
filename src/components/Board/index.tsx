@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import DiceRoll from '../DiceRoll';
 import Places from '../Places';
 import Player from '../Player';
 import type { GameController, Player as GamePlayer } from '../../types/game';
@@ -12,6 +13,8 @@ import './styles.css';
 interface BoardProps {
   players: GamePlayer[];
   game: GameController;
+  rolling: boolean;
+  onRollComplete: (result: number) => void;
 }
 
 const PLACE_PINS = zonePins();
@@ -52,7 +55,7 @@ function playerPosition(player: GamePlayer, players: GamePlayer[]): CSSPropertie
   return { top, left };
 }
 
-export default function Board({ players, game }: BoardProps) {
+export default function Board({ players, game, rolling, onRollComplete }: BoardProps) {
   const { status } = game.gameShift();
   const isSelectingMove = status === 'in-progress';
 
@@ -77,6 +80,7 @@ export default function Board({ players, game }: BoardProps) {
             );
           })}
         </div>
+        {rolling && <DiceRoll onComplete={onRollComplete} />}
       </section>
     </div>
   );

@@ -1,130 +1,41 @@
 .dice-roll-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 10000;
+  z-index: 50;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  background: rgba(47, 43, 40, 0.45);
+  overflow: hidden;
+  background: rgba(47, 43, 40, 0.2);
 }
 
-.dice-roll-flyer {
-  animation: dice-fly-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+.dice-box-container {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.dice-box-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .dice-roll-result {
-  margin-top: 1rem;
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0.75rem 1.25rem;
   font-size: 1.5rem;
   font-weight: 700;
   color: #fffefe;
   text-align: center;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
-  animation: dice-result-pop 0.35s ease-out 0.1s both;
-}
-
-.dice-scene {
-  width: 88px;
-  height: 88px;
-  perspective: 640px;
-}
-
-.dice-cube {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.dice-cube.rolling {
-  animation: dice-tumble 0.22s linear infinite;
-}
-
-.dice-face {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 6px;
-  padding: 10px;
-  background: linear-gradient(145deg, #fffefe 0%, #e8e6d8 100%);
-  border: 2px solid #737167;
-  border-radius: 12px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
-  backface-visibility: hidden;
-}
-
-.dice-face-1 {
-  transform: rotateY(0deg) translateZ(44px);
-}
-
-.dice-face-2 {
-  transform: rotateY(90deg) translateZ(44px);
-}
-
-.dice-face-3 {
-  transform: rotateX(90deg) translateZ(44px);
-}
-
-.dice-face-4 {
-  transform: rotateX(-90deg) translateZ(44px);
-}
-
-.dice-face-5 {
-  transform: rotateY(-90deg) translateZ(44px);
-}
-
-.dice-face-6 {
-  transform: rotateY(180deg) translateZ(44px);
-}
-
-.dice-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #2f2b28;
-  justify-self: center;
-  align-self: center;
-}
-
-.dice-dot.hidden {
-  visibility: hidden;
-}
-
-@keyframes dice-fly-in {
-  0% {
-    transform: translate(calc(-50vw + 35px), calc(-35vh + 120px)) scale(0.15) rotate(-25deg);
-    opacity: 0;
-  }
-
-  100% {
-    transform: translate(0, 0) scale(1) rotate(0deg);
-    opacity: 1;
-  }
-}
-
-@keyframes dice-tumble {
-  0% {
-    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-  }
-
-  25% {
-    transform: rotateX(90deg) rotateY(45deg) rotateZ(45deg);
-  }
-
-  50% {
-    transform: rotateX(180deg) rotateY(90deg) rotateZ(90deg);
-  }
-
-  75% {
-    transform: rotateX(270deg) rotateY(135deg) rotateZ(135deg);
-  }
-
-  100% {
-    transform: rotateX(360deg) rotateY(180deg) rotateZ(180deg);
-  }
+  background: rgba(47, 43, 40, 0.72);
+  border-radius: 8px;
+  animation: dice-result-pop 0.35s ease-out both;
 }
 
 @keyframes dice-result-pop {

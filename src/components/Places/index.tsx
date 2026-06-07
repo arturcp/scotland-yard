@@ -39,9 +39,11 @@ export default function Places({ game }: PlacesProps) {
   function handleZoneClick(_zoneId: ZoneId, path: string[]) {
     const { player, players } = game.gameShift();
     const newPosition = movePlayer(player, players, path);
+    const isTeleport = path.length === 1 && !path[0].includes(',');
+    const delay = isTeleport ? 0 : path.length * STEP_DURATION_MS;
     setTimeout(() => {
       game.updatePlayerPosition(player.id, newPosition);
-    }, path.length * STEP_DURATION_MS);
+    }, delay);
   }
 
   return (

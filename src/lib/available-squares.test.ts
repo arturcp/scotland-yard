@@ -1,3 +1,4 @@
+import { ZONE_IDS } from '../board';
 import type { AvailableSquare } from '../types/game';
 import { getAvailableSquares, hasAvailableSquare } from './available-squares';
 
@@ -237,6 +238,33 @@ describe('AvailableSquares', () => {
         ]),
       );
       expect(results).toHaveLength(2);
+    });
+
+    test('when inside carriage-station, offers teleport to every other zone', () => {
+      const playerInZone = {
+        id: 1,
+        name: 'John',
+        color: 'blue',
+        position: { place: 'carriage-station', id: 'carriage-station', path: ['18,3', 'carriage-station'] },
+      };
+      const results = getAvailableSquares(playerInZone, 1);
+      const expectedZones = ZONE_IDS.filter((zoneId) => zoneId !== 'carriage-station');
+
+      expect(results).toHaveLength(expectedZones.length);
+      for (const zoneId of expectedZones) {
+        expect(results).toContainEqual({ id: zoneId, place: zoneId, path: [zoneId] });
+      }
+    });
+
+    test('when inside carriage-station, does not offer grid tiles', () => {
+      const playerInZone = {
+        id: 1,
+        name: 'John',
+        color: 'blue',
+        position: { place: 'carriage-station', id: 'carriage-station', path: ['carriage-station'] },
+      };
+      const results = getAvailableSquares(playerInZone, 3);
+      expect(results.every((result) => result.place && !result.place.includes(','))).toBe(true);
     });
   });
 

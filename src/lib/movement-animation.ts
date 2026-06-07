@@ -15,8 +15,8 @@ export function parseNotation(notation: string): Position {
   return { place: notation };
 }
 
-function getCenteredOffset(player: Player, players: Player[], position: Position): number {
-  const playersAtSamePos = players.filter((p) => {
+function playersAtPosition(player: Player, players: Player[], position: Position): Player[] {
+  const atPosition = players.filter((p) => {
     if (p.id === player.id) return false;
     const pPos = p.position;
     if (position.place) {
@@ -25,13 +25,10 @@ function getCenteredOffset(player: Player, players: Player[], position: Position
     return (pPos.row ?? 0) === (position.row ?? 0) && (pPos.column ?? 0) === (position.column ?? 0);
   });
 
-  playersAtSamePos.push(player);
-  playersAtSamePos.sort((a, b) => a.id - b.id);
+  atPosition.push(player);
+  atPosition.sort((a, b) => a.id - b.id);
 
-  const idx = playersAtSamePos.findIndex((p) => p.id === player.id);
-  const N = playersAtSamePos.length;
-
-  return pieceCenterOffsetX(idx, N);
+  return atPosition;
 }
 
 function movePinTo(pin: HTMLElement, player: Player, players: Player[], position: Position) {
@@ -41,9 +38,14 @@ function movePinTo(pin: HTMLElement, player: Player, players: Player[], position
 
   const row = position.row ?? 0;
   const column = position.column ?? 0;
-  const offsetX = getCenteredOffset(player, players, position);
+  const atPosition = playersAtPosition(player, players, position);
+  const idx = atPosition.findIndex((p) => p.id === player.id);
+  const offsetX = pieceCenterOffsetX(idx, atPosition.length);
   const originTop = row * SQUARE_SIZE + BOARD_PADDING;
   const originLeft = column * SQUARE_SIZE + BOARD_PADDING;
+
+  pin.classList.add('player--anchor-center');
+  pin.classList.toggle('player--solo', atPosition.length === 1);
 
   pin.style.top = `${originTop + SQUARE_SIZE / 2}px`;
   pin.style.left = `${originLeft + SQUARE_SIZE / 2 + offsetX}px`;
