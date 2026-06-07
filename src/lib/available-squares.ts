@@ -1,4 +1,4 @@
-import { GRID, ENTRANCES, bridgeDestination, canEnterFromDirection, cellKey } from '../board';
+import { GRID, ENTRANCES, ZONE_IDS, bridgeDestination, canEnterFromDirection, cellKey } from '../board';
 import {
   availableSquare,
   canMove,
@@ -20,10 +20,20 @@ function clone<T>(data: T): T {
   return JSON.parse(JSON.stringify(data));
 }
 
+const CARRIAGE_STATION_ID: ZoneId = 'carriage-station';
+
 export function exitTilesForZone(zoneId: ZoneId): string[] {
   return ENTRANCES.filter((entrance) => entrance.zoneId === zoneId).map((entrance) =>
     cellKey(entrance.at.row, entrance.at.column),
   );
+}
+
+function getCarriageStationTeleportDestinations(): AvailableSquare[] {
+  return ZONE_IDS.filter((zoneId) => zoneId !== CARRIAGE_STATION_ID).map((zoneId) => ({
+    id: zoneId,
+    place: zoneId,
+    path: [zoneId],
+  }));
 }
 
 function parseTileId(tileId: string) {
@@ -139,7 +149,13 @@ export function getAvailableSquares(player: Player, diceResult: number): Availab
   const data = GRID.map((row) => [...row]) as MarkedCell[][];
 
   if (player.position.place) {
-    const exitTiles = exitTilesForZone(player.position.place as ZoneId);
+    const currentZone = player.position.place as ZoneId;
+
+    if (currentZone === CARRIAGE_STATION_ID) {
+      return getCarriageStationTeleportDestinations();
+    }
+
+    const exitTiles = exitTilesForZone(currentZone);
     if (!exitTiles.length) {
       return [];
     }
