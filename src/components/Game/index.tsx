@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import useIsDesktop from '../../hooks/useIsDesktop';
 import { useGameSocket } from '../../hooks/useGameSocket';
-import { getSessionToken } from '../../lib/session';
 import { movePlayer, STEP_DURATION_MS } from '../../lib/movement-animation';
 import Board from '../Board';
 import Lobby from '../Lobby';
@@ -30,7 +29,6 @@ export default function Game({ roomCode }: GameProps) {
   const [solutionSubmitted, setSolutionSubmitted] = useState(false);
   const [showTurnOrder, setShowTurnOrder] = useState(false);
   const [showCaseIntro, setShowCaseIntro] = useState(false);
-  const reconnectAttempted = useRef(false);
   const hasLeftHolmesHouseRef = useRef(false);
   const solutionDismissedRef = useRef(false);
   const prevHolmesVisitRef = useRef<string | null | undefined>(undefined);
@@ -55,7 +53,6 @@ export default function Game({ roomCode }: GameProps) {
     lastDiceRoll,
     remoteMove,
     caseFields,
-    reconnect,
     rollDice,
     move,
     updateNotes,
@@ -64,14 +61,6 @@ export default function Game({ roomCode }: GameProps) {
     clearRemoteMove,
     clearLastDiceRoll,
   } = gameSocket;
-
-  useEffect(() => {
-    const token = getSessionToken(roomCode);
-    if (token && !reconnectAttempted.current && !gameSocket.playerId) {
-      reconnectAttempted.current = true;
-      reconnect();
-    }
-  }, [gameSocket.playerId, reconnect, roomCode]);
 
   useEffect(() => {
     if (phase === 'turnOrder') {

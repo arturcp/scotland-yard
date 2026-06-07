@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getWebSocketUrl } from '../lib/api';
-import { getSessionToken, saveSessionToken } from '../lib/session';
+import { getSessionToken, saveSessionToken, clearSessionToken } from '../lib/session';
 import type {
   AvailableSquare,
   CaseField,
@@ -84,6 +84,16 @@ export function useGameSocket(roomCode: string) {
   const [state, setState] = useState<GameSocketState>(INITIAL_STATE);
   const wsRef = useRef<WebSocket | null>(null);
   const joinedRef = useRef(false);
+  const reconnectTimerRef = useRef<number | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+  const intentionalCloseRef = useRef(false);
+
+  const clearReconnectTimer = useCallback(() => {
+    if (reconnectTimerRef.current !== null) {
+      window.clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+  }, []);
 
   const send = useCallback((message: Record<string, unknown>) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -93,6 +103,8 @@ export function useGameSocket(roomCode: string) {
 
   const applyRoomState = useCallback(
     (payload: Extract<ServerMessage, { type: 'roomState' }>) => {
+      reconnectAttemptsRef.current = 0;
+      clearReconnectTimer();
       saveSessionToken(roomCode, payload.you.sessionToken);
       setState((prev) => ({
         ...prev,
@@ -101,38 +113,86 @@ export function useGameSocket(roomCode: string) {
         notes: payload.you.notes,
         caseFields: payload.caseFields,
         error: null,
+        connecting: false,
       }));
     },
-    [roomCode],
+    [clearReconnectTimer, roomCode],
   );
+
+  const scheduleReconnect = useCallback(() => {
+    if (reconnectTimerRef.current !== null || !getSessionToken(roomCode)) {
+      return;
+    }
+
+    const delay = Math.min(1000 * 2 ** reconnectAttemptsRef.current, 8000);
+    setState((prev) => ({
+      ...prev,
+      connected: false,
+      connecting: true,
+      error: 'Conexão perdida. Tentando reconectar…',
+    }));
+
+    reconnectTimerRef.current = window.setTimeout(() => {
+      reconnectTimerRef.current = null;
+      reconnectAttemptsRef.current += 1;
+      connectRef.current();
+    }, delay);
+  }, [roomCode]);
+
+  const connectRef = useRef<(joinPayload?: { name: string; color: string }) => void>(() => {});
 
   const connect = useCallback(
     (joinPayload?: { name: string; color: string }) => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
+      const existing = wsRef.current;
+      if (
+        existing &&
+        (existing.readyState === WebSocket.OPEN || existing.readyState === WebSocket.CONNECTING)
+      ) {
         return;
       }
 
+      if (existing) {
+        existing.onopen = null;
+        existing.onmessage = null;
+        existing.onerror = null;
+        existing.onclose = null;
+        existing.close();
+        wsRef.current = null;
+      }
+
       setState((prev) => ({ ...prev, connecting: true, error: null }));
+      intentionalCloseRef.current = false;
+
       const ws = new WebSocket(getWebSocketUrl());
       wsRef.current = ws;
 
       ws.onopen = () => {
-        setState((prev) => ({ ...prev, connected: true, connecting: false }));
+        if (ws !== wsRef.current) {
+          return;
+        }
+
+        setState((prev) => ({ ...prev, connected: true, connecting: false, error: null }));
         const sessionToken = getSessionToken(roomCode);
         if (sessionToken && !joinPayload) {
-          send({ type: 'reconnect', code: roomCode, sessionToken });
+          ws.send(JSON.stringify({ type: 'reconnect', code: roomCode, sessionToken }));
         } else if (joinPayload) {
-          send({
-            type: 'join',
-            code: roomCode,
-            name: joinPayload.name,
-            color: joinPayload.color,
-            sessionToken: sessionToken ?? undefined,
-          });
+          ws.send(
+            JSON.stringify({
+              type: 'join',
+              code: roomCode,
+              name: joinPayload.name,
+              color: joinPayload.color,
+              sessionToken: sessionToken ?? undefined,
+            }),
+          );
         }
       };
 
       ws.onmessage = (event) => {
+        if (ws !== wsRef.current) {
+          return;
+        }
+
         const message = JSON.parse(event.data as string) as ServerMessage;
 
         switch (message.type) {
@@ -140,7 +200,12 @@ export function useGameSocket(roomCode: string) {
             applyRoomState(message);
             break;
           case 'error':
-            setState((prev) => ({ ...prev, error: message.message }));
+            if (message.message.includes('Sessão expirada')) {
+              clearSessionToken(roomCode);
+              clearReconnectTimer();
+              intentionalCloseRef.current = true;
+            }
+            setState((prev) => ({ ...prev, error: message.message, connecting: false }));
             break;
           case 'turnOrderRoll':
             setState((prev) => ({ ...prev, turnOrderRolls: message.rolls }));
@@ -257,27 +322,49 @@ export function useGameSocket(roomCode: string) {
       };
 
       ws.onclose = () => {
-        setState((prev) => ({ ...prev, connected: false, connecting: false }));
+        if (ws !== wsRef.current) {
+          return;
+        }
+
         wsRef.current = null;
         joinedRef.current = false;
+        setState((prev) => ({ ...prev, connected: false, connecting: false }));
+
+        if (!intentionalCloseRef.current && getSessionToken(roomCode)) {
+          scheduleReconnect();
+        }
       };
 
       ws.onerror = () => {
-        setState((prev) => ({
-          ...prev,
-          error: 'Conexão perdida. Tentando reconectar…',
-          connecting: false,
-        }));
+        if (ws !== wsRef.current) {
+          return;
+        }
       };
     },
-    [applyRoomState, roomCode, send],
+    [applyRoomState, clearReconnectTimer, roomCode, scheduleReconnect],
   );
 
+  connectRef.current = connect;
+
   useEffect(() => {
+    if (getSessionToken(roomCode)) {
+      connectRef.current();
+    }
+
     return () => {
-      wsRef.current?.close();
+      intentionalCloseRef.current = true;
+      clearReconnectTimer();
+      const ws = wsRef.current;
+      if (ws) {
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.onclose = null;
+        ws.close();
+        wsRef.current = null;
+      }
     };
-  }, []);
+  }, [clearReconnectTimer, roomCode]);
 
   const join = useCallback(
     (name: string, color: string) => {
