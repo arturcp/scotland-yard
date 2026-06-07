@@ -1,3 +1,4 @@
+import { ChevronUp } from 'lucide-react';
 import { isDebugMode } from '../../lib/debug-mode';
 import { movePlayer, STEP_DURATION_MS } from '../../lib/movement-animation';
 import type { GameShiftView, Position } from '../../types/game';
@@ -49,7 +50,7 @@ export default function Square({
       data-column={column}
       onClick={handleClick}
     >
-      {type === 'entrance' && <i className="fa-solid fa-chevron-up"></i>}
+      {type === 'entrance' && <ChevronUp aria-hidden="true" size={24} strokeWidth={2} />}
       {showCoords && (
         <span className="square-debug-coords">
           ({row},{column})

@@ -32,9 +32,8 @@
   text-align: center;
 }
 
-.square.entrance i,
-.square.start i {
-  font-size: 24px;
+.square.entrance svg,
+.square.start svg {
   color: #000;
 }
 

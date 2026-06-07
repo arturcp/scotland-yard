@@ -37,22 +37,22 @@ describe('Sidebar', () => {
 
     test('renders the home icon', () => {
       const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
-      expect(container.querySelector('.fa-house')).toBeInTheDocument();
+      expect(container.querySelector('.lucide-house')).toBeInTheDocument();
     });
 
     test('renders the notes icon', () => {
       const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
-      expect(container.querySelector('.fa-file-lines')).toBeInTheDocument();
+      expect(container.querySelector('.lucide-file-text')).toBeInTheDocument();
     });
 
-    test('renders the detective icon', () => {
+    test('renders the players icon', () => {
       const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
-      expect(container.querySelector('.fa-user-secret')).toBeInTheDocument();
+      expect(container.querySelector('.lucide-users')).toBeInTheDocument();
     });
 
     test('renders the help icon', () => {
       const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
-      expect(container.querySelector('.fa-circle-question')).toBeInTheDocument();
+      expect(container.querySelector('.lucide-circle-question-mark')).toBeInTheDocument();
     });
 
     test('renders the dice roll trigger', () => {

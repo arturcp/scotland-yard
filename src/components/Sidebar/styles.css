@@ -79,9 +79,10 @@
   transition: background-color 0.2s ease;
 }
 
-.nav-item i,
+.nav-item svg,
 #sidebar .dice-roll-trigger .sidebar-dice-icon {
-  font-size: 28px;
+  width: 28px;
+  height: 28px;
 }
 
 .nav-item span {

@@ -55,12 +55,12 @@ describe('Square', () => {
 
     test('renders the chevron icon for entrance type', () => {
       const { container } = render(<Square {...makeProps({ type: 'entrance' })} />);
-      expect(container.querySelector('.fa-chevron-up')).toBeInTheDocument();
+      expect(container.querySelector('.lucide-chevron-up')).toBeInTheDocument();
     });
 
     test('does not render the chevron icon for non-entrance type', () => {
       const { container } = render(<Square {...makeProps({ type: '' })} />);
-      expect(container.querySelector('.fa-chevron-up')).not.toBeInTheDocument();
+      expect(container.querySelector('.lucide-chevron-up')).not.toBeInTheDocument();
     });
 
     test('applies the empty state class', () => {

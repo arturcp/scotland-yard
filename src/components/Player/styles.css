@@ -18,7 +18,9 @@
   transform: translate(-50%, -50%);
 }
 
-.player i {
+.player svg {
   display: block;
+  width: 100%;
+  height: 100%;
   transform: translateY(-0.1em) translateX(-0.1em);
 }

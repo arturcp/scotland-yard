@@ -21,7 +21,7 @@ describe('Player', () => {
 
   test('renders the user icon', () => {
     const { container } = render(<Player player={player} style={{}} />);
-    expect(container.querySelector('.fa-user')).toBeInTheDocument();
+    expect(container.querySelector('.lucide-user')).toBeInTheDocument();
   });
 
   test('applies color to the rendered style', () => {

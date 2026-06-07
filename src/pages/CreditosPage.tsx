@@ -66,9 +66,6 @@ export default function CreditosPage() {
           <li>
             <strong className="text-ivory">Lucide React</strong> — ícones
           </li>
-          <li>
-            <strong className="text-ivory">Font Awesome</strong> — ícones adicionais
-          </li>
         </ul>
       </section>
 

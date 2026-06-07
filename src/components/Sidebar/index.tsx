@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { CircleHelp, FileText, Home, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MicroModal from 'micromodal';
 import DiceIcon from './DiceIcon';
@@ -41,19 +42,19 @@ export default function Sidebar({ game, rolling, onRollStart }: SidebarProps) {
         <ul>
           <li>
             <button type="button" className="nav-item active" aria-current="page">
-              <i className="fa-solid fa-house" aria-hidden="true" />
+              <Home aria-hidden="true" size={28} strokeWidth={1.75} />
               <span>Inicio</span>
             </button>
           </li>
           <li>
             <button type="button" className="nav-item" data-micromodal-trigger="modal-notes">
-              <i className="fa-regular fa-file-lines" aria-hidden="true" />
+              <FileText aria-hidden="true" size={28} strokeWidth={1.75} />
               <span>Notas</span>
             </button>
           </li>
           <li>
             <button type="button" className="nav-item">
-              <i className="fa-solid fa-user-secret" aria-hidden="true" />
+              <Users aria-hidden="true" size={28} strokeWidth={1.75} />
               <span>Jogadores</span>
             </button>
           </li>
@@ -80,7 +81,7 @@ export default function Sidebar({ game, rolling, onRollStart }: SidebarProps) {
 
       <div className="sidebar-footer">
         <button type="button" className="nav-item">
-          <i className="fa-regular fa-circle-question" aria-hidden="true" />
+          <CircleHelp aria-hidden="true" size={28} strokeWidth={1.75} />
           <span>Ajuda</span>
         </button>
       </div>
