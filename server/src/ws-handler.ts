@@ -1,10 +1,12 @@
 import type { WebSocket } from 'ws';
+import type { ZoneId } from '../../src/board/types.js';
 import type { CaseDefinition, GameRoomState, NoteEntry, Position } from '../../src/types/game.js';
 import {
   beginSolutionVerification,
   confirmSolution,
   getCaseForRoom,
   getPlayerNotes,
+  getPlayerVisitedZones,
   getPublicRoomState,
   joinRoom,
   leaveRoom,
@@ -46,7 +48,12 @@ export type ServerMessage =
   | {
       type: 'roomState';
       state: ReturnType<typeof getPublicRoomState>;
-      you: { playerId: number; sessionToken: string; notes: NoteEntry[] };
+      you: {
+        playerId: number;
+        sessionToken: string;
+        notes: NoteEntry[];
+        visitedZones: ZoneId[];
+      };
       caseFields: CaseDefinition['fields'];
     }
   | { type: 'error'; message: string }
@@ -111,6 +118,7 @@ function sendRoomState(
         playerId,
         sessionToken,
         notes: getPlayerNotes(state, playerId),
+        visitedZones: getPlayerVisitedZones(state, playerId),
         masterKeysRemaining: state.masterKeysRemainingByPlayer[playerId] ?? 0,
       },
     caseFields: caseDef?.fields.map(({ key, label }) => ({ key, label })) ?? [],

@@ -48,6 +48,7 @@ export default function Game({ roomCode }: GameProps) {
     visiblePlayers,
     playerId,
     notes,
+    visitedZones,
     isMyTurn,
     canInteract,
     showDice,
@@ -176,11 +177,11 @@ export default function Game({ roomCode }: GameProps) {
     }
 
     const place = player.position.place;
-    const visitedZones = room.visitedZonesByPlayer[playerId] ?? [];
+    const visited = visitedZones;
 
     if (
       place !== 'holmes-house' ||
-      visitedZones.length > 0 ||
+      visited.length > 0 ||
       notes.some((entry) => entry.kind === 'clue')
     ) {
       hasLeftHolmesHouseRef.current = true;
@@ -205,7 +206,7 @@ export default function Game({ roomCode }: GameProps) {
     }
 
     prevHolmesVisitRef.current = place;
-  }, [notes, phase, playerId, room, solutionSubmitted]);
+  }, [notes, phase, playerId, room, solutionSubmitted, visitedZones]);
 
   useEffect(() => {
     if (phase === 'verifying') {
@@ -252,6 +253,7 @@ export default function Game({ roomCode }: GameProps) {
   const game: GameController = {
     canInteract: canInteract && !hideMovementOptions,
     lockedZones: room?.lockedZones ?? {},
+    visitedZones: visitedZones ?? [],
     gameShift: () => ({
       player: activePlayer ?? players[0]!,
       availableSquares: hideMovementOptions ? [] : (shift?.availableSquares ?? []),
@@ -388,6 +390,7 @@ export default function Game({ roomCode }: GameProps) {
         </div>
       </main>
       <Notes
+        visitedZones={visitedZones}
         clueNotes={clueNotes}
         customText={customNoteText}
         onCustomNotesChange={updateNotes}

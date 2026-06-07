@@ -126,6 +126,33 @@ export const ZONES: Record<ZoneId, Zone> = {
 
 export const ZONE_IDS = Object.keys(ZONES) as ZoneId[];
 
+export const ZONE_LABELS: Record<ZoneId, string> = {
+  'holmes-house': 'Casa do Sherlock Holmes',
+  museum: 'Museu',
+  bar: 'Bar',
+  'big-bang': 'Big Bang',
+  drugstore: 'Farmácia',
+  'book-store': 'Livraria',
+  locksmith: 'Chaveiro',
+  key: 'Chave',
+  bridge: 'Ponte',
+  docks: 'Docas',
+  park: 'Parque',
+  pawnshop: 'Casa de Penhores',
+  theater: 'Teatro',
+  hotel: 'Hotel',
+  'cigar-shop': 'Charutaria',
+  graveyard: 'Cemitério',
+  'carriage-station': 'Estação de Carruagens',
+  bank: 'Banco',
+  street: 'Rua',
+  'scotland-yard': 'Scotland Yard',
+};
+
+export function getZoneLabel(zoneId: ZoneId): string {
+  return ZONE_LABELS[zoneId] ?? zoneId;
+}
+
 export function zonePins(): Record<ZoneId, { top: number; left: number }> {
   return Object.fromEntries(ZONE_IDS.map((id) => [id, ZONES[id].pin])) as Record<
     ZoneId,

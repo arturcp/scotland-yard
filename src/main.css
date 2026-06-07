@@ -37,6 +37,29 @@ body {
   min-height: 100vh;
 }
 
+.scrollbar-noir {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gold-dim) #120e0a;
+}
+
+.scrollbar-noir::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-noir::-webkit-scrollbar-track {
+  background: #120e0a;
+}
+
+.scrollbar-noir::-webkit-scrollbar-thumb {
+  background: var(--color-gold-dim);
+  border-radius: 4px;
+  border: 2px solid #120e0a;
+}
+
+.scrollbar-noir::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold);
+}
+
 .game-app {
   --sidebar-border: #61563a;
   font-family:

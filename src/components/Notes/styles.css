@@ -3,37 +3,64 @@
 }
 
 #modal-notes .modal__container {
+  display: flex;
+  flex-direction: column;
   width: 650px;
-  height: 650px;
+  max-height: min(650px, calc(100vh - 48px));
+  overflow: hidden;
   z-index: 3;
 }
 
+#modal-notes .modal__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 1.25rem;
+  margin-bottom: 0;
+}
+
 #modal-notes .modal__btn {
-  margin-right: 10px;
+  margin-right: 0;
 }
 
 #modal-notes .modal__footer {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.15);
 }
 
+#modal-notes .notes__visited,
 #modal-notes .notes__clues {
   margin-bottom: 1rem;
 }
 
+#modal-notes .notes__visited h3,
 #modal-notes .notes__clues h3 {
   margin: 0 0 0.5rem;
   font-size: 0.95rem;
 }
 
+#modal-notes .notes__visited ul,
 #modal-notes .notes__clues ul {
   margin: 0;
   padding-left: 1rem;
 }
 
+#modal-notes .notes__visited li {
+  margin-bottom: 0.35rem;
+}
+
 #modal-notes .notes__clues li {
   margin-bottom: 0.75rem;
+}
+
+#modal-notes .notes__empty {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: rgba(232, 224, 200, 0.75);
 }
 
 #modal-notes .notes__custom-label {

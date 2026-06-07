@@ -19,6 +19,7 @@ function defaultSocketState() {
     room: null,
     playerId: null,
     notes: [],
+    visitedZones: [],
     caseFields: [],
     turnOrderRolls: [],
     turnBanner: null,

@@ -55,6 +55,7 @@ export interface GameController {
   updatePlayerPosition: (playerId: number, position: Position) => void;
   updateAvailableSquares: (availableSquares: AvailableSquare[], diceResult: number) => void;
   lockedZones?: Partial<Record<ZoneId, LockedZone>>;
+  visitedZones?: ZoneId[];
   canInteract?: boolean;
   onMove?: (destination: Position, path: string[]) => void;
 }

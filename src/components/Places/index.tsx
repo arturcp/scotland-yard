@@ -36,6 +36,7 @@ export default function Places({ game }: PlacesProps) {
   const { availableSquares } = game.gameShift();
   const canInteract = game.canInteract ?? true;
   const lockedZones = game.lockedZones ?? {};
+  const visitedZones = game.visitedZones ?? [];
 
   function handleZoneClick(zoneId: ZoneId, path: string[]) {
     if (!canInteract || !game.onMove) {
@@ -51,7 +52,8 @@ export default function Places({ game }: PlacesProps) {
       {zoneIds.map((zoneId) => {
         const available = availableSquares.find((s) => s.place === zoneId);
         const isLocked = !!lockedZones[zoneId as ZoneId];
-        const className = `place ${PLACE_CLASSES[zoneId]}${available && canInteract ? ' available-zone' : ''}${isLocked ? ' place--locked' : ''}`;
+        const isVisited = visitedZones.includes(zoneId);
+        const className = `place ${PLACE_CLASSES[zoneId]}${available && canInteract ? ' available-zone' : ''}${isLocked ? ' place--locked' : ''}${isVisited ? ' place--visited' : ''}`;
 
         return (
           <div

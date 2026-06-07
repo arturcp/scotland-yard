@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getWebSocketUrl } from '../lib/api';
 import { getSessionToken, saveSessionToken, clearSessionToken } from '../lib/session';
+import type { ZoneId } from '../board/types';
 import type {
   AvailableSquare,
   CaseField,
@@ -48,7 +49,13 @@ type ServerMessage =
   | {
       type: 'roomState';
       state: PublicRoomState;
-      you: { playerId: number; sessionToken: string; notes: NoteEntry[]; masterKeysRemaining: number };
+      you: {
+        playerId: number;
+        sessionToken: string;
+        notes: NoteEntry[];
+        visitedZones: ZoneId[];
+        masterKeysRemaining: number;
+      };
       caseFields: CaseField[];
     }
   | { type: 'error'; message: string }
@@ -108,6 +115,7 @@ export interface GameSocketState {
   room: PublicRoomState | null;
   playerId: number | null;
   notes: NoteEntry[];
+  visitedZones: ZoneId[];
   caseFields: CaseField[];
   turnOrderRolls: TurnOrderRoll[];
   turnBanner: string | null;
@@ -137,6 +145,7 @@ const INITIAL_STATE: GameSocketState = {
   room: null,
   playerId: null,
   notes: [],
+  visitedZones: [],
   caseFields: [],
   turnOrderRolls: [],
   turnBanner: null,
@@ -186,6 +195,7 @@ export function useGameSocket(roomCode: string) {
         room: payload.state,
         playerId: payload.you.playerId,
         notes: payload.you.notes,
+        visitedZones: payload.you.visitedZones ?? [],
         masterKeysRemaining: payload.you.masterKeysRemaining,
         caseFields: payload.caseFields,
         turnOrderRolls: payload.state.turnOrderRolls,

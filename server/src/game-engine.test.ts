@@ -6,6 +6,7 @@ import { seedCasesIfEmpty } from './case-store.js';
 import {
   computeTurnOrderFromRolls,
   createRoom,
+  getPlayerVisitedZones,
   joinRoom,
   leaveRoom,
   lockZoneFromClue,
@@ -256,6 +257,35 @@ describe('game engine', () => {
     expect(moved.state.shift.playerId).toBe(first.playerId);
     expect(moved.events?.some((event) => event.type === 'clueAdded')).toBe(true);
     expect(moved.events?.some((event) => event.type === 'turnStarted')).toBe(false);
+    expect(getPlayerVisitedZones(moved.state, first.playerId)).toContain('hotel');
+  });
+
+  test('records visits to zones without clues', () => {
+    const room = createRoom('002');
+    const first = joinRoom(room.code, 'Alice', 'blue');
+    const second = joinRoom(room.code, 'Bob', 'yellow');
+    startGame(room.code, first.playerId);
+    rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+
+    const state = started.state;
+    state.shift = {
+      status: 'in-progress',
+      playerId: first.playerId,
+      diceResult: 6,
+      availableSquares: [{ id: 'street', place: 'street', path: ['street'] }],
+    };
+    saveRoom(state);
+
+    const moved = movePlayer(room.code, first.playerId, {
+      place: 'street',
+      id: 'street',
+      path: ['street'],
+    });
+
+    expect(moved.error).toBeUndefined();
+    expect(getPlayerVisitedZones(moved.state, first.playerId)).toContain('street');
+    expect(moved.events?.some((event) => event.type === 'clueAdded')).toBe(false);
   });
 
   test('passTurn advances to the next player after a clue', () => {

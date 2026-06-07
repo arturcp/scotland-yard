@@ -172,6 +172,13 @@ function advanceTurn(state: GameRoomState): ServerGameEvent {
   };
 }
 
+function recordZoneVisit(state: GameRoomState, playerId: number, zoneId: ZoneId): void {
+  const visited = state.visitedZonesByPlayer[playerId] ?? [];
+  if (!visited.includes(zoneId)) {
+    state.visitedZonesByPlayer[playerId] = [...visited, zoneId];
+  }
+}
+
 function finishMoveWithClueCheck(
   state: GameRoomState,
   playerId: number,
@@ -183,14 +190,16 @@ function finishMoveWithClueCheck(
     return false;
   }
 
-  const visited = state.visitedZonesByPlayer[playerId] ?? [];
+  recordZoneVisit(state, playerId, zoneId);
+
+  const clueNotes = (state.notesByPlayer[playerId] ?? []).filter((entry) => entry.kind === 'clue');
+  const alreadyCollected = clueNotes.some((entry) => entry.zoneId === zoneId);
   const clueText = getCaseClue(state.caseId, zoneId);
-  if (!clueText || visited.includes(zoneId)) {
+  if (!clueText || alreadyCollected) {
     return false;
   }
 
   const zoneName = getZoneLabel(zoneId);
-  state.visitedZonesByPlayer[playerId] = [...visited, zoneId];
   const entry: NoteEntry = {
     kind: 'clue',
     zoneId,
@@ -272,10 +281,19 @@ export function getRoomSummary(code: string): RoomSummary {
   };
 }
 
-export function getPublicRoomState(state: GameRoomState): Omit<GameRoomState, 'sessionTokens' | 'notesByPlayer'> & {
+export function getPublicRoomState(state: GameRoomState): Omit<
+  GameRoomState,
+  'sessionTokens' | 'notesByPlayer' | 'visitedZonesByPlayer'
+> & {
   notesByPlayer: Record<number, NoteEntry[]>;
+  visitedZonesByPlayer: Record<number, ZoneId[]>;
 } {
-  const { sessionTokens: _tokens, notesByPlayer: _notes, ...rest } = state;
+  const {
+    sessionTokens: _tokens,
+    notesByPlayer: _notes,
+    visitedZonesByPlayer: _visited,
+    ...rest
+  } = state;
   return {
     ...rest,
     players: state.players.map(({ id, name, color, position, eliminated, connected }) => ({
@@ -287,11 +305,16 @@ export function getPublicRoomState(state: GameRoomState): Omit<GameRoomState, 's
       connected,
     })),
     notesByPlayer: {},
+    visitedZonesByPlayer: {},
   };
 }
 
 export function getPlayerNotes(state: GameRoomState, playerId: number): NoteEntry[] {
   return state.notesByPlayer[playerId] ?? [];
+}
+
+export function getPlayerVisitedZones(state: GameRoomState, playerId: number): ZoneId[] {
+  return state.visitedZonesByPlayer[playerId] ?? [];
 }
 
 export interface JoinResult {
