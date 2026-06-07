@@ -42,22 +42,20 @@ async function waitForAnimationFrames(count = 2): Promise<void> {
 interface DiceRollProps {
   onComplete: (result: number) => void;
   forcedResult?: number | null;
+  resultMessage?: string;
 }
 
-export default function DiceRoll({ onComplete, forcedResult = null }: DiceRollProps) {
+export default function DiceRoll({
+  onComplete,
+  forcedResult = null,
+  resultMessage,
+}: DiceRollProps) {
   const diceCanvasId = useId().replace(/:/g, '');
   const containerId = `dice-box-container-${diceCanvasId}`;
-  const [result, setResult] = useState<number | null>(forcedResult);
-  const [showResult, setShowResult] = useState(forcedResult !== null);
+  const [result, setResult] = useState<number | null>(null);
+  const [showResult, setShowResult] = useState(false);
 
   useEffect(() => {
-    if (forcedResult !== null) {
-      setResult(forcedResult);
-      setShowResult(true);
-      const timer = window.setTimeout(() => onComplete(forcedResult), RESULT_HOLD_MS);
-      return () => window.clearTimeout(timer);
-    }
-
     const container = document.getElementById(containerId);
     if (!container) {
       return;
@@ -90,7 +88,7 @@ export default function DiceRoll({ onComplete, forcedResult = null }: DiceRollPr
             return;
           }
 
-          const value = getDiceResult(results);
+          const value = forcedResult ?? getDiceResult(results);
           setResult(value);
           setShowResult(true);
 
@@ -122,7 +120,8 @@ export default function DiceRoll({ onComplete, forcedResult = null }: DiceRollPr
       await waitForAnimationFrames();
 
       if (!cancelled) {
-        diceBox.roll('1d6');
+        const notation = forcedResult !== null ? `1d6@${forcedResult}` : '1d6';
+        diceBox.roll(notation);
       }
     })();
 
@@ -138,9 +137,11 @@ export default function DiceRoll({ onComplete, forcedResult = null }: DiceRollPr
 
   return (
     <div className="dice-roll-overlay" role="status" aria-live="polite">
-      {forcedResult === null && <div id={containerId} className="dice-box-container" />}
+      <div id={containerId} className="dice-box-container" />
       {showResult && result !== null && (
-        <p className="dice-roll-result">Você tirou o número {result}!</p>
+        <p className="dice-roll-result">
+          {resultMessage ?? `Você tirou o número ${result}!`}
+        </p>
       )}
     </div>
   );

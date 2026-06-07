@@ -5,6 +5,7 @@ import DiceRoll, { RESULT_HOLD_MS } from './index';
 vi.mock('canvas-confetti', () => ({ default: vi.fn() }));
 
 let mockRollValue = 6;
+const mockRoll = vi.fn();
 
 vi.mock('@3d-dice/dice-box/dist/style.css', () => ({}));
 vi.mock('@3d-dice/dice-box', () => ({
@@ -21,7 +22,8 @@ vi.mock('@3d-dice/dice-box', () => ({
 
     show() {}
 
-    roll() {
+    roll(notation: string) {
+      mockRoll(notation);
       queueMicrotask(() => {
         this.onRollComplete?.([{ rolls: [{ value: mockRollValue }] }]);
       });
@@ -42,6 +44,7 @@ function renderDiceRoll(onComplete = vi.fn()) {
 describe('DiceRoll', () => {
   beforeEach(() => {
     mockRollValue = 6;
+    mockRoll.mockClear();
   });
 
   test('shows the roll result after the dice settle', async () => {
@@ -70,6 +73,42 @@ describe('DiceRoll', () => {
     });
 
     expect(confetti).not.toHaveBeenCalled();
+  });
+
+  test('uses predetermined notation when a forced result is provided', async () => {
+    mockRollValue = 2;
+
+    render(
+      <div style={{ position: 'relative', width: 1133, height: 937 }}>
+        <DiceRoll
+          forcedResult={4}
+          resultMessage="Kátia tirou o número 4!"
+          onComplete={vi.fn()}
+        />
+      </div>,
+    );
+
+    await waitFor(() => {
+      expect(mockRoll).toHaveBeenCalledWith('1d6@4');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Kátia tirou o número 4!')).toBeInTheDocument();
+    });
+  });
+
+  test('shows the server value even when the animation reports a different result', async () => {
+    mockRollValue = 2;
+
+    render(
+      <div style={{ position: 'relative', width: 1133, height: 937 }}>
+        <DiceRoll forcedResult={5} onComplete={vi.fn()} />
+      </div>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Você tirou o número 5!')).toBeInTheDocument();
+    });
   });
 
   test('calls onComplete after showing the result', async () => {

@@ -5,6 +5,7 @@ import type {
   AvailableSquare,
   CaseField,
   GameRoomState,
+  LastDiceRoll,
   NoteEntry,
   Position,
   TurnOrderRoll,
@@ -50,6 +51,7 @@ type ServerMessage =
   | {
       type: 'diceRolled';
       playerId: number;
+      playerName: string;
       value: number;
       availableSquares: AvailableSquare[];
     }
@@ -81,7 +83,7 @@ export interface GameSocketState {
   turnBanner: string | null;
   verifyingMessage: string | null;
   gameOverMessage: string | null;
-  lastDiceRoll: number | null;
+  lastDiceRoll: LastDiceRoll | null;
   remoteMove: { playerId: number; path: string[] } | null;
   officialSolution: CaseField[] | null;
   solutionNarrative: string | null;
@@ -260,7 +262,11 @@ export function useGameSocket(roomCode: string) {
             setState((prev) => ({
               ...prev,
               turnOrderRolls: message.rolls,
-              lastDiceRoll: message.value,
+              lastDiceRoll: {
+                value: message.value,
+                playerId: message.playerId,
+                playerName: message.playerName,
+              },
             }));
             break;
           case 'turnStarted':
@@ -282,7 +288,11 @@ export function useGameSocket(roomCode: string) {
           case 'diceRolled':
             setState((prev) => ({
               ...prev,
-              lastDiceRoll: prev.playerId === message.playerId ? message.value : prev.lastDiceRoll,
+              lastDiceRoll: {
+                value: message.value,
+                playerId: message.playerId,
+                playerName: message.playerName,
+              },
               room: prev.room
                 ? {
                     ...prev.room,

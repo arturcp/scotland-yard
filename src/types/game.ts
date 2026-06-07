@@ -86,6 +86,12 @@ export interface TurnOrderRoll {
   value: number;
 }
 
+export interface LastDiceRoll {
+  value: number;
+  playerId: number;
+  playerName: string;
+}
+
 export interface GameRoomState {
   code: string;
   phase: GamePhase;

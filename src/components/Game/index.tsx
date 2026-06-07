@@ -104,6 +104,18 @@ export default function Game({ roomCode }: GameProps) {
 
   const canShowCase = !!room?.caseIntro && phase !== null && phase !== 'lobby';
 
+  const diceResultMessage = useMemo(() => {
+    if (!lastDiceRoll) {
+      return null;
+    }
+
+    if (lastDiceRoll.playerId === playerId) {
+      return `Você tirou o número ${lastDiceRoll.value}!`;
+    }
+
+    return `${lastDiceRoll.playerName} tirou o número ${lastDiceRoll.value}!`;
+  }, [lastDiceRoll, playerId]);
+
   useEffect(() => {
     if (lastDiceRoll !== null) {
       setRolling(true);
@@ -410,7 +422,8 @@ export default function Game({ roomCode }: GameProps) {
       )}
       {rolling && lastDiceRoll !== null && (
         <DiceRoll
-          forcedResult={lastDiceRoll}
+          forcedResult={lastDiceRoll.value}
+          resultMessage={diceResultMessage ?? undefined}
           onComplete={() => {
             setRolling(false);
             clearLastDiceRoll();

@@ -538,7 +538,7 @@ export type ServerGameEvent =
       rolls: TurnOrderRoll[];
     }
   | { type: 'turnStarted'; playerId: number; playerName: string }
-  | { type: 'diceRolled'; playerId: number; value: number; availableSquares: AvailableSquare[] }
+  | { type: 'diceRolled'; playerId: number; playerName: string; value: number; availableSquares: AvailableSquare[] }
   | { type: 'playerMoved'; playerId: number; position: Position; path: string[] }
   | { type: 'clueAdded'; playerId: number; zoneId: ZoneId; zoneName: string; clueText: string }
   | { type: 'verifying'; playerName: string }
@@ -751,7 +751,7 @@ export function rollDice(code: string, playerId: number): EngineResult {
 
   return {
     state,
-    events: [{ type: 'diceRolled', playerId, value, availableSquares }],
+    events: [{ type: 'diceRolled', playerId, playerName: player.name, value, availableSquares }],
   };
 }
 
