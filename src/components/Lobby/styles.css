@@ -60,6 +60,15 @@
   color: #f87171;
 }
 
+.lobby__room-full {
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: rgba(212, 175, 55, 0.1);
+  color: #f5f0e6;
+  line-height: 1.5;
+}
+
 .lobby__form,
 .lobby__waiting {
   display: flex;

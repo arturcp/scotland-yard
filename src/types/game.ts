@@ -155,6 +155,8 @@ export interface RoomSummary {
   playerCount: number;
   caseId?: string;
   caseTitle?: string;
+  creatorId?: number | null;
+  players?: LobbyPlayer[];
 }
 
 export const PLAYER_COLORS = [
@@ -169,6 +171,13 @@ export const PLAYER_COLORS = [
 ] as const;
 
 export type PlayerColor = (typeof PLAYER_COLORS)[number];
+
+export interface LobbyPlayer {
+  id: number;
+  name: string;
+  color: PlayerColor;
+  connected: boolean;
+}
 
 export const PLAYER_COLOR_VALUES: Record<PlayerColor, string> = {
   blue: '#3B82F6',

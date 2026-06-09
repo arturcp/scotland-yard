@@ -8,10 +8,13 @@ import {
   DEFAULT_MASTER_KEYS_PER_PLAYER,
   MAX_MASTER_KEYS_PER_PLAYER,
   getPlayerColorValue,
+  type LobbyPlayer,
   type Player,
   type PlayerColor,
+  type RoomSummary,
 } from '../../types/game';
 import type { UseGameSocketReturn } from '../../hooks/useGameSocket';
+import { fetchRoomSummary } from '../../lib/api';
 
 import './styles.css';
 
@@ -58,16 +61,53 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
   const [joining, setJoining] = useState(false);
   const [copied, setCopied] = useState(false);
   const [masterKeys, setMasterKeys] = useState(DEFAULT_MASTER_KEYS_PER_PLAYER);
+  const [lobbySnapshot, setLobbySnapshot] = useState<RoomSummary | null>(null);
 
   const inviteUrl = useMemo(() => buildInviteUrl(roomCode), [roomCode]);
   const whatsAppUrl = useMemo(() => buildWhatsAppUrl(roomCode, inviteUrl), [roomCode, inviteUrl]);
 
+  const hasJoined = game.playerId !== null;
+  const players: LobbyPlayer[] = hasJoined
+    ? game.players.map(({ id, name, color, connected }) => ({ id, name, color, connected }))
+    : (lobbySnapshot?.players ?? []);
+  const creatorId = hasJoined ? game.room?.creatorId : lobbySnapshot?.creatorId;
+  const caseTitle = game.room?.caseTitle ?? lobbySnapshot?.caseTitle;
+
   const takenColors = useMemo(
-    () => new Set(game.players.map((player) => player.color)),
-    [game.players],
+    () => new Set(players.map((player) => player.color)),
+    [players],
   );
-  const connectedCount = game.players.filter((player) => player.connected).length;
+  const connectedCount = players.filter((player) => player.connected).length;
   const canStart = game.isCreator && connectedCount >= MIN_PLAYERS && game.phase === 'lobby';
+  const playerCount = hasJoined ? game.players.length : (lobbySnapshot?.playerCount ?? players.length);
+  const roomFull = !hasJoined && playerCount >= MAX_PLAYERS;
+
+  useEffect(() => {
+    if (hasJoined) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function refreshLobbySnapshot() {
+      try {
+        const summary = await fetchRoomSummary(roomCode);
+        if (!cancelled) {
+          setLobbySnapshot(summary);
+        }
+      } catch {
+        // Ignore polling errors; the join flow will surface connection issues.
+      }
+    }
+
+    refreshLobbySnapshot();
+    const intervalId = window.setInterval(refreshLobbySnapshot, 3000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [hasJoined, roomCode]);
 
   useEffect(() => {
     if (!takenColors.has(color)) {
@@ -114,7 +154,6 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
     }
   }
 
-  const hasJoined = game.playerId !== null;
   const showInvite = game.isCreator && hasJoined && game.phase === 'lobby';
 
   return (
@@ -127,15 +166,20 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
 
         <p className="lobby__eyebrow">Quartel-general dos detetives</p>
         <h1 className="lobby__title">Sala {roomCode}</h1>
-        {game.room?.caseTitle && (
+        {caseTitle && (
           <p className="lobby__case">
-            Caso: <strong>{game.room.caseTitle}</strong>
+            Caso: <strong>{caseTitle}</strong>
           </p>
         )}
 
-        {game.error && <p className="lobby__error">{game.error}</p>}
+        {game.error && !roomFull && <p className="lobby__error">{game.error}</p>}
 
-        {!hasJoined ? (
+        {!hasJoined && roomFull ? (
+          <p className="lobby__room-full" role="status">
+            A sala está cheia ({MAX_PLAYERS}/{MAX_PLAYERS} jogadores). Aguarde alguém sair ou peça ao
+            criador para iniciar uma nova partida.
+          </p>
+        ) : !hasJoined ? (
           <form className="lobby__form" onSubmit={handleJoin}>
             <label className="lobby__field">
               <span>Nome do detetive</span>
@@ -241,10 +285,10 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
         )}
 
         <section className="lobby__players">
-          <h2>Jogadores ({game.players.length}/{MAX_PLAYERS})</h2>
+          <h2>Jogadores ({players.length}/{MAX_PLAYERS})</h2>
           <ul>
-            {game.players.map((player) => {
-              const editable = canEditPlayerColor(player, game, hasJoined);
+            {players.map((player) => {
+              const editable = canEditPlayerColor(player as Player, game, hasJoined);
 
               return (
                 <li key={player.id} className="lobby__player">
@@ -261,7 +305,7 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
                     <span>
                       {player.name}
                       {!player.connected && ' (desconectado)'}
-                      {game.room?.creatorId === player.id && ' — criador'}
+                      {creatorId === player.id && ' — criador'}
                     </span>
                   </div>
 
@@ -273,7 +317,7 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
                     >
                       {PLAYER_COLORS.map((option) => {
                         const taken =
-                          game.players.some(
+                          players.some(
                             (other) => other.id !== player.id && other.color === option,
                           );
                         const selected = player.color === option;

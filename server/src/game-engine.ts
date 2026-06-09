@@ -292,6 +292,16 @@ export function getRoomSummary(code: string): RoomSummary {
     playerCount: state.players.length,
     caseId: state.caseId,
     caseTitle: state.caseTitle,
+    creatorId: state.creatorId,
+    players:
+      state.phase === 'lobby'
+        ? state.players.map(({ id, name, color, connected }) => ({
+            id,
+            name,
+            color,
+            connected,
+          }))
+        : undefined,
   };
 }
 
