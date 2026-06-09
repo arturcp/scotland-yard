@@ -1,5 +1,9 @@
-import { SQUARE_SIZE, BOARD_PADDING, pieceCenterOffsetX } from '../board/layout';
+import { zonePins } from '../board';
+import { SQUARE_SIZE, BOARD_PADDING, PIECE_CENTER_OFFSET, PIECE_SPACING, pieceCenterOffsetX } from '../board/layout';
+import type { ZoneId } from '../board/types';
 import type { Player, Position } from '../types/game';
+
+const PLACE_PINS = zonePins();
 
 export const STEP_DURATION_MS = 200;
 
@@ -32,20 +36,31 @@ function playersAtPosition(player: Player, players: Player[], position: Position
 }
 
 function movePinTo(pin: HTMLElement, player: Player, players: Player[], position: Position) {
+  const atPosition = playersAtPosition(player, players, position);
+  const idx = atPosition.findIndex((p) => p.id === player.id);
+  const N = atPosition.length;
+
   if (position.place) {
+    const zoneId = position.place as ZoneId;
+    const leftStart =
+      PLACE_PINS[zoneId].left + PIECE_CENTER_OFFSET - (PIECE_SPACING / 2) * (N - 1);
+
+    pin.classList.remove('player--anchor-center');
+    pin.classList.remove('player--solo');
+
+    pin.style.top = `${PLACE_PINS[zoneId].top}px`;
+    pin.style.left = `${leftStart + PIECE_SPACING * idx}px`;
     return;
   }
 
   const row = position.row ?? 0;
   const column = position.column ?? 0;
-  const atPosition = playersAtPosition(player, players, position);
-  const idx = atPosition.findIndex((p) => p.id === player.id);
-  const offsetX = pieceCenterOffsetX(idx, atPosition.length);
+  const offsetX = pieceCenterOffsetX(idx, N);
   const originTop = row * SQUARE_SIZE + BOARD_PADDING;
   const originLeft = column * SQUARE_SIZE + BOARD_PADDING;
 
   pin.classList.add('player--anchor-center');
-  pin.classList.toggle('player--solo', atPosition.length === 1);
+  pin.classList.toggle('player--solo', N === 1);
 
   pin.style.top = `${originTop + SQUARE_SIZE / 2}px`;
   pin.style.left = `${originLeft + SQUARE_SIZE / 2 + offsetX}px`;
