@@ -1,10 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import MicroModal from 'micromodal';
 import type { GameController, GameShiftStatus, Player } from '../../types/game';
 import Sidebar from './index';
 
-vi.mock('micromodal', () => ({ default: { init: vi.fn() } }));
+const mockMicroModalShow = vi.hoisted(() => vi.fn());
+
+vi.mock('micromodal', () => ({ default: { show: mockMicroModalShow } }));
 
 const players: Player[] = [
   { id: 1, name: 'John', color: 'blue', position: { row: 0, column: 0, place: null } },
@@ -30,6 +31,10 @@ function renderSidebar(ui: React.ReactElement) {
 }
 
 describe('Sidebar', () => {
+  beforeEach(() => {
+    mockMicroModalShow.mockClear();
+  });
+
   describe('rendering', () => {
     test('renders the sidebar element', () => {
       const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
@@ -89,10 +94,17 @@ describe('Sidebar', () => {
     });
   });
 
-  describe('MicroModal', () => {
-    test('initializes MicroModal on mount', () => {
+  describe('modal triggers', () => {
+    test('opens the notes modal when clicked', () => {
       renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
-      expect(MicroModal.init).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByTestId('show-notes-trigger'));
+      expect(mockMicroModalShow).toHaveBeenCalledWith('modal-notes');
+    });
+
+    test('opens the players modal when clicked', () => {
+      renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
+      fireEvent.click(screen.getByTestId('show-players-trigger'));
+      expect(mockMicroModalShow).toHaveBeenCalledWith('modal-players');
     });
   });
 

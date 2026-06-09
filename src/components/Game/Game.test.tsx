@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import Game from './index';
 
-vi.mock('micromodal', () => ({ default: { init: vi.fn() } }));
+const mockMicroModalShow = vi.hoisted(() => vi.fn());
+
+vi.mock('micromodal', () => ({ default: { show: mockMicroModalShow } }));
 
 const mockUseGameSocket = vi.hoisted(() => vi.fn());
 
@@ -91,9 +93,57 @@ function renderGame() {
   );
 }
 
+function waitingForOtherPlayerState() {
+  return {
+    ...defaultSocketState(),
+    connected: true,
+    phase: 'playing' as const,
+    playerId: 2,
+    isMyTurn: false,
+    turnBanner: 'Alice está jogando',
+    caseFields: [{ key: 'who', label: 'Quem cometeu o crime?' }],
+    room: {
+      code: 'ABC123',
+      phase: 'playing' as const,
+      creatorId: 1,
+      caseTitle: 'O Mistério',
+      caseIntro: 'Um caso intrigante.',
+      turnOrderPendingIds: [],
+      turnOrderRolls: [],
+      turnOrder: [1, 2],
+      players: [
+        {
+          id: 1,
+          name: 'Alice',
+          color: 'blue',
+          connected: true,
+          eliminated: false,
+          position: { row: 0, column: 0, place: 'museum' },
+        },
+        {
+          id: 2,
+          name: 'Bob',
+          color: 'yellow',
+          connected: true,
+          eliminated: false,
+          position: { row: 0, column: 0, place: 'holmes-house' },
+        },
+      ],
+      visitedZonesByPlayer: {},
+      shift: {
+        status: 'in-progress' as const,
+        playerId: 1,
+        availableSquares: [],
+        diceResult: 4,
+      },
+    },
+  };
+}
+
 describe('Game', () => {
   beforeEach(() => {
     mockDesktopViewport(true);
+    mockMicroModalShow.mockClear();
     mockUseGameSocket.mockReturnValue(defaultSocketState());
   });
 
@@ -374,45 +424,7 @@ describe('Game', () => {
   test('allows sidebar navigation while another player is on their turn', async () => {
     const user = userEvent.setup();
 
-    mockUseGameSocket.mockReturnValue({
-      ...defaultSocketState(),
-      connected: true,
-      phase: 'playing',
-      playerId: 2,
-      isMyTurn: false,
-      turnBanner: 'Alice está jogando',
-      caseFields: [{ key: 'who', label: 'Quem cometeu o crime?' }],
-      room: {
-        code: 'ABC123',
-        phase: 'playing',
-        creatorId: 1,
-        caseTitle: 'O Mistério',
-        caseIntro: 'Um caso intrigante.',
-        turnOrderPendingIds: [],
-        turnOrderRolls: [],
-        turnOrder: [1, 2],
-        players: [
-          {
-            id: 1,
-            name: 'Alice',
-            color: 'blue',
-            connected: true,
-            eliminated: false,
-            position: { row: 0, column: 0, place: 'museum' },
-          },
-          {
-            id: 2,
-            name: 'Bob',
-            color: 'yellow',
-            connected: true,
-            eliminated: false,
-            position: { row: 0, column: 0, place: 'holmes-house' },
-          },
-        ],
-        visitedZonesByPlayer: {},
-        shift: { status: 'in-progress', playerId: 1, availableSquares: [], diceResult: 4 },
-      },
-    });
+    mockUseGameSocket.mockReturnValue(waitingForOtherPlayerState());
 
     renderGame();
 
@@ -420,6 +432,39 @@ describe('Game', () => {
 
     expect(screen.getByText('Um caso intrigante.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Fechar' })).toBeInTheDocument();
+  });
+
+  test('opens notes and players modals from the sidebar while waiting for another player', async () => {
+    const user = userEvent.setup();
+
+    mockUseGameSocket.mockReturnValue(waitingForOtherPlayerState());
+
+    renderGame();
+
+    await user.click(screen.getByTestId('show-notes-trigger'));
+    expect(mockMicroModalShow).toHaveBeenCalledWith('modal-notes');
+
+    await user.click(screen.getByTestId('show-players-trigger'));
+    expect(mockMicroModalShow).toHaveBeenCalledWith('modal-players');
+  });
+
+  test('allows sidebar modals while another player dice roll animation is visible', async () => {
+    const user = userEvent.setup();
+
+    mockUseGameSocket.mockReturnValue({
+      ...waitingForOtherPlayerState(),
+      lastDiceRoll: {
+        value: 4,
+        playerId: 1,
+        playerName: 'Alice',
+        context: 'playing' as const,
+      },
+    });
+
+    renderGame();
+
+    await user.click(screen.getByTestId('show-notes-trigger'));
+    expect(mockMicroModalShow).toHaveBeenCalledWith('modal-notes');
   });
 
   test('shows mobile warning on small viewports', () => {

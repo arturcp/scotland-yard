@@ -116,7 +116,10 @@
 
 .game-over-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: var(--sidebar-width);
   z-index: 110;
   display: flex;
   align-items: center;

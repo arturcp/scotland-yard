@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { CircleHelp, FileText, ScrollText, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MicroModal from 'micromodal';
@@ -25,10 +24,6 @@ export default function Sidebar({
   onRollStart,
   onShowCase,
 }: SidebarProps) {
-  useEffect(() => {
-    MicroModal.init();
-  }, []);
-
   function handleDiceClick() {
     if (rolling || !showDice) {
       return;
@@ -51,13 +46,23 @@ export default function Sidebar({
       <nav className="sidebar-nav">
         <ul>
           <li>
-            <button type="button" className="nav-item" data-micromodal-trigger="modal-notes">
+            <button
+              type="button"
+              className="nav-item"
+              data-testid="show-notes-trigger"
+              onClick={() => MicroModal.show('modal-notes')}
+            >
               <FileText aria-hidden="true" size={28} strokeWidth={1.75} />
               <span>Notas</span>
             </button>
           </li>
           <li>
-            <button type="button" className="nav-item" data-micromodal-trigger="modal-players">
+            <button
+              type="button"
+              className="nav-item"
+              data-testid="show-players-trigger"
+              onClick={() => MicroModal.show('modal-players')}
+            >
               <Users aria-hidden="true" size={28} strokeWidth={1.75} />
               <span>Jogadores</span>
             </button>
