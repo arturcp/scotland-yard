@@ -54,8 +54,8 @@ describe('Places', () => {
       visitedZones: ['museum', 'bar'],
     };
     const { container } = render(<Places game={game} />);
-    expect(container.querySelector('.museum.place--visited')).toBeInTheDocument();
-    expect(container.querySelector('.bar.place--visited')).toBeInTheDocument();
-    expect(container.querySelector('.park.place--visited')).not.toBeInTheDocument();
+    expect(container.querySelector('.museum.place--visited .place__visited-badge')).toBeInTheDocument();
+    expect(container.querySelector('.bar.place--visited .place__visited-badge')).toBeInTheDocument();
+    expect(container.querySelector('.park .place__visited-badge')).not.toBeInTheDocument();
   });
 });

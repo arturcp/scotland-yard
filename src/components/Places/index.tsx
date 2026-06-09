@@ -71,7 +71,13 @@ export default function Places({ game }: PlacesProps) {
                 handleZoneClick(zoneId, available.path);
               }
             }}
-          />
+          >
+            {isVisited && (
+              <span className="place__visited-badge" aria-hidden="true" title="Local visitado">
+                ✓
+              </span>
+            )}
+          </div>
         );
       })}
     </div>
