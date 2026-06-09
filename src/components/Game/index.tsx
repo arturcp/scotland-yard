@@ -61,6 +61,7 @@ export default function Game({ roomCode }: GameProps) {
     lastSubmittedAnswers,
     solutionReveal,
     turnOrderRolls,
+    lastDiceRoll,
     pendingClue,
     pendingLockedZone,
     masterKeysRemaining,
@@ -80,6 +81,7 @@ export default function Game({ roomCode }: GameProps) {
     leaveGame,
     roomClosed,
     clearRemoteMove,
+    clearLastDiceRoll,
     clearPendingClue,
     clearPendingLockedZone,
   } = gameSocket;
@@ -559,6 +561,15 @@ export default function Game({ roomCode }: GameProps) {
           key={localDiceRoll}
           showConfetti
           onComplete={handleLocalDiceComplete}
+        />
+      )}
+      {lastDiceRoll?.context === 'playing' && (
+        <DiceRoll
+          key={`remote-${lastDiceRoll.playerId}-${lastDiceRoll.value}`}
+          predeterminedValue={lastDiceRoll.value}
+          resultMessage={`${lastDiceRoll.playerName} tirou o número ${lastDiceRoll.value}!`}
+          showConfetti
+          onComplete={clearLastDiceRoll}
         />
       )}
     </div>

@@ -349,9 +349,19 @@ export function useGameSocket(roomCode: string) {
                 message.playerId,
                 message.playerName,
               );
+              const isRemoteRoll =
+                prev.playerId !== null && message.playerId !== prev.playerId;
 
               return {
                 ...prev,
+                lastDiceRoll: isRemoteRoll
+                  ? {
+                      value: message.value,
+                      playerId: message.playerId,
+                      playerName,
+                      context: 'playing',
+                    }
+                  : prev.lastDiceRoll,
                 turnBanner:
                   prev.playerId === message.playerId
                     ? prev.turnBanner
