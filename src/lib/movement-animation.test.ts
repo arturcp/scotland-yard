@@ -86,9 +86,9 @@ describe('movement animation', () => {
       vi.runAllTimers();
 
       const pin = document.querySelector('#player-1') as HTMLElement;
-      expect(pin.style.top).toBe('500px');
-      expect(pin.style.left).toBe('113.5px');
-      expect(pin.classList.contains('player--anchor-center')).toBe(false);
+      expect(pin.style.top).toBe('511px');
+      expect(pin.style.left).toBe('124.5px');
+      expect(pin.classList.contains('player--anchor-center')).toBe(true);
     });
   });
 });

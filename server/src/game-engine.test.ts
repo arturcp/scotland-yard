@@ -2,6 +2,7 @@ import { describe, expect, test, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { MAX_PLAYERS, PLAYER_COLORS } from '../../src/types/game.js';
 import { seedCasesIfEmpty } from './case-store.js';
 import {
   computeTurnOrderFromRolls,
@@ -460,5 +461,51 @@ describe('game engine', () => {
     expect(result.state.phase).toBe('finished');
     expect(result.state.winnerId).toBe(first.playerId);
     expect(result.events?.some((event) => event.type === 'gameOver')).toBe(true);
+  });
+
+  test('rejects invalid color on join', () => {
+    const room = createRoom('002');
+    const result = joinRoom(room.code, 'Alice', 'brown');
+    expect(result.error).toBe('Cor inválida.');
+  });
+
+  test('rejects duplicate color on join', () => {
+    const room = createRoom('002');
+    joinRoom(room.code, 'Alice', 'blue');
+    const second = joinRoom(room.code, 'Bob', 'blue');
+    expect(second.error).toBe('Esta cor já está em uso.');
+  });
+
+  test('rejects reconnect with another players color', () => {
+    const room = createRoom('002');
+    const first = joinRoom(room.code, 'Alice', 'blue');
+    joinRoom(room.code, 'Bob', 'yellow');
+
+    const reconnect = joinRoom(room.code, 'Alice', 'yellow', first.sessionToken);
+    expect(reconnect.error).toBe('Esta cor já está em uso.');
+  });
+
+  test('allows reconnect with same color', () => {
+    const room = createRoom('002');
+    const first = joinRoom(room.code, 'Alice', 'blue');
+    joinRoom(room.code, 'Bob', 'yellow');
+
+    const reconnect = joinRoom(room.code, 'Alice', 'blue', first.sessionToken);
+    expect(reconnect.error).toBeUndefined();
+    expect(reconnect.playerId).toBe(first.playerId);
+  });
+
+  test('rejects join when room is full', () => {
+    const room = createRoom('002');
+    const tokens: string[] = [];
+
+    for (let i = 0; i < MAX_PLAYERS; i++) {
+      const joined = joinRoom(room.code, `Player ${i + 1}`, PLAYER_COLORS[i]);
+      expect(joined.error).toBeUndefined();
+      tokens.push(joined.sessionToken);
+    }
+
+    const overflow = joinRoom(room.code, 'Extra', 'blue');
+    expect(overflow.error).toBe('A sala está cheia.');
   });
 });

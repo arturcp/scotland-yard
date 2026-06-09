@@ -23,6 +23,20 @@ import { deleteRoom, loadRoom, saveRoom } from './persistence.js';
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const STARTING_POSITION: Position = { place: 'holmes-house' };
 
+function validatePlayerColor(
+  color: string,
+  players: Player[],
+  excludePlayerId?: number,
+): string | undefined {
+  if (!PLAYER_COLORS.includes(color as (typeof PLAYER_COLORS)[number])) {
+    return 'Cor inválida.';
+  }
+  if (players.some((player) => player.id !== excludePlayerId && player.color === color)) {
+    return 'Esta cor já está em uso.';
+  }
+  return undefined;
+}
+
 const activeRooms = new Map<string, GameRoomState>();
 
 function generateCode(): string {
@@ -387,6 +401,10 @@ export function joinRoom(
     const existingId = Object.entries(state.sessionTokens).find(([, token]) => token === sessionToken)?.[0];
     const existing = existingId ? state.players.find((p) => p.id === Number(existingId)) : undefined;
     if (existing) {
+      const colorError = validatePlayerColor(color, state.players, existing.id);
+      if (colorError) {
+        return { state, sessionToken: '', playerId: 0, error: colorError };
+      }
       existing.name = trimmedName;
       existing.color = color;
       existing.connected = true;
@@ -408,8 +426,9 @@ export function joinRoom(
     return { state, sessionToken: '', playerId: 0, error: 'A sala está cheia.' };
   }
 
-  if (state.players.some((p) => p.color === color)) {
-    return { state, sessionToken: '', playerId: 0, error: 'Esta cor já está em uso.' };
+  const colorError = validatePlayerColor(color, state.players);
+  if (colorError) {
+    return { state, sessionToken: '', playerId: 0, error: colorError };
   }
 
   if (state.players.some((p) => p.name.toLowerCase() === trimmedName.toLowerCase())) {

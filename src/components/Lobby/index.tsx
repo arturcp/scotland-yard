@@ -1,7 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, Copy } from 'lucide-react';
-import { PLAYER_COLORS, MIN_PLAYERS, DEFAULT_MASTER_KEYS_PER_PLAYER, MAX_MASTER_KEYS_PER_PLAYER, type Player, type PlayerColor } from '../../types/game';
+import {
+  PLAYER_COLORS,
+  MIN_PLAYERS,
+  MAX_PLAYERS,
+  DEFAULT_MASTER_KEYS_PER_PLAYER,
+  MAX_MASTER_KEYS_PER_PLAYER,
+  getPlayerColorValue,
+  type Player,
+  type PlayerColor,
+} from '../../types/game';
 import type { UseGameSocketReturn } from '../../hooks/useGameSocket';
 
 import './styles.css';
@@ -23,10 +32,12 @@ interface LobbyProps {
 const COLOR_LABELS: Record<PlayerColor, string> = {
   blue: 'Azul',
   yellow: 'Amarelo',
-  brown: 'Marrom',
-  lightpink: 'Rosa',
+  red: 'Vermelho',
+  pink: 'Rosa',
   green: 'Verde',
   purple: 'Roxo',
+  cyan: 'Ciano',
+  orange: 'Laranja',
 };
 
 function canEditPlayerColor(
@@ -51,9 +62,28 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
   const inviteUrl = useMemo(() => buildInviteUrl(roomCode), [roomCode]);
   const whatsAppUrl = useMemo(() => buildWhatsAppUrl(roomCode, inviteUrl), [roomCode, inviteUrl]);
 
-  const takenColors = new Set(game.players.map((player) => player.color));
+  const takenColors = useMemo(
+    () => new Set(game.players.map((player) => player.color)),
+    [game.players],
+  );
   const connectedCount = game.players.filter((player) => player.connected).length;
   const canStart = game.isCreator && connectedCount >= MIN_PLAYERS && game.phase === 'lobby';
+
+  useEffect(() => {
+    if (!takenColors.has(color)) {
+      return;
+    }
+    const available = PLAYER_COLORS.find((option) => !takenColors.has(option));
+    if (available) {
+      setColor(available);
+    }
+  }, [color, takenColors]);
+
+  useEffect(() => {
+    if (joining && (game.playerId !== null || game.error)) {
+      setJoining(false);
+    }
+  }, [joining, game.playerId, game.error]);
 
   function handleMasterKeysChange(value: number) {
     setMasterKeys(value);
@@ -128,7 +158,7 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
                       key={option}
                       type="button"
                       className={`lobby__color${color === option ? ' lobby__color--selected' : ''}${taken ? ' lobby__color--taken' : ''}`}
-                      style={{ '--piece-color': option } as React.CSSProperties}
+                      style={{ '--piece-color': getPlayerColorValue(option) } as React.CSSProperties}
                       disabled={taken}
                       onClick={() => setColor(option)}
                       aria-label={COLOR_LABELS[option]}
@@ -211,7 +241,7 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
         )}
 
         <section className="lobby__players">
-          <h2>Jogadores ({connectedCount})</h2>
+          <h2>Jogadores ({game.players.length}/{MAX_PLAYERS})</h2>
           <ul>
             {game.players.map((player) => {
               const editable = canEditPlayerColor(player, game, hasJoined);
@@ -222,7 +252,7 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
                     {!editable && (
                       <span
                         className="lobby__swatch"
-                        style={{ color: player.color }}
+                        style={{ color: getPlayerColorValue(player.color) }}
                         aria-hidden="true"
                       >
                         ●
@@ -253,7 +283,7 @@ export default function Lobby({ roomCode, game }: LobbyProps) {
                             key={option}
                             type="button"
                             className={`lobby__color lobby__color--compact${selected ? ' lobby__color--selected' : ''}${taken ? ' lobby__color--taken' : ''}`}
-                            style={{ '--piece-color': option } as React.CSSProperties}
+                            style={{ '--piece-color': getPlayerColorValue(option) } as React.CSSProperties}
                             disabled={taken}
                             onClick={() => game.updateColor(player.id, option)}
                             aria-label={COLOR_LABELS[option]}

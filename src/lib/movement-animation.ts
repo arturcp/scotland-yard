@@ -1,5 +1,11 @@
 import { zonePins } from '../board';
-import { SQUARE_SIZE, BOARD_PADDING, PIECE_CENTER_OFFSET, PIECE_SPACING, pieceCenterOffsetX } from '../board/layout';
+import {
+  SQUARE_SIZE,
+  BOARD_PADDING,
+  PIECE_CENTER_OFFSET,
+  PIECE_SIZE,
+  getPiecePlacement,
+} from '../board/layout';
 import type { ZoneId } from '../board/types';
 import type { Player, Position } from '../types/game';
 
@@ -39,30 +45,29 @@ function movePinTo(pin: HTMLElement, player: Player, players: Player[], position
   const atPosition = playersAtPosition(player, players, position);
   const idx = atPosition.findIndex((p) => p.id === player.id);
   const N = atPosition.length;
+  const { offsetX, offsetY, scale } = getPiecePlacement(idx, N);
+
+  pin.classList.add('player--anchor-center');
+  pin.classList.toggle('player--solo', N === 1);
+  pin.style.setProperty('--piece-scale', String(scale));
 
   if (position.place) {
     const zoneId = position.place as ZoneId;
-    const leftStart =
-      PLACE_PINS[zoneId].left + PIECE_CENTER_OFFSET - (PIECE_SPACING / 2) * (N - 1);
+    const pinCoords = PLACE_PINS[zoneId];
+    const centerX = pinCoords.left + PIECE_CENTER_OFFSET + PIECE_SIZE / 2;
+    const centerY = pinCoords.top + PIECE_SIZE / 2;
 
-    pin.classList.remove('player--anchor-center');
-    pin.classList.remove('player--solo');
-
-    pin.style.top = `${PLACE_PINS[zoneId].top}px`;
-    pin.style.left = `${leftStart + PIECE_SPACING * idx}px`;
+    pin.style.top = `${centerY + offsetY}px`;
+    pin.style.left = `${centerX + offsetX}px`;
     return;
   }
 
   const row = position.row ?? 0;
   const column = position.column ?? 0;
-  const offsetX = pieceCenterOffsetX(idx, N);
   const originTop = row * SQUARE_SIZE + BOARD_PADDING;
   const originLeft = column * SQUARE_SIZE + BOARD_PADDING;
 
-  pin.classList.add('player--anchor-center');
-  pin.classList.toggle('player--solo', N === 1);
-
-  pin.style.top = `${originTop + SQUARE_SIZE / 2}px`;
+  pin.style.top = `${originTop + SQUARE_SIZE / 2 + offsetY}px`;
   pin.style.left = `${originLeft + SQUARE_SIZE / 2 + offsetX}px`;
 }
 

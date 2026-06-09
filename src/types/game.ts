@@ -160,16 +160,33 @@ export interface RoomSummary {
 export const PLAYER_COLORS = [
   'blue',
   'yellow',
-  'brown',
-  'lightpink',
+  'red',
+  'pink',
   'green',
   'purple',
+  'cyan',
+  'orange',
 ] as const;
 
 export type PlayerColor = (typeof PLAYER_COLORS)[number];
 
+export const PLAYER_COLOR_VALUES: Record<PlayerColor, string> = {
+  blue: '#3B82F6',
+  yellow: '#FACC15',
+  red: '#EF4444',
+  pink: '#F472B6',
+  green: '#22C55E',
+  purple: '#A855F7',
+  cyan: '#06B6D4',
+  orange: '#F97316',
+};
+
+export function getPlayerColorValue(color: PlayerColor): string {
+  return PLAYER_COLOR_VALUES[color];
+}
+
 export const MIN_PLAYERS = 2;
-export const MAX_PLAYERS = 6;
+export const MAX_PLAYERS = 8;
 export const DEFAULT_MASTER_KEYS_PER_PLAYER = 2;
 export const MAX_MASTER_KEYS_PER_PLAYER = 5;
 

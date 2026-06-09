@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { UserRound } from 'lucide-react';
-import type { Player } from '../../types/game';
+import { getPlayerColorValue, type Player } from '../../types/game';
 
 import '../Notes/micromodal.css';
 import './styles.css';
@@ -60,7 +60,7 @@ export default function PlayersModal({ players, turnOrder }: PlayersModalProps) 
                     aria-hidden="true"
                     size={32}
                     strokeWidth={1.75}
-                    style={{ color: player.color }}
+                    style={{ color: getPlayerColorValue(player.color) }}
                   />
                   <span className="players-modal__name">{player.name}</span>
                   {player.eliminated && <span className="players-modal__out">Eliminado</span>}

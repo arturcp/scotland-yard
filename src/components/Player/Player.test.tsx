@@ -27,6 +27,6 @@ describe('Player', () => {
   test('applies color to the rendered style', () => {
     const { container } = render(<Player player={player} style={{ top: 10, left: 20 }} />);
     const el = container.querySelector('#player-2') as HTMLElement;
-    expect(el.style.color).toBe('yellow');
+    expect(el.style.color).toBe('rgb(250, 204, 21)');
   });
 });
