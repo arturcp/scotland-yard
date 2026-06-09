@@ -41,6 +41,19 @@
   grid-template-columns: 2.75rem 2rem 1fr auto;
 }
 
+.players-modal__item--active {
+  margin: 0 -0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  border-radius: 6px;
+  background: rgba(212, 175, 55, 0.08);
+  border-bottom-color: transparent;
+}
+
+.players-modal__item--active + .players-modal__item {
+  border-top: 1px solid rgba(212, 175, 55, 0.15);
+}
+
 .players-modal__item:last-child {
   border-bottom: none;
 }
@@ -60,4 +73,10 @@
 .players-modal__out {
   font-size: 0.85rem;
   color: rgba(245, 240, 230, 0.55);
+}
+
+.players-modal__active {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-gold);
 }

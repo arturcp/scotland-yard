@@ -190,8 +190,11 @@ export const PLAYER_COLOR_VALUES: Record<PlayerColor, string> = {
   orange: '#F97316',
 };
 
-export function getPlayerColorValue(color: PlayerColor): string {
-  return PLAYER_COLOR_VALUES[color];
+export function getPlayerColorValue(color: PlayerColor | string): string {
+  if ((PLAYER_COLORS as readonly string[]).includes(color)) {
+    return PLAYER_COLOR_VALUES[color as PlayerColor];
+  }
+  return PLAYER_COLOR_VALUES.blue;
 }
 
 export const MIN_PLAYERS = 2;

@@ -397,7 +397,11 @@ export default function Game({ roomCode }: GameProps) {
         customText={customNoteText}
         onCustomNotesChange={updateNotes}
       />
-      <PlayersModal players={room.players} turnOrder={room.turnOrder} />
+      <PlayersModal
+        players={room.players}
+        turnOrder={room.turnOrder}
+        activePlayerId={phase === 'playing' ? shift?.playerId : null}
+      />
       <SolutionModal
         open={solutionOpen && phase !== 'finished'}
         caseFields={caseFields}

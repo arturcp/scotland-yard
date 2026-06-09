@@ -8,9 +8,14 @@ import './styles.css';
 interface PlayersModalProps {
   players: Player[];
   turnOrder: number[];
+  activePlayerId?: number | null;
 }
 
-export default function PlayersModal({ players, turnOrder }: PlayersModalProps) {
+export default function PlayersModal({
+  players,
+  turnOrder,
+  activePlayerId = null,
+}: PlayersModalProps) {
   const entries = useMemo(() => {
     if (turnOrder.length > 0) {
       return turnOrder.flatMap((id, index) => {
@@ -43,32 +48,43 @@ export default function PlayersModal({ players, turnOrder }: PlayersModalProps) 
             <button className="modal__close" aria-label="Fechar" data-micromodal-close />
           </header>
           <main className="modal__content">
-            {hasTurnOrder && (
-              <p className="players-modal__subtitle">Ordem de jogada</p>
-            )}
+            {hasTurnOrder && <p className="players-modal__subtitle">Ordem de jogada</p>}
             <ul
               className={`players-modal__list${hasTurnOrder ? ' players-modal__list--ordered' : ''}`}
             >
-              {entries.map(({ player, rank }) => (
-                <li key={player.id} className="players-modal__item">
-                  {hasTurnOrder && rank !== null && (
-                    <span className="players-modal__rank" aria-label={`${rank}º na ordem de jogada`}>
-                      {rank}º
-                    </span>
-                  )}
-                  <UserRound
-                    aria-hidden="true"
-                    size={32}
-                    strokeWidth={1.75}
-                    style={{ color: getPlayerColorValue(player.color) }}
-                  />
-                  <span className="players-modal__name">{player.name}</span>
-                  {player.eliminated && <span className="players-modal__out">Eliminado</span>}
-                  {!player.connected && (
-                    <span className="players-modal__out">Desconectado</span>
-                  )}
-                </li>
-              ))}
+              {entries.map(({ player, rank }) => {
+                const isPlaying = activePlayerId === player.id;
+
+                return (
+                  <li
+                    key={player.id}
+                    className={`players-modal__item${isPlaying ? ' players-modal__item--active' : ''}`}
+                  >
+                    {hasTurnOrder && rank !== null && (
+                      <span
+                        className="players-modal__rank"
+                        aria-label={`${rank}º na ordem de jogada`}
+                      >
+                        {rank}º
+                      </span>
+                    )}
+                    <UserRound
+                      aria-hidden="true"
+                      size={32}
+                      strokeWidth={1.75}
+                      style={{ color: getPlayerColorValue(player.color) }}
+                    />
+                    <span className="players-modal__name">{player.name}</span>
+                    {isPlaying && <span className="players-modal__active">Jogando agora</span>}
+                    {!isPlaying && player.eliminated && (
+                      <span className="players-modal__out">Eliminado</span>
+                    )}
+                    {!isPlaying && !player.connected && (
+                      <span className="players-modal__out">Desconectado</span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </main>
           <footer className="modal__footer">
