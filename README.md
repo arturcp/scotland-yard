@@ -46,6 +46,10 @@ For local development, the server falls back to `server/data/rooms.db` when thos
 
 Copy `.env.example` to `.env` and fill in your Turso credentials before deploying.
 
+## Deploy (Render)
+
+See [docs/render-deploy.md](docs/render-deploy.md). The repo includes a [`render.yaml`](render.yaml) Blueprint with SPA rewrite rules for the static site.
+
 ## Clearing saved games
 
 Room state is persisted in Turso (production) or locally in `server/data/rooms.db` (development). To remove all saved games and start fresh (for example, after a server update or when a room is stuck in an old game phase), stop the server and either delete the local file or clear the `rooms` table in Turso:

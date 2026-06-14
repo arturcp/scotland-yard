@@ -1,0 +1,38 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# Service names must match your existing Render services to sync via Blueprint.
+# After pushing, open the Render dashboard → Blueprints → sync/apply changes.
+# Remove any Redirect/Rewrite rules configured manually in the Static Site UI
+# to avoid conflicts with the routes below.
+
+services:
+  - type: web
+    name: scotland-yard-8zor
+    runtime: node
+    buildCommand: yarn --frozen-lockfile install
+    startCommand: yarn server
+    healthCheckPath: /api/health
+    envVars:
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+
+  - type: web
+    name: scotland-yard-1
+    runtime: static
+    buildCommand: yarn --frozen-lockfile install && yarn build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+      - type: rewrite
+        source: /*/*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: scotland-yard-8zor
+          envVarKey: RENDER_EXTERNAL_URL

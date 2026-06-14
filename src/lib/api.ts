@@ -55,6 +55,14 @@ export function getWebSocketUrl(): string {
   if (configured) {
     return configured;
   }
+  if (API_BASE) {
+    const url = new URL(API_BASE);
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    url.pathname = '/ws';
+    url.search = '';
+    url.hash = '';
+    return url.toString();
+  }
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${protocol}//${window.location.host}/ws`;
 }
