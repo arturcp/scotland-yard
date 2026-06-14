@@ -1,6 +1,6 @@
 import { UserRound } from 'lucide-react';
 import type { CSSProperties } from 'react';
-import type { Player as GamePlayer } from '../../types/game';
+import { getPlayerColorValue, type Player as GamePlayer } from '../../types/game';
 
 import './styles.css';
 
@@ -9,9 +9,16 @@ interface PlayerProps {
   style: CSSProperties;
   anchorCenter?: boolean;
   solo?: boolean;
+  scale?: number;
 }
 
-export default function Player({ player, style, anchorCenter = false, solo = false }: PlayerProps) {
+export default function Player({
+  player,
+  style,
+  anchorCenter = false,
+  solo = false,
+  scale = 1,
+}: PlayerProps) {
   const classes = [
     'player',
     player.color,
@@ -22,7 +29,17 @@ export default function Player({ player, style, anchorCenter = false, solo = fal
     .join(' ');
 
   return (
-    <div id={`player-${player.id}`} className={classes} style={{ ...style, color: player.color }}>
+    <div
+      id={`player-${player.id}`}
+      className={classes}
+      style={
+        {
+          ...style,
+          color: getPlayerColorValue(player.color),
+          '--piece-scale': scale,
+        } as CSSProperties
+      }
+    >
       <UserRound aria-hidden="true" strokeWidth={2} fill="currentColor" />
     </div>
   );

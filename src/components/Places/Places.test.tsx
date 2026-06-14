@@ -47,4 +47,15 @@ describe('Places', () => {
     const { container } = render(<Places game={makeGame()} />);
     expect(container.querySelector(`.${name}`)).toBeInTheDocument();
   });
+
+  test('marks visited zones for the current player', () => {
+    const game: GameController = {
+      ...makeGame(),
+      visitedZones: ['museum', 'bar'],
+    };
+    const { container } = render(<Places game={game} />);
+    expect(container.querySelector('.museum.place--visited .place__visited-badge')).toBeInTheDocument();
+    expect(container.querySelector('.bar.place--visited .place__visited-badge')).toBeInTheDocument();
+    expect(container.querySelector('.park .place__visited-badge')).not.toBeInTheDocument();
+  });
 });

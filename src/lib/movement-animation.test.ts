@@ -79,5 +79,16 @@ describe('movement animation', () => {
         path,
       });
     });
+
+    test('moves the player pin into the zone on the final step', () => {
+      vi.useFakeTimers();
+      movePlayer(makePlayer(), [makePlayer()], ['7,2', 'hotel']);
+      vi.runAllTimers();
+
+      const pin = document.querySelector('#player-1') as HTMLElement;
+      expect(pin.style.top).toBe('511px');
+      expect(pin.style.left).toBe('124.5px');
+      expect(pin.classList.contains('player--anchor-center')).toBe(true);
+    });
   });
 });

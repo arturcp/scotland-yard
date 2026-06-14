@@ -1,10 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import MicroModal from 'micromodal';
 import type { GameController, GameShiftStatus, Player } from '../../types/game';
 import Sidebar from './index';
 
-vi.mock('micromodal', () => ({ default: { init: vi.fn() } }));
+const mockMicroModalShow = vi.hoisted(() => vi.fn());
+
+vi.mock('micromodal', () => ({ default: { show: mockMicroModalShow } }));
 
 const players: Player[] = [
   { id: 1, name: 'John', color: 'blue', position: { row: 0, column: 0, place: null } },
@@ -21,6 +22,7 @@ const makeGame = (
 
 const defaultProps = {
   rolling: false,
+  showDice: true,
   onRollStart: vi.fn(),
 };
 
@@ -29,15 +31,14 @@ function renderSidebar(ui: React.ReactElement) {
 }
 
 describe('Sidebar', () => {
+  beforeEach(() => {
+    mockMicroModalShow.mockClear();
+  });
+
   describe('rendering', () => {
     test('renders the sidebar element', () => {
       const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(container.querySelector('#sidebar')).toBeInTheDocument();
-    });
-
-    test('renders the home icon', () => {
-      const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
-      expect(container.querySelector('.lucide-house')).toBeInTheDocument();
     });
 
     test('renders the notes icon', () => {
@@ -50,17 +51,33 @@ describe('Sidebar', () => {
       expect(container.querySelector('.lucide-users')).toBeInTheDocument();
     });
 
+    test('renders the case button when showCase is true', () => {
+      const onShowCase = vi.fn();
+      renderSidebar(
+        <Sidebar game={makeGame()} {...defaultProps} showCase onShowCase={onShowCase} />,
+      );
+      expect(screen.getByTestId('show-case-trigger')).toBeInTheDocument();
+      expect(screen.getByText('Caso')).toBeInTheDocument();
+    });
+
+    test('hides the case button when showCase is false', () => {
+      renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
+      expect(screen.queryByTestId('show-case-trigger')).not.toBeInTheDocument();
+    });
+
     test('renders the help icon', () => {
       const { container } = renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(container.querySelector('.lucide-circle-question-mark')).toBeInTheDocument();
     });
 
-    test('renders the dice roll trigger', () => {
+    test('renders the dice roll trigger when showDice is true', () => {
       renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
       expect(screen.getByTestId('dice-roll-trigger')).toBeInTheDocument();
-      expect(
-        screen.getByTestId('dice-roll-trigger').querySelector('.sidebar-dice-icon'),
-      ).toBeInTheDocument();
+    });
+
+    test('hides the dice roll trigger when showDice is false', () => {
+      renderSidebar(<Sidebar game={makeGame()} {...defaultProps} showDice={false} />);
+      expect(screen.queryByTestId('dice-roll-trigger')).not.toBeInTheDocument();
     });
 
     test('renders the Scotland Yard title', () => {
@@ -77,10 +94,17 @@ describe('Sidebar', () => {
     });
   });
 
-  describe('MicroModal', () => {
-    test('initializes MicroModal on mount', () => {
+  describe('modal triggers', () => {
+    test('opens the notes modal when clicked', () => {
       renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
-      expect(MicroModal.init).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByTestId('show-notes-trigger'));
+      expect(mockMicroModalShow).toHaveBeenCalledWith('modal-notes');
+    });
+
+    test('opens the players modal when clicked', () => {
+      renderSidebar(<Sidebar game={makeGame()} {...defaultProps} />);
+      fireEvent.click(screen.getByTestId('show-players-trigger'));
+      expect(mockMicroModalShow).toHaveBeenCalledWith('modal-players');
     });
   });
 
@@ -96,11 +120,22 @@ describe('Sidebar', () => {
     });
   });
 
+  describe('case button click', () => {
+    test('calls onShowCase when clicked', () => {
+      const onShowCase = vi.fn();
+      renderSidebar(
+        <Sidebar game={makeGame()} {...defaultProps} showCase onShowCase={onShowCase} />,
+      );
+      fireEvent.click(screen.getByTestId('show-case-trigger'));
+      expect(onShowCase).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('dice button click', () => {
     test('calls onRollStart when clicked', () => {
       const onRollStart = vi.fn();
       renderSidebar(
-        <Sidebar game={makeGame('waiting')} rolling={false} onRollStart={onRollStart} />,
+        <Sidebar game={makeGame('waiting')} rolling={false} showDice onRollStart={onRollStart} />,
       );
       fireEvent.click(screen.getByTestId('dice-roll-trigger'));
       expect(onRollStart).toHaveBeenCalledTimes(1);

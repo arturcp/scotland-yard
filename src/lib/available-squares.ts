@@ -166,7 +166,7 @@ export function getAvailableSquares(player: Player, diceResult: number): Availab
       const position = createBoardPosition(data, { row, column, place: null });
       findNextMove(results, [], position, data, diceResult);
     }
-    return results;
+    return results.filter((square) => square.place !== currentZone);
   }
 
   const row = player.position.row ?? 0;

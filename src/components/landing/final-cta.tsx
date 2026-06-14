@@ -1,4 +1,4 @@
-import { ArrowRight } from 'lucide-react';
+import { RoomActions } from './room-actions';
 
 export function FinalCta() {
   return (
@@ -19,28 +19,9 @@ export function FinalCta() {
         </p>
 
         <div className="mt-12 flex flex-col items-center gap-6">
-          <a
-            href="#"
-            className="group inline-flex items-center gap-2 rounded-sm bg-gold px-10 py-5 font-heading text-xl font-semibold tracking-wide text-background transition-colors hover:bg-ivory"
-          >
-            Criar Sala
-            <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
-          </a>
-
-          <form className="flex items-stretch overflow-hidden rounded-sm border border-gold/50 bg-background/70 backdrop-blur-sm">
-            <input
-              type="text"
-              placeholder="Código da sala"
-              aria-label="Código da sala"
-              className="w-40 bg-transparent px-4 py-3 font-body text-sm tracking-widest text-ivory uppercase placeholder:text-ivory/40 focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="border-l border-gold/50 bg-gold/10 px-6 py-3 font-body text-sm tracking-wide text-gold transition-colors hover:bg-gold hover:text-background"
-            >
-              Entrar
-            </button>
-          </form>
+          <RoomActions
+            createClassName="group inline-flex items-center gap-2 rounded-sm bg-gold px-10 py-5 font-heading text-xl font-semibold tracking-wide text-background transition-colors hover:bg-ivory"
+          />
         </div>
 
         <p className="mt-14 font-heading text-2xl text-gold/70 italic">

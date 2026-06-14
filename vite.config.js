@@ -12,10 +12,20 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3001',
+      '/ws': {
+        target: 'ws://localhost:3001',
+        ws: true,
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.js'],
     globals: true,
     clearMocks: true,
+    include: ['src/**/*.test.{ts,tsx}', 'server/src/**/*.test.ts'],
   },
 });

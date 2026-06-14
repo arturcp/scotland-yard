@@ -1,6 +1,5 @@
 import { ChevronUp } from 'lucide-react';
 import { isDebugMode } from '../../lib/debug-mode';
-import { movePlayer, STEP_DURATION_MS } from '../../lib/movement-animation';
 import type { GameShiftView, Position } from '../../types/game';
 
 import './styles.css';
@@ -15,30 +14,29 @@ interface SquareProps {
   available: boolean;
   gameShift: GameShiftView;
   path: string[] | null;
+  canInteract?: boolean;
+  onMove?: (destination: Position, path: string[]) => void;
 }
 
 export default function Square({
   type,
   direction,
-  updatePlayerPosition,
   state,
   row,
   column,
   available,
-  gameShift,
   path,
+  canInteract = true,
+  onMove,
 }: SquareProps) {
   const squareId = `${row},${column}`;
   const showCoords = isDebugMode() && state !== 'empty';
-  const classes = `square ${state || ''} ${type} ${available ? 'available-square' : ''}${showCoords ? ' square-debug' : ''}`;
+  const clickable = available && canInteract;
+  const classes = `square ${state || ''} ${type} ${clickable ? 'available-square' : ''}${showCoords ? ' square-debug' : ''}`;
 
   function handleClick() {
-    if (!available || !path) return;
-    const { player, players } = gameShift;
-    const newPosition = movePlayer(player, players, path);
-    setTimeout(() => {
-      updatePlayerPosition(player.id, newPosition);
-    }, path.length * STEP_DURATION_MS);
+    if (!clickable || !path || !onMove) return;
+    onMove({ row, column, place: null, id: squareId, path }, path);
   }
 
   return (

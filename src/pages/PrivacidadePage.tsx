@@ -38,10 +38,13 @@ export default function PrivacidadePage() {
       <section>
         <h2>Armazenamento local</h2>
         <p>
-          O site não grava preferências ou dados pessoais no seu navegador por meio de{' '}
-          <em>localStorage</em> ou <em>sessionStorage</em>. O estado das partidas é mantido
-          apenas durante a sessão de jogo ativa e não persiste informações pessoais após o
-          encerramento.
+          Utilizamos apenas <em>sessionStorage</em> para guardar um token anônimo de reconexão à
+          sala em que você está jogando. Esse token não identifica você pessoalmente, não persiste
+          após o encerramento da aba do navegador e não é usado para rastreamento.
+        </p>
+        <p>
+          O estado das partidas é mantido no servidor apenas durante a sessão de jogo ativa e é
+          descartado automaticamente após o período de inatividade da sala.
         </p>
       </section>
 

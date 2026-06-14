@@ -1,0 +1,262 @@
+.lobby {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background:
+    linear-gradient(rgba(10, 8, 6, 0.85), rgba(10, 8, 6, 0.85)),
+    url('/images/london-map-dark.png') center / cover;
+}
+
+.lobby__card {
+  width: min(100%, 32rem);
+  padding: 2rem;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(18, 14, 10, 0.92);
+  color: #f5f0e6;
+}
+
+.lobby__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  color: rgba(245, 240, 230, 0.7);
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.lobby__back:hover {
+  color: #d4af37;
+}
+
+.lobby__back-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.lobby__eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+
+.lobby__title {
+  margin: 0 0 1.5rem;
+  font-size: 2rem;
+}
+
+.lobby__case {
+  margin: -0.75rem 0 1.25rem;
+  color: rgba(245, 240, 230, 0.8);
+}
+
+.lobby__error {
+  margin: 0 0 1rem;
+  color: #f87171;
+}
+
+.lobby__room-full {
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: rgba(212, 175, 55, 0.1);
+  color: #f5f0e6;
+  line-height: 1.5;
+}
+
+.lobby__form,
+.lobby__waiting {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lobby__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lobby__field input {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+}
+
+.lobby__colors {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lobby__color-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 2.5rem);
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.lobby__color {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background: var(--piece-color);
+  cursor: pointer;
+}
+
+.lobby__color--selected {
+  border-color: #f5f0e6;
+}
+
+.lobby__color--taken {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.lobby__color--compact {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.lobby__submit {
+  padding: 0.85rem 1rem;
+  border: none;
+  background: #d4af37;
+  color: #120e0a;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lobby__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lobby__hint,
+.lobby__status {
+  margin: 0;
+  color: rgba(245, 240, 230, 0.75);
+}
+
+.lobby__invite {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.lobby__invite-label {
+  margin: 0;
+  font-size: 0.875rem;
+  color: rgba(245, 240, 230, 0.85);
+}
+
+.lobby__invite-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.lobby__invite-url {
+  flex: 1;
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(245, 240, 230, 0.9);
+  font-size: 0.8125rem;
+  font-family: inherit;
+}
+
+.lobby__invite-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  background: transparent;
+  color: #f5f0e6;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.lobby__invite-copy:hover {
+  background: rgba(212, 175, 55, 0.12);
+}
+
+.lobby__invite-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.lobby__invite-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(37, 211, 102, 0.55);
+  background: rgba(37, 211, 102, 0.12);
+  color: #9ef0b8;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.lobby__invite-whatsapp:hover {
+  background: rgba(37, 211, 102, 0.22);
+}
+
+.lobby__players {
+  margin-top: 2rem;
+}
+
+.lobby__players h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.lobby__players ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lobby__players li {
+  padding: 0.35rem 0;
+}
+
+.lobby__player {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.lobby__player-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lobby__player-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-left: 0.25rem;
+}
+
+.lobby__swatch {
+  margin-right: 0.5rem;
+}

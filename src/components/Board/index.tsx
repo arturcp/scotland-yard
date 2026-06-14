@@ -1,10 +1,14 @@
 import type { CSSProperties } from 'react';
-import DiceRoll from '../DiceRoll';
 import Places from '../Places';
 import Player from '../Player';
 import type { GameController, Player as GamePlayer } from '../../types/game';
 import { GRID, zonePins } from '../../board';
-import { PIECE_CENTER_OFFSET, PIECE_SIZE, PIECE_SPACING, piecePosition } from '../../board/layout';
+import {
+  getPiecePlacement,
+  PIECE_CENTER_OFFSET,
+  PIECE_SIZE,
+  piecePosition,
+} from '../../board/layout';
 import type { ZoneId } from '../../board/types';
 import { buildSquares } from './square-factory';
 
@@ -13,8 +17,6 @@ import './styles.css';
 interface BoardProps {
   players: GamePlayer[];
   game: GameController;
-  rolling: boolean;
-  onRollComplete: (result: number) => void;
 }
 
 const PLACE_PINS = zonePins();
@@ -35,33 +37,39 @@ function playersAtTile(player: GamePlayer, players: GamePlayer[]) {
     .sort((a, b) => a.id - b.id);
 }
 
-function playerPosition(player: GamePlayer, players: GamePlayer[]): CSSProperties {
+function playerPlacement(player: GamePlayer, players: GamePlayer[]) {
   const { position } = player;
   const atTile = playersAtTile(player, players);
   const idx = atTile.findIndex((p) => p.id === player.id);
   const N = atTile.length;
+  const { offsetX, offsetY, scale } = getPiecePlacement(idx, N);
 
   if (position.place) {
     const zoneId = position.place as ZoneId;
-    const leftStart =
-      PLACE_PINS[zoneId].left + PIECE_CENTER_OFFSET - (PIECE_SPACING / 2) * (N - 1);
+    const pin = PLACE_PINS[zoneId];
+    const centerX = pin.left + PIECE_CENTER_OFFSET + PIECE_SIZE / 2;
+    const centerY = pin.top + PIECE_SIZE / 2;
     return {
-      top: PLACE_PINS[zoneId].top,
-      left: leftStart + PIECE_SPACING * idx,
+      top: centerY + offsetY,
+      left: centerX + offsetX,
+      scale,
     };
   }
 
   const { top, left } = piecePosition(position.row ?? 0, position.column ?? 0, idx, N);
-  return { top, left };
+  return { top, left, scale };
 }
 
-export default function Board({ players, game, rolling, onRollComplete }: BoardProps) {
+export default function Board({ players, game }: BoardProps) {
   const { status } = game.gameShift();
-  const isSelectingMove = status === 'in-progress';
+  const isSelectingMove = status === 'in-progress' && game.canInteract;
 
   return (
     <div id="board-frame">
-      <section id="board" className={isSelectingMove ? 'move-selection-active' : undefined}>
+      <section
+        id="board"
+        className={`${isSelectingMove ? 'move-selection-active' : ''}${game.canInteract ? '' : ' board--locked'}`}
+      >
         {GRID.map((list, row) => buildSquares(list, row, game))}
         <Places game={game} />
         <div id="players" style={{ '--piece-size': `${PIECE_SIZE}px` } as CSSProperties}>
@@ -69,18 +77,20 @@ export default function Board({ players, game, rolling, onRollComplete }: BoardP
             const atTile = playersAtTile(player, players);
             const onGrid = !player.position.place;
 
+            const placement = playerPlacement(player, players);
+
             return (
               <Player
                 key={player.id}
                 player={player}
-                style={playerPosition(player, players)}
-                anchorCenter={onGrid}
+                style={{ top: placement.top, left: placement.left }}
+                anchorCenter={onGrid || Boolean(player.position.place)}
                 solo={onGrid && atTile.length === 1}
+                scale={placement.scale}
               />
             );
           })}
         </div>
-        {rolling && <DiceRoll onComplete={onRollComplete} />}
       </section>
     </div>
   );

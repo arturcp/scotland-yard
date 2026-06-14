@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { CircleHelp, FileText, Home, Users } from 'lucide-react';
+import { CircleHelp, FileText, ScrollText, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MicroModal from 'micromodal';
 import DiceIcon from './DiceIcon';
@@ -11,16 +10,22 @@ import './styles.css';
 interface SidebarProps {
   game: GameController;
   rolling: boolean;
+  showDice: boolean;
+  showCase?: boolean;
   onRollStart: () => void;
+  onShowCase?: () => void;
 }
 
-export default function Sidebar({ game, rolling, onRollStart }: SidebarProps) {
-  useEffect(() => {
-    MicroModal.init();
-  }, []);
-
+export default function Sidebar({
+  game,
+  rolling,
+  showDice,
+  showCase = false,
+  onRollStart,
+  onShowCase,
+}: SidebarProps) {
   function handleDiceClick() {
-    if (rolling) {
+    if (rolling || !showDice) {
       return;
     }
 
@@ -29,7 +34,7 @@ export default function Sidebar({ game, rolling, onRollStart }: SidebarProps) {
 
   const { status, diceResult } = game.gameShift();
   const diceButtonClasses =
-    status === 'waiting' ? 'dice-roll-trigger pulsate-fwd' : 'dice-roll-trigger';
+    showDice && status === 'waiting' ? 'dice-roll-trigger pulsate-fwd' : 'dice-roll-trigger';
 
   return (
     <aside id="sidebar">
@@ -41,41 +46,60 @@ export default function Sidebar({ game, rolling, onRollStart }: SidebarProps) {
       <nav className="sidebar-nav">
         <ul>
           <li>
-            <button type="button" className="nav-item active" aria-current="page">
-              <Home aria-hidden="true" size={28} strokeWidth={1.75} />
-              <span>Inicio</span>
-            </button>
-          </li>
-          <li>
-            <button type="button" className="nav-item" data-micromodal-trigger="modal-notes">
+            <button
+              type="button"
+              className="nav-item"
+              data-testid="show-notes-trigger"
+              onClick={() => MicroModal.show('modal-notes')}
+            >
               <FileText aria-hidden="true" size={28} strokeWidth={1.75} />
               <span>Notas</span>
             </button>
           </li>
           <li>
-            <button type="button" className="nav-item">
+            <button
+              type="button"
+              className="nav-item"
+              data-testid="show-players-trigger"
+              onClick={() => MicroModal.show('modal-players')}
+            >
               <Users aria-hidden="true" size={28} strokeWidth={1.75} />
               <span>Jogadores</span>
             </button>
           </li>
-          <li>
-            <button
-              type="button"
-              className={diceButtonClasses}
-              onClick={handleDiceClick}
-              data-testid="dice-roll-trigger"
-              aria-label="Rolar dados"
-              disabled={rolling}
-            >
-              <DiceIcon />
-              {diceResult !== null && (
-                <span className="dice-result-badge" data-testid="dice-result-badge">
-                  {diceResult}
-                </span>
-              )}
-              <span>Dados</span>
-            </button>
-          </li>
+          {showCase && (
+            <li>
+              <button
+                type="button"
+                className="nav-item"
+                data-testid="show-case-trigger"
+                onClick={onShowCase}
+              >
+                <ScrollText aria-hidden="true" size={28} strokeWidth={1.75} />
+                <span>Caso</span>
+              </button>
+            </li>
+          )}
+          {showDice && (
+            <li>
+              <button
+                type="button"
+                className={diceButtonClasses}
+                onClick={handleDiceClick}
+                data-testid="dice-roll-trigger"
+                aria-label="Rolar dados"
+                disabled={rolling}
+              >
+                <DiceIcon />
+                {diceResult !== null && (
+                  <span className="dice-result-badge" data-testid="dice-result-badge">
+                    {diceResult}
+                  </span>
+                )}
+                <span>Dados</span>
+              </button>
+            </li>
+          )}
         </ul>
       </nav>
 

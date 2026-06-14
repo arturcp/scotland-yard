@@ -1,0 +1,117 @@
+.clue-modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: var(--sidebar-width);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 2rem;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.clue-modal__panel {
+  width: 100%;
+  max-width: 36rem;
+  max-height: min(85vh, 40rem);
+  padding: 1.5rem;
+  background: rgba(18, 14, 10, 0.95);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  color: #f5f0e6;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+}
+
+.clue-modal__body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  margin-top: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gold-dim) #120e0a;
+}
+
+.clue-modal__body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.clue-modal__body::-webkit-scrollbar-track {
+  background: #120e0a;
+}
+
+.clue-modal__body::-webkit-scrollbar-thumb {
+  background: var(--color-gold-dim);
+  border-radius: 4px;
+  border: 2px solid #120e0a;
+}
+
+.clue-modal__body::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold);
+}
+
+.clue-modal__text {
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.clue-modal__hint {
+  margin: 1.25rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 4px;
+  background: rgba(212, 175, 55, 0.06);
+  color: rgba(245, 240, 230, 0.8);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.clue-modal__hint strong {
+  color: var(--color-gold);
+  font-weight: 600;
+}
+
+.clue-modal__close {
+  flex-shrink: 0;
+  margin-top: 1.25rem;
+}
+
+.clue-modal__keys {
+  margin: 0.75rem 0 0;
+  color: rgba(245, 240, 230, 0.85);
+  font-size: 0.9rem;
+}
+
+.clue-modal__keys strong {
+  color: var(--color-gold);
+}
+
+.clue-modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.clue-modal__action {
+  width: 100%;
+}
+
+.clue-modal__action--secondary {
+  background: transparent;
+  color: #f5f0e6;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+}
+
+.clue-modal__action--secondary:hover:not(:disabled) {
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.clue-modal__action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

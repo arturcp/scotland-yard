@@ -1,5 +1,15 @@
-import { SQUARE_SIZE, BOARD_PADDING, pieceCenterOffsetX } from '../board/layout';
+import { zonePins } from '../board';
+import {
+  SQUARE_SIZE,
+  BOARD_PADDING,
+  PIECE_CENTER_OFFSET,
+  PIECE_SIZE,
+  getPiecePlacement,
+} from '../board/layout';
+import type { ZoneId } from '../board/types';
 import type { Player, Position } from '../types/game';
+
+const PLACE_PINS = zonePins();
 
 export const STEP_DURATION_MS = 200;
 
@@ -32,22 +42,32 @@ function playersAtPosition(player: Player, players: Player[], position: Position
 }
 
 function movePinTo(pin: HTMLElement, player: Player, players: Player[], position: Position) {
+  const atPosition = playersAtPosition(player, players, position);
+  const idx = atPosition.findIndex((p) => p.id === player.id);
+  const N = atPosition.length;
+  const { offsetX, offsetY, scale } = getPiecePlacement(idx, N);
+
+  pin.classList.add('player--anchor-center');
+  pin.classList.toggle('player--solo', N === 1);
+  pin.style.setProperty('--piece-scale', String(scale));
+
   if (position.place) {
+    const zoneId = position.place as ZoneId;
+    const pinCoords = PLACE_PINS[zoneId];
+    const centerX = pinCoords.left + PIECE_CENTER_OFFSET + PIECE_SIZE / 2;
+    const centerY = pinCoords.top + PIECE_SIZE / 2;
+
+    pin.style.top = `${centerY + offsetY}px`;
+    pin.style.left = `${centerX + offsetX}px`;
     return;
   }
 
   const row = position.row ?? 0;
   const column = position.column ?? 0;
-  const atPosition = playersAtPosition(player, players, position);
-  const idx = atPosition.findIndex((p) => p.id === player.id);
-  const offsetX = pieceCenterOffsetX(idx, atPosition.length);
   const originTop = row * SQUARE_SIZE + BOARD_PADDING;
   const originLeft = column * SQUARE_SIZE + BOARD_PADDING;
 
-  pin.classList.add('player--anchor-center');
-  pin.classList.toggle('player--solo', atPosition.length === 1);
-
-  pin.style.top = `${originTop + SQUARE_SIZE / 2}px`;
+  pin.style.top = `${originTop + SQUARE_SIZE / 2 + offsetY}px`;
   pin.style.left = `${originLeft + SQUARE_SIZE / 2 + offsetX}px`;
 }
 

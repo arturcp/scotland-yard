@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import DiceBox from '@3d-dice/dice-box';
 import '@3d-dice/dice-box/dist/style.css';
 import confetti from 'canvas-confetti';
@@ -6,6 +6,7 @@ import confetti from 'canvas-confetti';
 import './styles.css';
 
 export const RESULT_HOLD_MS = 2000;
+export const PREDETERMINED_TUMBLE_MS = 1800;
 
 function getDiceResult(results: Array<{ rolls: Array<{ value: number }> }>): number {
   return results[0]?.rolls?.[0]?.value ?? 1;
@@ -41,16 +42,85 @@ async function waitForAnimationFrames(count = 2): Promise<void> {
 
 interface DiceRollProps {
   onComplete: (result: number) => void;
+  resultMessage?: string;
+  showConfetti?: boolean;
+  predeterminedValue?: number;
 }
 
-export default function DiceRoll({ onComplete }: DiceRollProps) {
+function PredeterminedDiceRoll({
+  predeterminedValue,
+  resultMessage,
+  showConfetti = true,
+  onComplete,
+}: Required<Pick<DiceRollProps, 'predeterminedValue' | 'onComplete'>> &
+  Pick<DiceRollProps, 'resultMessage' | 'showConfetti'>) {
+  const onCompleteRef = useRef(onComplete);
+  const [showResult, setShowResult] = useState(false);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    const showTimer = window.setTimeout(() => {
+      setShowResult(true);
+
+      if (showConfetti && predeterminedValue === 6) {
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.55 },
+        });
+      }
+    }, PREDETERMINED_TUMBLE_MS);
+
+    const completeTimer = window.setTimeout(() => {
+      onCompleteRef.current(predeterminedValue);
+    }, PREDETERMINED_TUMBLE_MS + RESULT_HOLD_MS);
+
+    return () => {
+      window.clearTimeout(showTimer);
+      window.clearTimeout(completeTimer);
+    };
+  }, [predeterminedValue, showConfetti]);
+
+  return (
+    <div className="dice-roll-overlay" role="status" aria-live="polite">
+      <div
+        className={`dice-roll-preset ${showResult ? 'dice-roll-preset--settled' : ''}`}
+        aria-hidden="true"
+      >
+        {showResult && (
+          <span className="dice-roll-preset__value">{predeterminedValue}</span>
+        )}
+      </div>
+      {showResult && (
+        <p className="dice-roll-result">
+          {resultMessage ?? `Você tirou o número ${predeterminedValue}!`}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function RandomDiceRoll({
+  onComplete,
+  resultMessage,
+  showConfetti = true,
+}: Omit<DiceRollProps, 'predeterminedValue'>) {
   const diceCanvasId = useId().replace(/:/g, '');
   const containerId = `dice-box-container-${diceCanvasId}`;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const onCompleteRef = useRef(onComplete);
   const [result, setResult] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
 
   useEffect(() => {
-    const container = document.getElementById(containerId);
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    const container = containerRef.current;
     if (!container) {
       return;
     }
@@ -86,7 +156,7 @@ export default function DiceRoll({ onComplete }: DiceRollProps) {
           setResult(value);
           setShowResult(true);
 
-          if (value === 6) {
+          if (showConfetti && value === 6) {
             confetti({
               particleCount: 120,
               spread: 80,
@@ -95,7 +165,7 @@ export default function DiceRoll({ onComplete }: DiceRollProps) {
           }
 
           completeTimer = window.setTimeout(() => {
-            onComplete(value);
+            onCompleteRef.current(value);
           }, RESULT_HOLD_MS);
         },
       });
@@ -126,14 +196,42 @@ export default function DiceRoll({ onComplete }: DiceRollProps) {
         diceBox.clear();
       }
     };
-  }, [containerId, diceCanvasId, onComplete]);
+  }, [containerId, diceCanvasId, showConfetti]);
 
   return (
     <div className="dice-roll-overlay" role="status" aria-live="polite">
-      <div id={containerId} className="dice-box-container" />
+      <div id={containerId} ref={containerRef} className="dice-box-container" />
       {showResult && result !== null && (
-        <p className="dice-roll-result">Você tirou o número {result}!</p>
+        <p className="dice-roll-result">
+          {resultMessage ?? `Você tirou o número ${result}!`}
+        </p>
       )}
     </div>
+  );
+}
+
+export default function DiceRoll({
+  onComplete,
+  resultMessage,
+  showConfetti = true,
+  predeterminedValue,
+}: DiceRollProps) {
+  if (predeterminedValue !== undefined) {
+    return (
+      <PredeterminedDiceRoll
+        predeterminedValue={predeterminedValue}
+        resultMessage={resultMessage}
+        showConfetti={showConfetti}
+        onComplete={onComplete}
+      />
+    );
+  }
+
+  return (
+    <RandomDiceRoll
+      onComplete={onComplete}
+      resultMessage={resultMessage}
+      showConfetti={showConfetti}
+    />
   );
 }
