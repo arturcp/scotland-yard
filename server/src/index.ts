@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import fs from 'fs';
 import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -10,6 +11,7 @@ import { deleteExpiredRooms, initDatabase } from './persistence.js';
 import { handleConnection } from './ws-handler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DIST_PATH = path.join(__dirname, '..', '..', 'dist');
 const PORT = Number(process.env.PORT ?? 3001);
 
 const app = express();
@@ -81,6 +83,29 @@ app.get('/api/rooms/:code', async (req, res) => {
   }
 });
 
+function configureFrontend(): void {
+  const indexPath = path.join(DIST_PATH, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return;
+  }
+
+  app.use(express.static(DIST_PATH));
+
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      next();
+      return;
+    }
+    if (req.path.startsWith('/api')) {
+      next();
+      return;
+    }
+    res.sendFile(indexPath);
+  });
+}
+
+configureFrontend();
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
 
@@ -103,6 +128,9 @@ async function startServer(): Promise<void> {
   server.listen(PORT, () => {
     console.log(`Game server listening on http://localhost:${PORT}`);
     console.log(`WebSocket endpoint: ws://localhost:${PORT}/ws`);
+    if (fs.existsSync(path.join(DIST_PATH, 'index.html'))) {
+      console.log(`Serving frontend from ${DIST_PATH}`);
+    }
     const dbUrl =
       process.env.TURSO_DATABASE_URL ??
       `file:${process.env.DB_PATH ?? path.join(__dirname, '..', 'data', 'rooms.db')}`;

@@ -1,15 +1,16 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
-# Service names must match your existing Render services to sync via Blueprint.
-# After pushing, open the Render dashboard → Blueprints → sync/apply changes.
-# Remove any Redirect/Rewrite rules configured manually in the Static Site UI
-# to avoid conflicts with the routes below.
+# Recommended: use only scotland-yard-8zor (API + WebSocket + frontend).
+# The Express server serves dist/ with SPA fallback — no rewrite rules needed.
+#
+# Sync: Render dashboard → Blueprints → apply changes from this file.
+# Service names must match existing Render services.
 
 services:
   - type: web
     name: scotland-yard-8zor
     runtime: node
-    buildCommand: yarn --frozen-lockfile install
+    buildCommand: yarn --frozen-lockfile install && yarn build
     startCommand: yarn server
     healthCheckPath: /api/health
     envVars:
@@ -18,6 +19,7 @@ services:
       - key: TURSO_AUTH_TOKEN
         sync: false
 
+  # Optional legacy static site. Prefer scotland-yard-8zor for direct /jogo/* links.
   - type: web
     name: scotland-yard-1
     runtime: static
@@ -26,9 +28,6 @@ services:
     routes:
       - type: rewrite
         source: /*
-        destination: /index.html
-      - type: rewrite
-        source: /*/*
         destination: /index.html
     envVars:
       - key: VITE_API_URL
