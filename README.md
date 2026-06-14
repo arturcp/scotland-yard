@@ -33,9 +33,22 @@ Runs the Vitest test suite.
 
 Builds the frontend for production into the `dist` folder.
 
+## Database (Turso)
+
+The game server uses SQLite through [Turso](https://turso.tech/) via `@libsql/client`. In production, set:
+
+```bash
+TURSO_DATABASE_URL=libsql://your-database-name-your-org.turso.io
+TURSO_AUTH_TOKEN=your-turso-auth-token
+```
+
+For local development, the server falls back to `server/data/rooms.db` when those variables are not set.
+
+Copy `.env.example` to `.env` and fill in your Turso credentials before deploying.
+
 ## Clearing saved games
 
-Room state is persisted locally in `server/data/rooms.db`. To remove all saved games and start fresh (for example, after a server update or when a room is stuck in an old game phase), stop the server and delete that file:
+Room state is persisted in Turso (production) or locally in `server/data/rooms.db` (development). To remove all saved games and start fresh (for example, after a server update or when a room is stuck in an old game phase), stop the server and either delete the local file or clear the `rooms` table in Turso:
 
 ```bash
 rm server/data/rooms.db

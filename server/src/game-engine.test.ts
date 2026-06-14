@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { MAX_PLAYERS, PLAYER_COLORS } from '../../src/types/game.js';
-import { seedCasesIfEmpty } from './case-store.js';
+import { seedCasesIfEmpty, resetCaseStore } from './case-store.js';
 import {
   computeTurnOrderFromRolls,
   createRoom,
@@ -29,24 +29,26 @@ import { closeDb, saveRoom } from './persistence.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEST_DB = path.join(__dirname, '..', 'data', 'test-rooms.db');
 
-beforeEach(() => {
-  process.env.DB_PATH = TEST_DB;
+beforeEach(async () => {
+  process.env.TURSO_DATABASE_URL = `file:${TEST_DB}`;
+  delete process.env.TURSO_AUTH_TOKEN;
   if (fs.existsSync(TEST_DB)) {
     fs.unlinkSync(TEST_DB);
   }
-  seedCasesIfEmpty();
+  await seedCasesIfEmpty();
 });
 
-afterEach(() => {
-  closeDb();
+afterEach(async () => {
+  await closeDb();
+  resetCaseStore();
   if (fs.existsSync(TEST_DB)) {
     fs.unlinkSync(TEST_DB);
   }
 });
 
 describe('game engine', () => {
-  test('creates a room with lobby phase and selected case', () => {
-    const room = createRoom('001');
+  test('creates a room with lobby phase and selected case', async () => {
+    const room = await createRoom('001');
     expect(room.code).toHaveLength(6);
     expect(room.phase).toBe('lobby');
     expect(room.caseId).toBe('001');
@@ -54,66 +56,66 @@ describe('game engine', () => {
     expect(room.caseIntro.length).toBeGreaterThan(0);
   });
 
-  test('rejects unknown case', () => {
-    expect(() => createRoom('999')).toThrow('Caso não encontrado.');
+  test('rejects unknown case', async () => {
+    await expect(createRoom('999')).rejects.toThrow('Caso não encontrado.');
   });
 
-  test('player can change own color in lobby', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    joinRoom(room.code, 'Bob', 'yellow');
+  test('player can change own color in lobby', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    await joinRoom(room.code, 'Bob', 'yellow');
 
-    const updated = updatePlayerColor(room.code, first.playerId, first.playerId, 'green');
+    const updated = await updatePlayerColor(room.code, first.playerId, first.playerId, 'green');
     expect(updated.error).toBeUndefined();
     expect(updated.state.players.find((p) => p.id === first.playerId)?.color).toBe('green');
   });
 
-  test('creator can change another player color in lobby', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'yellow');
+  test('creator can change another player color in lobby', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'yellow');
 
-    const updated = updatePlayerColor(room.code, first.playerId, second.playerId, 'purple');
+    const updated = await updatePlayerColor(room.code, first.playerId, second.playerId, 'purple');
     expect(updated.error).toBeUndefined();
     expect(updated.state.players.find((p) => p.id === second.playerId)?.color).toBe('purple');
   });
 
-  test('non-creator cannot change another player color', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'yellow');
+  test('non-creator cannot change another player color', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'yellow');
 
-    const updated = updatePlayerColor(room.code, second.playerId, first.playerId, 'green');
+    const updated = await updatePlayerColor(room.code, second.playerId, first.playerId, 'green');
     expect(updated.error).toBe('Você não pode alterar a cor deste jogador.');
   });
 
-  test('rejects duplicate color in lobby', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    joinRoom(room.code, 'Bob', 'yellow');
+  test('rejects duplicate color in lobby', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    await joinRoom(room.code, 'Bob', 'yellow');
 
-    const updated = updatePlayerColor(room.code, first.playerId, first.playerId, 'yellow');
+    const updated = await updatePlayerColor(room.code, first.playerId, first.playerId, 'yellow');
     expect(updated.error).toBe('Esta cor já está em uso.');
   });
 
-  test('rejects color change after game starts', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    joinRoom(room.code, 'Bob', 'yellow');
-    startGame(room.code, first.playerId);
+  test('rejects color change after game starts', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    await joinRoom(room.code, 'Bob', 'yellow');
+    await startGame(room.code, first.playerId);
 
-    const updated = updatePlayerColor(room.code, first.playerId, first.playerId, 'green');
+    const updated = await updatePlayerColor(room.code, first.playerId, first.playerId, 'green');
     expect(updated.error).toBe('Não é possível alterar cores após o início da partida.');
   });
 
-  test('starts turn order phase and waits for each player to roll', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'yellow');
+  test('starts turn order phase and waits for each player to roll', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'yellow');
     expect(first.error).toBeUndefined();
     expect(second.error).toBeUndefined();
 
-    const started = startGame(room.code, first.playerId);
+    const started = await startGame(room.code, first.playerId);
     expect(started.error).toBeUndefined();
     expect(started.state.phase).toBe('turnOrder');
     expect(started.state.turnOrderPendingIds).toEqual([first.playerId, second.playerId]);
@@ -122,12 +124,12 @@ describe('game engine', () => {
     expect(started.events?.some((event) => event.type === 'turnOrderStarted')).toBe(true);
     expect(started.events?.some((event) => event.type === 'turnStarted')).toBe(false);
 
-    const aliceRoll = rollTurnOrderDice(room.code, first.playerId, 4);
+    const aliceRoll = await rollTurnOrderDice(room.code, first.playerId, 4);
     expect(aliceRoll.error).toBeUndefined();
     expect(aliceRoll.state.phase).toBe('turnOrder');
     expect(aliceRoll.events?.some((event) => event.type === 'turnOrderDiceRolled')).toBe(true);
 
-    const bobRoll = rollTurnOrderDice(room.code, second.playerId, 6);
+    const bobRoll = await rollTurnOrderDice(room.code, second.playerId, 6);
     expect(bobRoll.error).toBeUndefined();
     expect(bobRoll.state.phase).toBe('playing');
     expect(bobRoll.state.turnOrder).toHaveLength(2);
@@ -151,92 +153,92 @@ describe('game engine', () => {
     expect(order[5]).toBe(1);
   });
 
-  test('keeps turn order phase until every connected player rolls', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'yellow');
-    startGame(room.code, first.playerId);
+  test('keeps turn order phase until every connected player rolls', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'yellow');
+    await startGame(room.code, first.playerId);
 
-    const partial = rollTurnOrderDice(room.code, first.playerId, 4);
+    const partial = await rollTurnOrderDice(room.code, first.playerId, 4);
     expect(partial.state.phase).toBe('turnOrder');
     expect(partial.state.turnOrderPendingIds).toEqual([second.playerId]);
     expect(partial.events?.some((event) => event.type === 'turnStarted')).toBe(false);
   });
 
-  test('rejects invalid dice values', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    joinRoom(room.code, 'Bob', 'yellow');
-    startGame(room.code, first.playerId);
+  test('rejects invalid dice values', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    await joinRoom(room.code, 'Bob', 'yellow');
+    await startGame(room.code, first.playerId);
 
-    expect(rollTurnOrderDice(room.code, first.playerId, 0).error).toBe('Valor de dado inválido.');
-    expect(rollTurnOrderDice(room.code, first.playerId, 7).error).toBe('Valor de dado inválido.');
+    expect((await rollTurnOrderDice(room.code, first.playerId, 0)).error).toBe('Valor de dado inválido.');
+    expect((await rollTurnOrderDice(room.code, first.playerId, 7)).error).toBe('Valor de dado inválido.');
   });
 
-  test('rejects duplicate turn order rolls', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    joinRoom(room.code, 'Bob', 'yellow');
-    startGame(room.code, first.playerId);
+  test('rejects duplicate turn order rolls', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    await joinRoom(room.code, 'Bob', 'yellow');
+    await startGame(room.code, first.playerId);
 
-    const firstRoll = rollTurnOrderDice(room.code, first.playerId, 4);
+    const firstRoll = await rollTurnOrderDice(room.code, first.playerId, 4);
     expect(firstRoll.error).toBeUndefined();
 
-    const duplicateRoll = rollTurnOrderDice(room.code, first.playerId, 4);
+    const duplicateRoll = await rollTurnOrderDice(room.code, first.playerId, 4);
     expect(duplicateRoll.error).toBe('Você já rolou o dado para a ordem de jogada.');
   });
 
-  test('deletes room when the last player leaves', () => {
-    const room = createRoom('002');
-    const only = joinRoom(room.code, 'Alice', 'blue');
+  test('deletes room when the last player leaves', async () => {
+    const room = await createRoom('002');
+    const only = await joinRoom(room.code, 'Alice', 'blue');
 
-    const result = leaveRoom(room.code, only.playerId);
+    const result = await leaveRoom(room.code, only.playerId);
     expect(result.error).toBeUndefined();
     expect(result.roomDeleted).toBe(true);
-    expect(roomExists(room.code)).toBe(false);
+    expect(await roomExists(room.code)).toBe(false);
   });
 
-  test('removes player and reassigns creator when someone leaves', () => {
-    const room = createRoom('002');
-    const creator = joinRoom(room.code, 'Alice', 'blue');
-    const other = joinRoom(room.code, 'Bob', 'yellow');
+  test('removes player and reassigns creator when someone leaves', async () => {
+    const room = await createRoom('002');
+    const creator = await joinRoom(room.code, 'Alice', 'blue');
+    const other = await joinRoom(room.code, 'Bob', 'yellow');
 
-    const result = leaveRoom(room.code, creator.playerId);
+    const result = await leaveRoom(room.code, creator.playerId);
     expect(result.error).toBeUndefined();
     expect(result.roomDeleted).toBe(false);
     expect(result.state?.players).toHaveLength(1);
     expect(result.state?.creatorId).toBe(other.playerId);
-    expect(roomExists(room.code)).toBe(true);
+    expect(await roomExists(room.code)).toBe(true);
   });
 
-  test('rolls dice only for active player', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'yellow');
-    startGame(room.code, first.playerId);
-    rollTurnOrderDice(room.code, first.playerId, 4);
-    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+  test('rolls dice only for active player', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'yellow');
+    await startGame(room.code, first.playerId);
+    await rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = await rollTurnOrderDice(room.code, second.playerId, 6);
     const activeId = started.state.shift.playerId;
 
-    const wrong = rollDice(
+    const wrong = await rollDice(
       room.code,
       activeId === first.playerId ? second.playerId : first.playerId,
       3,
     );
     expect(wrong.error).toBe('Não é a sua vez.');
 
-    const rolled = rollDice(room.code, activeId, 5);
+    const rolled = await rollDice(room.code, activeId, 5);
     expect(rolled.error).toBeUndefined();
     expect(rolled.state.shift.diceResult).toBe(5);
   });
 
-  test('keeps turn when discovering a clue', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'yellow');
-    startGame(room.code, first.playerId);
-    rollTurnOrderDice(room.code, first.playerId, 4);
-    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+  test('keeps turn when discovering a clue', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'yellow');
+    await startGame(room.code, first.playerId);
+    await rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = await rollTurnOrderDice(room.code, second.playerId, 6);
 
     const state = started.state;
     state.shift = {
@@ -245,9 +247,9 @@ describe('game engine', () => {
       diceResult: 6,
       availableSquares: [{ id: 'hotel', place: 'hotel', path: ['hotel'] }],
     };
-    saveRoom(state);
+    await saveRoom(state);
 
-    const moved = movePlayer(room.code, first.playerId, {
+    const moved = await movePlayer(room.code, first.playerId, {
       place: 'hotel',
       id: 'hotel',
       path: ['hotel'],
@@ -261,13 +263,13 @@ describe('game engine', () => {
     expect(getPlayerVisitedZones(moved.state, first.playerId)).toContain('hotel');
   });
 
-  test('records visits to zones without clues', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'yellow');
-    startGame(room.code, first.playerId);
-    rollTurnOrderDice(room.code, first.playerId, 4);
-    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+  test('records visits to zones without clues', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'yellow');
+    await startGame(room.code, first.playerId);
+    await rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = await rollTurnOrderDice(room.code, second.playerId, 6);
 
     const state = started.state;
     state.shift = {
@@ -276,9 +278,9 @@ describe('game engine', () => {
       diceResult: 6,
       availableSquares: [{ id: 'street', place: 'street', path: ['street'] }],
     };
-    saveRoom(state);
+    await saveRoom(state);
 
-    const moved = movePlayer(room.code, first.playerId, {
+    const moved = await movePlayer(room.code, first.playerId, {
       place: 'street',
       id: 'street',
       path: ['street'],
@@ -289,13 +291,13 @@ describe('game engine', () => {
     expect(moved.events?.some((event) => event.type === 'clueAdded')).toBe(false);
   });
 
-  test('passTurn advances to the next player after a clue', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'yellow');
-    startGame(room.code, first.playerId);
-    rollTurnOrderDice(room.code, first.playerId, 4);
-    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+  test('passTurn advances to the next player after a clue', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'yellow');
+    await startGame(room.code, first.playerId);
+    await rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = await rollTurnOrderDice(room.code, second.playerId, 6);
 
     const state = started.state;
     state.currentPlayerIndex = state.turnOrder.indexOf(first.playerId);
@@ -305,9 +307,9 @@ describe('game engine', () => {
       availableSquares: [],
       diceResult: null,
     };
-    saveRoom(state);
+    await saveRoom(state);
 
-    const passed = passTurn(room.code, first.playerId);
+    const passed = await passTurn(room.code, first.playerId);
     expect(passed.error).toBeUndefined();
     expect(passed.state.shift.status).toBe('waiting');
     const nextPlayerId =
@@ -316,11 +318,11 @@ describe('game engine', () => {
     expect(passed.events?.some((event) => event.type === 'turnStarted')).toBe(true);
   });
 
-  test('lockZoneFromClue consumes a key and locks the zone', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    joinRoom(room.code, 'Bob', 'yellow');
-    const started = startGame(room.code, first.playerId);
+  test('lockZoneFromClue consumes a key and locks the zone', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    await joinRoom(room.code, 'Bob', 'yellow');
+    const started = await startGame(room.code, first.playerId);
 
     const state = started.state;
     state.phase = 'playing';
@@ -334,22 +336,22 @@ describe('game engine', () => {
     };
     state.players.find((player) => player.id === first.playerId)!.position = { place: 'hotel' };
     state.masterKeysRemainingByPlayer[first.playerId] = 2;
-    saveRoom(state);
+    await saveRoom(state);
 
-    const locked = lockZoneFromClue(room.code, first.playerId, 'hotel');
+    const locked = await lockZoneFromClue(room.code, first.playerId, 'hotel');
     expect(locked.error).toBeUndefined();
     expect(locked.state.lockedZones.hotel?.lockedBy).toBe(first.playerId);
     expect(locked.state.masterKeysRemainingByPlayer[first.playerId]).toBe(1);
     expect(locked.events?.some((event) => event.type === 'zoneLocked')).toBe(true);
   });
 
-  test('entering a locked zone without a key passes the turn', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'yellow');
-    startGame(room.code, first.playerId);
-    rollTurnOrderDice(room.code, first.playerId, 4);
-    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+  test('entering a locked zone without a key passes the turn', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'yellow');
+    await startGame(room.code, first.playerId);
+    await rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = await rollTurnOrderDice(room.code, second.playerId, 6);
 
     const state = started.state;
     state.currentPlayerIndex = state.turnOrder.indexOf(first.playerId);
@@ -361,9 +363,9 @@ describe('game engine', () => {
     };
     state.lockedZones = { museum: { lockedBy: second.playerId } };
     state.masterKeysRemainingByPlayer[first.playerId] = 0;
-    saveRoom(state);
+    await saveRoom(state);
 
-    const blocked = movePlayer(room.code, first.playerId, {
+    const blocked = await movePlayer(room.code, first.playerId, {
       place: 'museum',
       id: 'museum',
       path: ['museum'],
@@ -371,141 +373,139 @@ describe('game engine', () => {
     expect(blocked.state.shift.status).toBe('awaiting-locked-zone');
     expect(blocked.events?.some((event) => event.type === 'lockedZoneEncountered')).toBe(true);
 
-    const resolved = resolveLockedZoneEntry(room.code, first.playerId, false);
+    const resolved = await resolveLockedZoneEntry(room.code, first.playerId, false);
     const nextPlayerId =
       state.turnOrder[(state.turnOrder.indexOf(first.playerId) + 1) % state.turnOrder.length]!;
     expect(resolved.state.shift.playerId).toBe(nextPlayerId);
     expect(resolved.events?.some((event) => event.type === 'turnStarted')).toBe(true);
   });
 
-  test('creator can configure master keys in the lobby', () => {
-    const room = createRoom('002');
-    const creator = joinRoom(room.code, 'Alice', 'blue');
+  test('creator can configure master keys in the lobby', async () => {
+    const room = await createRoom('002');
+    const creator = await joinRoom(room.code, 'Alice', 'blue');
 
-    const updated = setMasterKeysPerPlayer(room.code, creator.playerId, 3);
+    const updated = await setMasterKeysPerPlayer(room.code, creator.playerId, 3);
     expect(updated.error).toBeUndefined();
     expect(updated.state.masterKeysPerPlayer).toBe(3);
   });
 
-  test('reveals solution before player confirms', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'yellow');
-    startGame(room.code, first.playerId);
-    rollTurnOrderDice(room.code, first.playerId, 4);
-    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+  test('reveals solution before player confirms', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'yellow');
+    await startGame(room.code, first.playerId);
+    await rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = await rollTurnOrderDice(room.code, second.playerId, 6);
 
     const player = started.state.players.find((p) => p.id === first.playerId)!;
     player.position = { place: 'holmes-house' };
-    saveRoom(started.state);
+    await saveRoom(started.state);
 
-    beginSolutionVerification(room.code, first.playerId, {
+    await beginSolutionVerification(room.code, first.playerId, {
       culprit: 'wrong',
       method: 'wrong',
       motive: 'wrong',
     });
 
-    const reveal = revealSolution(room.code, first.playerId);
+    const reveal = await revealSolution(room.code, first.playerId);
     expect(reveal.error).toBeUndefined();
     expect(reveal.events?.some((event) => event.type === 'solutionRevealed')).toBe(true);
     expect(reveal.state.phase).toBe('verifying');
     expect(reveal.state.players.find((p) => p.id === first.playerId)?.eliminated).toBe(false);
   });
 
-  test('eliminates player on wrong solution confirmation', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'yellow');
-    startGame(room.code, first.playerId);
-    rollTurnOrderDice(room.code, first.playerId, 4);
-    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+  test('eliminates player on wrong solution confirmation', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'yellow');
+    await startGame(room.code, first.playerId);
+    await rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = await rollTurnOrderDice(room.code, second.playerId, 6);
 
     const player = started.state.players.find((p) => p.id === first.playerId)!;
     player.position = { place: 'holmes-house' };
-    saveRoom(started.state);
+    await saveRoom(started.state);
 
-    beginSolutionVerification(room.code, first.playerId, {
+    await beginSolutionVerification(room.code, first.playerId, {
       culprit: 'wrong',
       method: 'wrong',
       motive: 'wrong',
     });
 
-    revealSolution(room.code, first.playerId);
+    await revealSolution(room.code, first.playerId);
 
-    const result = confirmSolution(room.code, first.playerId, false);
+    const result = await confirmSolution(room.code, first.playerId, false);
     expect(result.events?.some((event) => event.type === 'solutionFailed')).toBe(true);
     expect(result.state.players.find((p) => p.id === first.playerId)?.eliminated).toBe(true);
   });
 
-  test('ends game when player confirms correct solution', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'yellow');
-    startGame(room.code, first.playerId);
-    rollTurnOrderDice(room.code, first.playerId, 4);
-    const started = rollTurnOrderDice(room.code, second.playerId, 6);
+  test('ends game when player confirms correct solution', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'yellow');
+    await startGame(room.code, first.playerId);
+    await rollTurnOrderDice(room.code, first.playerId, 4);
+    const started = await rollTurnOrderDice(room.code, second.playerId, 6);
 
     const player = started.state.players.find((p) => p.id === first.playerId)!;
     player.position = { place: 'holmes-house' };
-    saveRoom(started.state);
+    await saveRoom(started.state);
 
-    beginSolutionVerification(room.code, first.playerId, {
+    await beginSolutionVerification(room.code, first.playerId, {
       culprit: 'My guess',
       method: 'My method',
       motive: 'My motive',
     });
 
-    revealSolution(room.code, first.playerId);
+    await revealSolution(room.code, first.playerId);
 
-    const result = confirmSolution(room.code, first.playerId, true);
+    const result = await confirmSolution(room.code, first.playerId, true);
     expect(result.state.phase).toBe('finished');
     expect(result.state.winnerId).toBe(first.playerId);
     expect(result.events?.some((event) => event.type === 'gameOver')).toBe(true);
   });
 
-  test('rejects invalid color on join', () => {
-    const room = createRoom('002');
-    const result = joinRoom(room.code, 'Alice', 'brown');
+  test('rejects invalid color on join', async () => {
+    const room = await createRoom('002');
+    const result = await joinRoom(room.code, 'Alice', 'brown');
     expect(result.error).toBe('Cor inválida.');
   });
 
-  test('rejects duplicate color on join', () => {
-    const room = createRoom('002');
-    joinRoom(room.code, 'Alice', 'blue');
-    const second = joinRoom(room.code, 'Bob', 'blue');
+  test('rejects duplicate color on join', async () => {
+    const room = await createRoom('002');
+    await joinRoom(room.code, 'Alice', 'blue');
+    const second = await joinRoom(room.code, 'Bob', 'blue');
     expect(second.error).toBe('Esta cor já está em uso.');
   });
 
-  test('rejects reconnect with another players color', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    joinRoom(room.code, 'Bob', 'yellow');
+  test('rejects reconnect with another players color', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    await joinRoom(room.code, 'Bob', 'yellow');
 
-    const reconnect = joinRoom(room.code, 'Alice', 'yellow', first.sessionToken);
+    const reconnect = await joinRoom(room.code, 'Alice', 'yellow', first.sessionToken);
     expect(reconnect.error).toBe('Esta cor já está em uso.');
   });
 
-  test('allows reconnect with same color', () => {
-    const room = createRoom('002');
-    const first = joinRoom(room.code, 'Alice', 'blue');
-    joinRoom(room.code, 'Bob', 'yellow');
+  test('allows reconnect with same color', async () => {
+    const room = await createRoom('002');
+    const first = await joinRoom(room.code, 'Alice', 'blue');
+    await joinRoom(room.code, 'Bob', 'yellow');
 
-    const reconnect = joinRoom(room.code, 'Alice', 'blue', first.sessionToken);
+    const reconnect = await joinRoom(room.code, 'Alice', 'blue', first.sessionToken);
     expect(reconnect.error).toBeUndefined();
     expect(reconnect.playerId).toBe(first.playerId);
   });
 
-  test('rejects join when room is full', () => {
-    const room = createRoom('002');
-    const tokens: string[] = [];
+  test('rejects join when room is full', async () => {
+    const room = await createRoom('002');
 
     for (let i = 0; i < MAX_PLAYERS; i++) {
-      const joined = joinRoom(room.code, `Player ${i + 1}`, PLAYER_COLORS[i]);
+      const joined = await joinRoom(room.code, `Player ${i + 1}`, PLAYER_COLORS[i]);
       expect(joined.error).toBeUndefined();
-      tokens.push(joined.sessionToken);
     }
 
-    const overflow = joinRoom(room.code, 'Extra', 'blue');
+    const overflow = await joinRoom(room.code, 'Extra', 'blue');
     expect(overflow.error).toBe('A sala está cheia.');
   });
 });

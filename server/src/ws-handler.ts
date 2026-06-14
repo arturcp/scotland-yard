@@ -96,31 +96,31 @@ function broadcast(roomCode: string, message: ServerMessage, except?: WebSocket)
   }
 }
 
-function broadcastRoomState(code: string, state: GameRoomState): void {
+async function broadcastRoomState(code: string, state: GameRoomState): Promise<void> {
   for (const client of getClients(code)) {
     const ctx = clientContext.get(client);
     if (!ctx) continue;
-    sendRoomState(client, state, ctx.playerId, ctx.sessionToken);
+    await sendRoomState(client, state, ctx.playerId, ctx.sessionToken);
   }
 }
 
-function sendRoomState(
+async function sendRoomState(
   ws: WebSocket,
   state: GameRoomState,
   playerId: number,
   sessionToken: string,
-): void {
-  const caseDef = getCaseForRoom(state.code);
+): Promise<void> {
+  const caseDef = await getCaseForRoom(state.code);
   send(ws, {
     type: 'roomState',
     state: getPublicRoomState(state),
-      you: {
-        playerId,
-        sessionToken,
-        notes: getPlayerNotes(state, playerId),
-        visitedZones: getPlayerVisitedZones(state, playerId),
-        masterKeysRemaining: state.masterKeysRemainingByPlayer[playerId] ?? 0,
-      },
+    you: {
+      playerId,
+      sessionToken,
+      notes: getPlayerNotes(state, playerId),
+      visitedZones: getPlayerVisitedZones(state, playerId),
+      masterKeysRemaining: state.masterKeysRemainingByPlayer[playerId] ?? 0,
+    },
     caseFields: caseDef?.fields.map(({ key, label }) => ({ key, label })) ?? [],
   });
 }
@@ -130,7 +130,11 @@ function registerClient(ws: WebSocket, roomCode: string, sessionToken: string, p
   getClients(roomCode).add(ws);
 }
 
-function handleEvents(code: string, events: ServerGameEvent[] | undefined, state: GameRoomState): void {
+async function handleEvents(
+  code: string,
+  events: ServerGameEvent[] | undefined,
+  state: GameRoomState,
+): Promise<void> {
   if (events?.length) {
     for (const event of events) {
       if (
@@ -151,216 +155,225 @@ function handleEvents(code: string, events: ServerGameEvent[] | undefined, state
     }
   }
 
-  broadcastRoomState(code, state);
+  await broadcastRoomState(code, state);
 }
 
 export function handleConnection(ws: WebSocket): void {
   ws.on('message', (raw) => {
-    let message: ClientMessage;
-    try {
-      message = JSON.parse(raw.toString()) as ClientMessage;
-    } catch {
-      sendError(ws, 'Mensagem inválida.');
-      return;
-    }
-
-    switch (message.type) {
-      case 'join': {
-        const result = joinRoom(message.code, message.name, message.color, message.sessionToken);
-        if (result.error) {
-          sendError(ws, result.error);
-          return;
-        }
-        registerClient(ws, result.state.code, result.sessionToken, result.playerId);
-        sendRoomState(ws, result.state, result.playerId, result.sessionToken);
-        broadcastRoomState(result.state.code, result.state);
-        break;
+    void (async () => {
+      let message: ClientMessage;
+      try {
+        message = JSON.parse(raw.toString()) as ClientMessage;
+      } catch {
+        sendError(ws, 'Mensagem inválida.');
+        return;
       }
-      case 'reconnect': {
-        const result = reconnectRoom(message.code, message.sessionToken);
-        if (result.error) {
-          sendError(ws, result.error);
-          return;
+
+      switch (message.type) {
+        case 'join': {
+          const result = await joinRoom(message.code, message.name, message.color, message.sessionToken);
+          if (result.error) {
+            sendError(ws, result.error);
+            return;
+          }
+          registerClient(ws, result.state.code, result.sessionToken, result.playerId);
+          await sendRoomState(ws, result.state, result.playerId, result.sessionToken);
+          await broadcastRoomState(result.state.code, result.state);
+          break;
         }
-        registerClient(ws, result.state.code, result.sessionToken, result.playerId);
-        sendRoomState(ws, result.state, result.playerId, result.sessionToken);
-        broadcastRoomState(result.state.code, result.state);
-        break;
-      }
-      default: {
-        const ctx = clientContext.get(ws);
-        if (!ctx) {
-          sendError(ws, 'Conecte-se à sala primeiro.');
-          return;
+        case 'reconnect': {
+          const result = await reconnectRoom(message.code, message.sessionToken);
+          if (result.error) {
+            sendError(ws, result.error);
+            return;
+          }
+          registerClient(ws, result.state.code, result.sessionToken, result.playerId);
+          await sendRoomState(ws, result.state, result.playerId, result.sessionToken);
+          await broadcastRoomState(result.state.code, result.state);
+          break;
         }
+        default: {
+          const ctx = clientContext.get(ws);
+          if (!ctx) {
+            sendError(ws, 'Conecte-se à sala primeiro.');
+            return;
+          }
 
-        switch (message.type) {
-          case 'updateColor': {
-            const result = updatePlayerColor(
-              ctx.roomCode,
-              ctx.playerId,
-              message.targetPlayerId,
-              message.color,
-            );
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            broadcastRoomState(ctx.roomCode, result.state);
-            break;
-          }
-          case 'start': {
-            const result = startGame(ctx.roomCode, ctx.playerId);
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            handleEvents(ctx.roomCode, result.events, result.state);
-            break;
-          }
-          case 'rollDice': {
-            const result = rollDice(ctx.roomCode, ctx.playerId, message.value);
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            handleEvents(ctx.roomCode, result.events, result.state);
-            break;
-          }
-          case 'rollTurnOrderDice': {
-            const result = rollTurnOrderDice(ctx.roomCode, ctx.playerId, message.value);
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            handleEvents(ctx.roomCode, result.events, result.state);
-            break;
-          }
-          case 'move': {
-            const result = movePlayer(ctx.roomCode, ctx.playerId, message.destination);
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            handleEvents(ctx.roomCode, result.events, result.state);
-            break;
-          }
-          case 'passTurn': {
-            const result = passTurn(ctx.roomCode, ctx.playerId);
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            handleEvents(ctx.roomCode, result.events, result.state);
-            break;
-          }
-          case 'lockZone': {
-            const result = lockZoneFromClue(ctx.roomCode, ctx.playerId, message.zoneId);
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            handleEvents(ctx.roomCode, result.events, result.state);
-            break;
-          }
-          case 'resolveLockedZone': {
-            const result = resolveLockedZoneEntry(ctx.roomCode, ctx.playerId, message.unlock);
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            handleEvents(ctx.roomCode, result.events, result.state);
-            break;
-          }
-          case 'setMasterKeysPerPlayer': {
-            const result = setMasterKeysPerPlayer(ctx.roomCode, ctx.playerId, message.count);
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            broadcastRoomState(ctx.roomCode, result.state);
-            break;
-          }
-          case 'updateNotes': {
-            const result = updateNotes(ctx.roomCode, ctx.playerId, message.customText);
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            sendRoomState(ws, result.state, ctx.playerId, ctx.sessionToken);
-            break;
-          }
-          case 'submitSolution': {
-            const result = beginSolutionVerification(
-              ctx.roomCode,
-              ctx.playerId,
-              message.answers,
-            );
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            handleEvents(ctx.roomCode, result.events, result.state);
-            break;
-          }
-          case 'revealSolution': {
-            const result = revealSolution(ctx.roomCode, ctx.playerId);
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            handleEvents(ctx.roomCode, result.events, result.state);
-            break;
-          }
-          case 'confirmSolution': {
-            const result = confirmSolution(ctx.roomCode, ctx.playerId, message.correct);
-            if (result.error) {
-              sendError(ws, result.error);
-              return;
-            }
-            handleEvents(ctx.roomCode, result.events, result.state);
-            break;
-          }
-          case 'leave': {
-            const roomCode = ctx.roomCode;
-            const result = leaveRoom(roomCode, ctx.playerId);
-            if (result.error && !result.roomDeleted) {
-              sendError(ws, result.error);
-              return;
-            }
-
-            getClients(roomCode).delete(ws);
-            clientContext.delete(ws);
-            send(ws, { type: 'left' });
-
-            if (result.roomDeleted) {
-              for (const client of getClients(roomCode)) {
-                send(client, { type: 'roomClosed' });
-                client.close();
-                clientContext.delete(client);
+          switch (message.type) {
+            case 'updateColor': {
+              const result = await updatePlayerColor(
+                ctx.roomCode,
+                ctx.playerId,
+                message.targetPlayerId,
+                message.color,
+              );
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
               }
-              roomClients.delete(roomCode);
-            } else if (result.state) {
-              handleEvents(roomCode, result.events, result.state);
+              await broadcastRoomState(ctx.roomCode, result.state);
+              break;
             }
+            case 'start': {
+              const result = await startGame(ctx.roomCode, ctx.playerId);
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
+              }
+              await handleEvents(ctx.roomCode, result.events, result.state);
+              break;
+            }
+            case 'rollDice': {
+              const result = await rollDice(ctx.roomCode, ctx.playerId, message.value);
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
+              }
+              await handleEvents(ctx.roomCode, result.events, result.state);
+              break;
+            }
+            case 'rollTurnOrderDice': {
+              const result = await rollTurnOrderDice(ctx.roomCode, ctx.playerId, message.value);
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
+              }
+              await handleEvents(ctx.roomCode, result.events, result.state);
+              break;
+            }
+            case 'move': {
+              const result = await movePlayer(ctx.roomCode, ctx.playerId, message.destination);
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
+              }
+              await handleEvents(ctx.roomCode, result.events, result.state);
+              break;
+            }
+            case 'passTurn': {
+              const result = await passTurn(ctx.roomCode, ctx.playerId);
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
+              }
+              await handleEvents(ctx.roomCode, result.events, result.state);
+              break;
+            }
+            case 'lockZone': {
+              const result = await lockZoneFromClue(ctx.roomCode, ctx.playerId, message.zoneId);
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
+              }
+              await handleEvents(ctx.roomCode, result.events, result.state);
+              break;
+            }
+            case 'resolveLockedZone': {
+              const result = await resolveLockedZoneEntry(ctx.roomCode, ctx.playerId, message.unlock);
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
+              }
+              await handleEvents(ctx.roomCode, result.events, result.state);
+              break;
+            }
+            case 'setMasterKeysPerPlayer': {
+              const result = await setMasterKeysPerPlayer(ctx.roomCode, ctx.playerId, message.count);
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
+              }
+              await broadcastRoomState(ctx.roomCode, result.state);
+              break;
+            }
+            case 'updateNotes': {
+              const result = await updateNotes(ctx.roomCode, ctx.playerId, message.customText);
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
+              }
+              await sendRoomState(ws, result.state, ctx.playerId, ctx.sessionToken);
+              break;
+            }
+            case 'submitSolution': {
+              const result = await beginSolutionVerification(
+                ctx.roomCode,
+                ctx.playerId,
+                message.answers,
+              );
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
+              }
+              await handleEvents(ctx.roomCode, result.events, result.state);
+              break;
+            }
+            case 'revealSolution': {
+              const result = await revealSolution(ctx.roomCode, ctx.playerId);
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
+              }
+              await handleEvents(ctx.roomCode, result.events, result.state);
+              break;
+            }
+            case 'confirmSolution': {
+              const result = await confirmSolution(ctx.roomCode, ctx.playerId, message.correct);
+              if (result.error) {
+                sendError(ws, result.error);
+                return;
+              }
+              await handleEvents(ctx.roomCode, result.events, result.state);
+              break;
+            }
+            case 'leave': {
+              const roomCode = ctx.roomCode;
+              const result = await leaveRoom(roomCode, ctx.playerId);
+              if (result.error && !result.roomDeleted) {
+                sendError(ws, result.error);
+                return;
+              }
 
-            ws.close();
-            break;
+              getClients(roomCode).delete(ws);
+              clientContext.delete(ws);
+              send(ws, { type: 'left' });
+
+              if (result.roomDeleted) {
+                for (const client of getClients(roomCode)) {
+                  send(client, { type: 'roomClosed' });
+                  client.close();
+                  clientContext.delete(client);
+                }
+                roomClients.delete(roomCode);
+              } else if (result.state) {
+                await handleEvents(roomCode, result.events, result.state);
+              }
+
+              ws.close();
+              break;
+            }
           }
         }
       }
-    }
+    })().catch((error) => {
+      console.error('WebSocket message handler failed:', error);
+      sendError(ws, 'Erro interno do servidor.');
+    });
   });
 
   ws.on('close', () => {
-    const ctx = clientContext.get(ws);
-    if (ctx) {
-      setPlayerConnected(ctx.roomCode, ctx.sessionToken, false);
-      getClients(ctx.roomCode).delete(ws);
-      clientContext.delete(ws);
-      const state = reconnectRoom(ctx.roomCode, ctx.sessionToken).state;
-      broadcastRoomState(ctx.roomCode, state);
-    }
+    void (async () => {
+      const ctx = clientContext.get(ws);
+      if (ctx) {
+        await setPlayerConnected(ctx.roomCode, ctx.sessionToken, false);
+        getClients(ctx.roomCode).delete(ws);
+        clientContext.delete(ws);
+        const result = await reconnectRoom(ctx.roomCode, ctx.sessionToken);
+        await broadcastRoomState(ctx.roomCode, result.state);
+      }
+    })().catch((error) => {
+      console.error('WebSocket close handler failed:', error);
+    });
   });
 }
 
