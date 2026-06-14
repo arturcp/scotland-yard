@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { createClient, type Client } from '@libsql/client';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -6,51 +6,83 @@ import type { GameRoomState } from '../../src/types/game.js';
 import { DEFAULT_MASTER_KEYS_PER_PLAYER } from '../../src/types/game.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = process.env.DB_PATH ?? path.join(__dirname, '..', 'data', 'rooms.db');
+const DEFAULT_DB_PATH = path.join(__dirname, '..', 'data', 'rooms.db');
 
 const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 
-let db: Database.Database | null = null;
+let client: Client | null = null;
+let schemaReady: Promise<void> | null = null;
 
-function getDb(): Database.Database {
-  if (!db) {
-    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-    db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS rooms (
-        code TEXT PRIMARY KEY,
-        state_json TEXT NOT NULL,
-        updated_at INTEGER NOT NULL
-      )
-    `);
+function resolveDatabaseUrl(): string {
+  if (process.env.TURSO_DATABASE_URL) {
+    return process.env.TURSO_DATABASE_URL;
   }
-  return db;
+  if (process.env.DB_PATH) {
+    return `file:${process.env.DB_PATH}`;
+  }
+  return `file:${DEFAULT_DB_PATH}`;
 }
 
-export function getDatabase(): Database.Database {
-  return getDb();
+function getClient(): Client {
+  if (!client) {
+    const url = resolveDatabaseUrl();
+    if (url.startsWith('file:')) {
+      fs.mkdirSync(path.dirname(url.slice('file:'.length)), { recursive: true });
+    }
+    client = createClient({
+      url,
+      authToken: process.env.TURSO_AUTH_TOKEN,
+    });
+  }
+  return client;
 }
 
-export function saveRoom(state: GameRoomState): void {
-  const database = getDb();
-  database
-    .prepare(
-      `INSERT INTO rooms (code, state_json, updated_at) VALUES (?, ?, ?)
-       ON CONFLICT(code) DO UPDATE SET state_json = excluded.state_json, updated_at = excluded.updated_at`,
-    )
-    .run(state.code, JSON.stringify(state), Date.now());
+async function ensureSchema(): Promise<void> {
+  if (!schemaReady) {
+    schemaReady = (async () => {
+      const db = getClient();
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS rooms (
+          code TEXT PRIMARY KEY,
+          state_json TEXT NOT NULL,
+          updated_at INTEGER NOT NULL
+        )
+      `);
+    })();
+  }
+  await schemaReady;
 }
 
-export function loadRoom(code: string): GameRoomState | null {
-  const database = getDb();
-  const row = database
-    .prepare('SELECT state_json FROM rooms WHERE code = ?')
-    .get(code.toUpperCase()) as { state_json: string } | undefined;
+export function getDatabase(): Client {
+  return getClient();
+}
+
+export async function initDatabase(): Promise<void> {
+  await ensureSchema();
+}
+
+export async function saveRoom(state: GameRoomState): Promise<void> {
+  await ensureSchema();
+  const database = getClient();
+  await database.execute({
+    sql: `INSERT INTO rooms (code, state_json, updated_at) VALUES (?, ?, ?)
+          ON CONFLICT(code) DO UPDATE SET state_json = excluded.state_json, updated_at = excluded.updated_at`,
+    args: [state.code, JSON.stringify(state), Date.now()],
+  });
+}
+
+export async function loadRoom(code: string): Promise<GameRoomState | null> {
+  await ensureSchema();
+  const database = getClient();
+  const result = await database.execute({
+    sql: 'SELECT state_json FROM rooms WHERE code = ?',
+    args: [code.toUpperCase()],
+  });
+  const row = result.rows[0];
   if (!row) {
     return null;
   }
-  const state = JSON.parse(row.state_json) as GameRoomState;
+  const state = JSON.parse(row.state_json as string) as GameRoomState;
   if (!state.sessionTokens) {
     state.sessionTokens = {};
   }
@@ -75,25 +107,40 @@ export function loadRoom(code: string): GameRoomState | null {
   return state;
 }
 
-export function roomExists(code: string): boolean {
-  const database = getDb();
-  const row = database.prepare('SELECT 1 FROM rooms WHERE code = ?').get(code.toUpperCase());
-  return !!row;
+export async function roomExists(code: string): Promise<boolean> {
+  await ensureSchema();
+  const database = getClient();
+  const result = await database.execute({
+    sql: 'SELECT 1 FROM rooms WHERE code = ?',
+    args: [code.toUpperCase()],
+  });
+  return result.rows.length > 0;
 }
 
-export function deleteExpiredRooms(): number {
-  const database = getDb();
+export async function deleteExpiredRooms(): Promise<number> {
+  await ensureSchema();
+  const database = getClient();
   const cutoff = Date.now() - ROOM_TTL_MS;
-  const result = database.prepare('DELETE FROM rooms WHERE updated_at < ?').run(cutoff);
-  return result.changes;
+  const result = await database.execute({
+    sql: 'DELETE FROM rooms WHERE updated_at < ?',
+    args: [cutoff],
+  });
+  return result.rowsAffected;
 }
 
-export function deleteRoom(code: string): void {
-  const database = getDb();
-  database.prepare('DELETE FROM rooms WHERE code = ?').run(code.toUpperCase());
+export async function deleteRoom(code: string): Promise<void> {
+  await ensureSchema();
+  const database = getClient();
+  await database.execute({
+    sql: 'DELETE FROM rooms WHERE code = ?',
+    args: [code.toUpperCase()],
+  });
 }
 
-export function closeDb(): void {
-  db?.close();
-  db = null;
+export async function closeDb(): Promise<void> {
+  if (client) {
+    client.close();
+    client = null;
+  }
+  schemaReady = null;
 }

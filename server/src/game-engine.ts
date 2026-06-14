@@ -82,8 +82,8 @@ function activePlayers(state: GameRoomState): Player[] {
   return state.players.filter((p) => !p.eliminated);
 }
 
-function getCase(state: GameRoomState): CaseDefinition {
-  const caseDef = getCaseById(state.caseId);
+async function getCase(state: GameRoomState): Promise<CaseDefinition> {
+  const caseDef = await getCaseById(state.caseId);
   if (!caseDef) {
     throw new Error(`Caso não encontrado: ${state.caseId}`);
   }
@@ -193,12 +193,12 @@ function recordZoneVisit(state: GameRoomState, playerId: number, zoneId: ZoneId)
   }
 }
 
-function finishMoveWithClueCheck(
+async function finishMoveWithClueCheck(
   state: GameRoomState,
   playerId: number,
   newPosition: Position,
   events: ServerGameEvent[],
-): boolean {
+): Promise<boolean> {
   const zoneId = newPosition.place as ZoneId | undefined;
   if (!zoneId || zoneId === 'holmes-house') {
     return false;
@@ -208,7 +208,7 @@ function finishMoveWithClueCheck(
 
   const clueNotes = (state.notesByPlayer[playerId] ?? []).filter((entry) => entry.kind === 'clue');
   const alreadyCollected = clueNotes.some((entry) => entry.zoneId === zoneId);
-  const clueText = getCaseClue(state.caseId, zoneId);
+  const clueText = await getCaseClue(state.caseId, zoneId);
   if (!clueText || alreadyCollected) {
     return false;
   }
@@ -239,19 +239,19 @@ function finishMoveWithClueCheck(
   return true;
 }
 
-function persist(state: GameRoomState): GameRoomState {
-  saveRoom(state);
+async function persist(state: GameRoomState): Promise<GameRoomState> {
+  await saveRoom(state);
   activeRooms.set(state.code, state);
   return state;
 }
 
-function getMutableRoom(code: string): GameRoomState | null {
+async function getMutableRoom(code: string): Promise<GameRoomState | null> {
   const normalized = code.toUpperCase();
   const cached = activeRooms.get(normalized);
   if (cached) {
     return cached;
   }
-  const loaded = loadRoom(normalized);
+  const loaded = await loadRoom(normalized);
   if (loaded) {
     activeRooms.set(normalized, loaded);
     return loaded;
@@ -259,30 +259,30 @@ function getMutableRoom(code: string): GameRoomState | null {
   return null;
 }
 
-export function createRoom(caseId: string): GameRoomState {
-  if (!caseExists(caseId)) {
+export async function createRoom(caseId: string): Promise<GameRoomState> {
+  if (!(await caseExists(caseId))) {
     throw new Error('Caso não encontrado.');
   }
 
-  const caseDef = getCaseById(caseId);
+  const caseDef = await getCaseById(caseId);
   if (!caseDef) {
     throw new Error('Caso não encontrado.');
   }
 
   let code = generateCode();
-  while (roomExists(code)) {
+  while (await roomExists(code)) {
     code = generateCode();
   }
-  const state = persist(createInitialState(code, caseDef));
+  const state = await persist(createInitialState(code, caseDef));
   return state;
 }
 
-export function roomExists(code: string): boolean {
-  return !!getMutableRoom(code);
+export async function roomExists(code: string): Promise<boolean> {
+  return !!(await getMutableRoom(code));
 }
 
-export function getRoomSummary(code: string): RoomSummary {
-  const state = getMutableRoom(code);
+export async function getRoomSummary(code: string): Promise<RoomSummary> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { exists: false, phase: null, playerCount: 0 };
   }
@@ -348,13 +348,13 @@ export interface JoinResult {
   error?: string;
 }
 
-export function joinRoom(
+export async function joinRoom(
   code: string,
   name: string,
   color: string,
   sessionToken?: string,
-): JoinResult {
-  const state = getMutableRoom(code);
+): Promise<JoinResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return {
       state: {
@@ -418,7 +418,7 @@ export function joinRoom(
       existing.name = trimmedName;
       existing.color = color;
       existing.connected = true;
-      persist(state);
+      await persist(state);
       return { state, sessionToken, playerId: existing.id };
     }
   }
@@ -466,23 +466,27 @@ export function joinRoom(
   }
   state.notesByPlayer[playerId] = state.notesByPlayer[playerId] ?? [];
 
-  persist(state);
+  await persist(state);
   return { state, sessionToken: newToken, playerId };
 }
 
-export function setPlayerConnected(code: string, sessionToken: string, connected: boolean): void {
-  const state = getMutableRoom(code);
+export async function setPlayerConnected(
+  code: string,
+  sessionToken: string,
+  connected: boolean,
+): Promise<void> {
+  const state = await getMutableRoom(code);
   if (!state) return;
   const playerId = Object.entries(state.sessionTokens).find(([, token]) => token === sessionToken)?.[0];
   const player = playerId ? state.players.find((p) => p.id === Number(playerId)) : undefined;
   if (player) {
     player.connected = connected;
-    persist(state);
+    await persist(state);
   }
 }
 
-export function reconnectRoom(code: string, sessionToken: string): JoinResult {
-  const state = getMutableRoom(code);
+export async function reconnectRoom(code: string, sessionToken: string): Promise<JoinResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return {
       state: {
@@ -533,7 +537,7 @@ export function reconnectRoom(code: string, sessionToken: string): JoinResult {
   }
 
   player.connected = true;
-  persist(state);
+  await persist(state);
   return { state, sessionToken, playerId: player.id };
 }
 
@@ -617,8 +621,8 @@ function removePlayerFromGameState(state: GameRoomState, playerId: number): Serv
   return events;
 }
 
-export function leaveRoom(code: string, playerId: number): LeaveRoomResult {
-  const state = getMutableRoom(code);
+export async function leaveRoom(code: string, playerId: number): Promise<LeaveRoomResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: null, roomDeleted: true, error: 'Sala não encontrada.' };
   }
@@ -630,12 +634,12 @@ export function leaveRoom(code: string, playerId: number): LeaveRoomResult {
   const events = removePlayerFromGameState(state, playerId);
 
   if (state.players.length === 0) {
-    deleteRoom(code);
+    await deleteRoom(code);
     activeRooms.delete(code.toUpperCase());
     return { state: null, roomDeleted: true, events };
   }
 
-  persist(state);
+  await persist(state);
   return { state, roomDeleted: false, events };
 }
 
@@ -687,13 +691,13 @@ export type ServerGameEvent =
       playerAnswers: Record<string, string>;
     };
 
-export function updatePlayerColor(
+export async function updatePlayerColor(
   code: string,
   requesterId: number,
   targetPlayerId: number,
   color: string,
-): EngineResult {
-  const state = getMutableRoom(code);
+): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -724,12 +728,12 @@ export function updatePlayerColor(
   }
 
   target.color = color;
-  persist(state);
+  await persist(state);
   return { state };
 }
 
-export function startGame(code: string, playerId: number): EngineResult {
-  const state = getMutableRoom(code);
+export async function startGame(code: string, playerId: number): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -757,7 +761,7 @@ export function startGame(code: string, playerId: number): EngineResult {
     playerId: 0,
     diceResult: null,
   };
-  persist(state);
+  await persist(state);
 
   return { state, events: [{ type: 'turnOrderStarted' }] };
 }
@@ -816,12 +820,12 @@ function finalizeTurnOrder(state: GameRoomState): ServerGameEvent[] {
   ];
 }
 
-export function setMasterKeysPerPlayer(
+export async function setMasterKeysPerPlayer(
   code: string,
   playerId: number,
   count: number,
-): EngineResult {
-  const state = getMutableRoom(code);
+): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -839,12 +843,16 @@ export function setMasterKeysPerPlayer(
   }
 
   state.masterKeysPerPlayer = count;
-  persist(state);
+  await persist(state);
   return { state };
 }
 
-export function rollTurnOrderDice(code: string, playerId: number, value: number): EngineResult {
-  const state = getMutableRoom(code);
+export async function rollTurnOrderDice(
+  code: string,
+  playerId: number,
+  value: number,
+): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -883,12 +891,12 @@ export function rollTurnOrderDice(code: string, playerId: number, value: number)
     events.push(...finalizeTurnOrder(state));
   }
 
-  persist(state);
+  await persist(state);
   return { state, events };
 }
 
-export function rollDice(code: string, playerId: number, value: number): EngineResult {
-  const state = getMutableRoom(code);
+export async function rollDice(code: string, playerId: number, value: number): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -919,7 +927,7 @@ export function rollDice(code: string, playerId: number, value: number): EngineR
     playerId,
     diceResult: diceValue,
   };
-  persist(state);
+  await persist(state);
 
   return {
     state,
@@ -942,8 +950,12 @@ function positionsEqual(a: Position, b: AvailableSquare): boolean {
   return (a.row ?? -1) === (b.row ?? -2) && (a.column ?? -1) === (b.column ?? -2);
 }
 
-export function movePlayer(code: string, playerId: number, destination: Position): EngineResult {
-  const state = getMutableRoom(code);
+export async function movePlayer(
+  code: string,
+  playerId: number,
+  destination: Position,
+): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -974,7 +986,7 @@ export function movePlayer(code: string, playerId: number, destination: Position
       destination: newPosition,
       path: match.path,
     };
-    persist(state);
+    await persist(state);
     return {
       state,
       events: [
@@ -1000,18 +1012,18 @@ export function movePlayer(code: string, playerId: number, destination: Position
     },
   ];
 
-  if (finishMoveWithClueCheck(state, playerId, newPosition, events)) {
-    persist(state);
+  if (await finishMoveWithClueCheck(state, playerId, newPosition, events)) {
+    await persist(state);
     return { state, events };
   }
 
   events.push(advanceTurn(state));
-  persist(state);
+  await persist(state);
   return { state, events };
 }
 
-export function passTurn(code: string, playerId: number): EngineResult {
-  const state = getMutableRoom(code);
+export async function passTurn(code: string, playerId: number): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -1027,12 +1039,16 @@ export function passTurn(code: string, playerId: number): EngineResult {
 
   state.pendingLockedZoneEntry = null;
   const events = [advanceTurn(state)];
-  persist(state);
+  await persist(state);
   return { state, events };
 }
 
-export function lockZoneFromClue(code: string, playerId: number, zoneId: ZoneId): EngineResult {
-  const state = getMutableRoom(code);
+export async function lockZoneFromClue(
+  code: string,
+  playerId: number,
+  zoneId: ZoneId,
+): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -1065,16 +1081,16 @@ export function lockZoneFromClue(code: string, playerId: number, zoneId: ZoneId)
     },
     advanceTurn(state),
   ];
-  persist(state);
+  await persist(state);
   return { state, events };
 }
 
-export function resolveLockedZoneEntry(
+export async function resolveLockedZoneEntry(
   code: string,
   playerId: number,
   unlock: boolean,
-): EngineResult {
-  const state = getMutableRoom(code);
+): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -1094,7 +1110,7 @@ export function resolveLockedZoneEntry(
   if (!unlock || !hasKey) {
     state.pendingLockedZoneEntry = null;
     const events = [advanceTurn(state)];
-    persist(state);
+    await persist(state);
     return { state, events };
   }
 
@@ -1117,22 +1133,22 @@ export function resolveLockedZoneEntry(
   ];
   state.pendingLockedZoneEntry = null;
 
-  if (finishMoveWithClueCheck(state, playerId, pending.destination, events)) {
-    persist(state);
+  if (await finishMoveWithClueCheck(state, playerId, pending.destination, events)) {
+    await persist(state);
     return { state, events };
   }
 
   events.push(advanceTurn(state));
-  persist(state);
+  await persist(state);
   return { state, events };
 }
 
-export function updateNotes(
+export async function updateNotes(
   code: string,
   playerId: number,
   customText: string,
-): EngineResult {
-  const state = getMutableRoom(code);
+): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -1144,16 +1160,16 @@ export function updateNotes(
     : [];
 
   state.notesByPlayer[playerId] = [...clues, ...customEntries];
-  persist(state);
+  await persist(state);
   return { state };
 }
 
-export function beginSolutionVerification(
+export async function beginSolutionVerification(
   code: string,
   playerId: number,
   answers: Record<string, string>,
-): EngineResult {
-  const state = getMutableRoom(code);
+): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -1172,7 +1188,7 @@ export function beginSolutionVerification(
   state.phase = 'verifying';
   state.verifyingPlayerId = playerId;
   state.lastSubmittedAnswers = answers;
-  persist(state);
+  await persist(state);
 
   return {
     state,
@@ -1180,8 +1196,8 @@ export function beginSolutionVerification(
   };
 }
 
-export function revealSolution(code: string, playerId: number): EngineResult {
-  const state = getMutableRoom(code);
+export async function revealSolution(code: string, playerId: number): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -1189,7 +1205,7 @@ export function revealSolution(code: string, playerId: number): EngineResult {
     return { state, error: 'Verificação inválida.' };
   }
 
-  const caseDef = getCase(state);
+  const caseDef = await getCase(state);
   const answers = state.lastSubmittedAnswers ?? {};
 
   return {
@@ -1206,12 +1222,12 @@ export function revealSolution(code: string, playerId: number): EngineResult {
   };
 }
 
-export function confirmSolution(
+export async function confirmSolution(
   code: string,
   playerId: number,
   correct: boolean,
-): EngineResult {
-  const state = getMutableRoom(code);
+): Promise<EngineResult> {
+  const state = await getMutableRoom(code);
   if (!state) {
     return { state: emptyRoomState(code), error: 'Sala não encontrada.' };
   }
@@ -1220,7 +1236,7 @@ export function confirmSolution(
   }
 
   const player = state.players.find((p) => p.id === playerId)!;
-  const caseDef = getCase(state);
+  const caseDef = await getCase(state);
   const answers = state.lastSubmittedAnswers ?? {};
 
   state.officialSolution = caseDef.fields;
@@ -1228,7 +1244,7 @@ export function confirmSolution(
   if (correct) {
     state.phase = 'finished';
     state.winnerId = playerId;
-    persist(state);
+    await persist(state);
     return {
       state,
       events: [
@@ -1251,7 +1267,7 @@ export function confirmSolution(
 
   if (activePlayers(state).length === 0) {
     state.phase = 'finished';
-    persist(state);
+    await persist(state);
     return {
       state,
       events: [
@@ -1269,7 +1285,7 @@ export function confirmSolution(
     state.shift.playerId = state.turnOrder[state.currentPlayerIndex]!;
   }
 
-  persist(state);
+  await persist(state);
   const nextPlayer = state.players.find((p) => p.id === state.shift.playerId)!;
 
   return {
@@ -1286,20 +1302,20 @@ export function confirmSolution(
   };
 }
 
-export function getCaseForRoom(code: string): CaseDefinition | null {
-  const state = getMutableRoom(code);
+export async function getCaseForRoom(code: string): Promise<CaseDefinition | null> {
+  const state = await getMutableRoom(code);
   if (!state) return null;
   return getCaseById(state.caseId);
 }
 
-export function resetRoomToLobby(code: string): GameRoomState | null {
-  const state = getMutableRoom(code);
+export async function resetRoomToLobby(code: string): Promise<GameRoomState | null> {
+  const state = await getMutableRoom(code);
   if (!state) return null;
-  deleteRoom(code);
+  await deleteRoom(code);
   activeRooms.delete(code.toUpperCase());
   return null;
 }
 
-export function hydrateActiveRooms(): void {
+export async function hydrateActiveRooms(): Promise<void> {
   // Rooms are loaded lazily from SQLite on access.
 }
