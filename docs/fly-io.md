@@ -57,7 +57,9 @@ fly secrets set \
   TURSO_AUTH_TOKEN="your-turso-auth-token"
 ```
 
-Fly.io injects `PORT=8080` automatically; the server reads `process.env.PORT`.
+Do **not** set `PORT` as a secret. Fly.io routes traffic to port `8080` (see `internal_port` in `fly.toml`). If you copied your local `.env` and set `PORT=3001`, the app will listen on the wrong port and health checks will fail.
+
+Fly.io sets `PORT=8080` automatically; the server reads `process.env.PORT`.
 
 You do **not** need `VITE_API_URL` or `VITE_WS_URL` when the frontend and API are served from the same Fly.io app — the client uses relative `/api` paths and connects to `/ws` on the same host.
 
@@ -121,6 +123,19 @@ The default `fly.toml` uses:
 WebSocket game sessions keep connections open, so an active game keeps the machine awake. Adjust `min_machines_running` if you want always-on availability.
 
 ## Troubleshooting
+
+### Proxy can't reach the app (`failed to connect to machine` / `waiting for machine to be reachable on 0.0.0.0:8080`)
+
+The logs show the server listening on port 3001 while Fly expects 8080. This usually means `PORT=3001` was set as a secret.
+
+Remove it and redeploy:
+
+```bash
+fly secrets unset PORT
+fly deploy
+```
+
+After a successful deploy, logs should show `Game server listening on http://0.0.0.0:8080`.
 
 ### App starts but pages are blank or 404
 
