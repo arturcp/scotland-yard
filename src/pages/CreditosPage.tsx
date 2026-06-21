@@ -78,7 +78,7 @@ export default function CreditosPage() {
         </p>
       </section>
 
-      <p className="text-sm text-muted-foreground">Obrigado por jogar. Boa caçada a Mr. X.</p>
+      <p className="text-sm text-muted-foreground">Obrigado por jogar.</p>
     </LegalLayout>
   );
 }
