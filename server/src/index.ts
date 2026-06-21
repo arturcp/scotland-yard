@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import fs from 'fs';
 import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -81,6 +82,14 @@ app.get('/api/rooms/:code', async (req, res) => {
   }
 });
 
+const distPath = path.join(__dirname, '..', '..', 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get(/^(?!\/api|\/ws).*/, (_req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
 
@@ -100,9 +109,12 @@ async function startServer(): Promise<void> {
   await initDatabase();
   await seedCasesIfEmpty();
 
-  server.listen(PORT, () => {
-    console.log(`Game server listening on http://localhost:${PORT}`);
-    console.log(`WebSocket endpoint: ws://localhost:${PORT}/ws`);
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Game server listening on http://0.0.0.0:${PORT}`);
+    console.log(`WebSocket endpoint: ws://0.0.0.0:${PORT}/ws`);
+    if (fs.existsSync(distPath)) {
+      console.log(`Serving frontend from ${distPath}`);
+    }
     const dbUrl =
       process.env.TURSO_DATABASE_URL ??
       `file:${process.env.DB_PATH ?? path.join(__dirname, '..', 'data', 'rooms.db')}`;
