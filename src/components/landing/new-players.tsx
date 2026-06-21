@@ -33,7 +33,7 @@ export function NewPlayers() {
           Primeira investigação?
         </h2>
         <p className="mt-5 font-body text-lg leading-relaxed text-pretty text-muted-foreground">
-          Comece pelo básico e esteja pronto para a caçada em poucos minutos.
+          Comece pelo básico e esteja pronto para jogar em poucos minutos.
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
