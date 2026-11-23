@@ -1,7 +1,16 @@
+import type { InStatement } from '@libsql/client';
 import type { ZoneId } from '../../src/board/types.js';
 import type { CaseDefinition, CaseField, CaseListItem, CasePreview } from '../../src/types/game.js';
 import { getDatabase } from './persistence.js';
-import { CASE_SEEDS, type CaseSeed } from './seed-cases.js';
+import {
+  CASE_SEEDS,
+  CASE_SEED_VERSION,
+  CLUE_BOOKS,
+  NO_CLUE_TEXT,
+  type CaseSeed,
+} from './seed-cases.js';
+
+const SEED_VERSION_KEY = 'cases_seed_version';
 
 const ZONE_LABELS: Record<ZoneId, string> = {
   'holmes-house': 'Casa do Sherlock Holmes',
@@ -28,33 +37,88 @@ const ZONE_LABELS: Record<ZoneId, string> = {
 
 let caseTablesReady: Promise<void> | null = null;
 
+const STATEMENT_CHUNK_SIZE = 400;
+
+async function readSeedVersion(db: ReturnType<typeof getDatabase>): Promise<number> {
+  await db.execute(
+    'CREATE TABLE IF NOT EXISTS seed_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)',
+  );
+  const result = await db.execute({
+    sql: 'SELECT value FROM seed_meta WHERE key = ?',
+    args: [SEED_VERSION_KEY],
+  });
+  return Number(result.rows[0]?.value ?? 0);
+}
+
+/**
+ * Cria as tabelas e semeia os casos. Se o banco foi semeado com outra versão dos dados
+ * (ex.: os casos antigos, em que `case_clues` guardava o texto), apaga e semeia de novo.
+ */
 async function initCaseTables(): Promise<void> {
   if (!caseTablesReady) {
     caseTablesReady = (async () => {
       const db = getDatabase();
-      await db.execute(`CREATE TABLE IF NOT EXISTS cases (
-        id TEXT PRIMARY KEY,
-        number INTEGER NOT NULL,
-        title TEXT NOT NULL,
-        intro TEXT NOT NULL,
-        solution_narrative TEXT NOT NULL
-      )`);
-      await db.execute(`CREATE TABLE IF NOT EXISTS case_fields (
-        case_id TEXT NOT NULL,
-        field_key TEXT NOT NULL,
-        label TEXT NOT NULL,
-        answer TEXT NOT NULL,
-        PRIMARY KEY (case_id, field_key),
-        FOREIGN KEY (case_id) REFERENCES cases(id)
-      )`);
-      await db.execute(`CREATE TABLE IF NOT EXISTS case_clues (
-        case_id TEXT NOT NULL,
-        zone_id TEXT NOT NULL,
-        text TEXT NOT NULL,
-        PRIMARY KEY (case_id, zone_id),
-        FOREIGN KEY (case_id) REFERENCES cases(id)
-      )`);
-    })();
+      if ((await readSeedVersion(db)) === CASE_SEED_VERSION) {
+        return;
+      }
+
+      await db.batch(
+        [
+          'DROP TABLE IF EXISTS case_clues',
+          'DROP TABLE IF EXISTS case_fields',
+          'DROP TABLE IF EXISTS clue_book',
+          'DROP TABLE IF EXISTS cases',
+          `CREATE TABLE cases (
+            id TEXT PRIMARY KEY,
+            number INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            book_id TEXT NOT NULL,
+            intro TEXT NOT NULL,
+            solution_narrative TEXT NOT NULL
+          )`,
+          `CREATE TABLE case_fields (
+            case_id TEXT NOT NULL,
+            field_key TEXT NOT NULL,
+            label TEXT NOT NULL,
+            answer TEXT NOT NULL,
+            PRIMARY KEY (case_id, field_key),
+            FOREIGN KEY (case_id) REFERENCES cases(id)
+          )`,
+          // De-para do caso: em qual número do livro de pistas está a pista de cada local.
+          `CREATE TABLE case_clues (
+            case_id TEXT NOT NULL,
+            zone_id TEXT NOT NULL,
+            clue_number INTEGER NOT NULL,
+            PRIMARY KEY (case_id, zone_id),
+            FOREIGN KEY (case_id) REFERENCES cases(id)
+          )`,
+          // Livro de pistas: cada livro cobre 20 casos e numera as pistas de 1 a 280.
+          `CREATE TABLE clue_book (
+            book_id TEXT NOT NULL,
+            clue_number INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            PRIMARY KEY (book_id, clue_number)
+          )`,
+        ],
+        'write',
+      );
+
+      const statements = [
+        ...CASE_SEEDS.flatMap((seed) => buildCaseSeedStatements(seed)),
+        ...buildClueBookStatements(),
+      ];
+      for (let i = 0; i < statements.length; i += STATEMENT_CHUNK_SIZE) {
+        await db.batch(statements.slice(i, i + STATEMENT_CHUNK_SIZE), 'write');
+      }
+
+      await db.execute({
+        sql: 'INSERT OR REPLACE INTO seed_meta (key, value) VALUES (?, ?)',
+        args: [SEED_VERSION_KEY, String(CASE_SEED_VERSION)],
+      });
+    })().catch((error) => {
+      caseTablesReady = null;
+      throw error;
+    });
   }
   await caseTablesReady;
 }
@@ -63,18 +127,12 @@ export function resetCaseStore(): void {
   caseTablesReady = null;
 }
 
-function buildCaseSeedStatements(seed: CaseSeed) {
-  const statements = [
+function buildCaseSeedStatements(seed: CaseSeed): InStatement[] {
+  const statements: InStatement[] = [
     {
-      sql: `INSERT INTO cases (id, number, title, intro, solution_narrative)
-            VALUES (?, ?, ?, ?, ?)`,
-      args: [seed.id, seed.number, seed.title, seed.intro, seed.solutionNarrative] as [
-        string,
-        number,
-        string,
-        string,
-        string,
-      ],
+      sql: `INSERT INTO cases (id, number, title, book_id, intro, solution_narrative)
+            VALUES (?, ?, ?, ?, ?, ?)`,
+      args: [seed.id, seed.number, seed.title, seed.bookId, seed.intro, seed.solutionNarrative],
     },
   ];
 
@@ -85,11 +143,11 @@ function buildCaseSeedStatements(seed: CaseSeed) {
     });
   }
 
-  for (const [zoneId, text] of Object.entries(seed.clues)) {
-    if (text) {
+  for (const [zoneId, clueNumber] of Object.entries(seed.clues)) {
+    if (clueNumber !== undefined) {
       statements.push({
-        sql: `INSERT INTO case_clues (case_id, zone_id, text) VALUES (?, ?, ?)`,
-        args: [seed.id, zoneId, text],
+        sql: `INSERT INTO case_clues (case_id, zone_id, clue_number) VALUES (?, ?, ?)`,
+        args: [seed.id, zoneId, clueNumber],
       });
     }
   }
@@ -97,17 +155,17 @@ function buildCaseSeedStatements(seed: CaseSeed) {
   return statements;
 }
 
+function buildClueBookStatements(): InStatement[] {
+  return Object.entries(CLUE_BOOKS).flatMap(([bookId, clues]) =>
+    Object.entries(clues).map(([clueNumber, text]) => ({
+      sql: 'INSERT INTO clue_book (book_id, clue_number, text) VALUES (?, ?, ?)',
+      args: [bookId, Number(clueNumber), text],
+    })),
+  );
+}
+
 export async function seedCasesIfEmpty(): Promise<void> {
   await initCaseTables();
-  const db = getDatabase();
-  const count = await db.execute('SELECT COUNT(*) as total FROM cases');
-  const total = Number(count.rows[0]?.total ?? 0);
-  if (total > 0) {
-    return;
-  }
-
-  const statements = CASE_SEEDS.flatMap((seed) => buildCaseSeedStatements(seed));
-  await db.batch(statements, 'write');
 }
 
 export async function listCasesPublic(): Promise<CaseListItem[]> {
@@ -154,13 +212,20 @@ export async function getCaseById(caseId: string): Promise<CaseDefinition | null
   })) as CaseField[];
 
   const clueRowsResult = await db.execute({
-    sql: 'SELECT zone_id, text FROM case_clues WHERE case_id = ?',
+    sql: `SELECT cc.zone_id AS zone_id, cb.text AS text
+          FROM case_clues cc
+          JOIN cases c ON c.id = cc.case_id
+          JOIN clue_book cb ON cb.book_id = c.book_id AND cb.clue_number = cc.clue_number
+          WHERE cc.case_id = ?`,
     args: [caseId],
   });
 
   const clues: Partial<Record<ZoneId, string>> = {};
   for (const clueRow of clueRowsResult.rows) {
-    clues[clueRow.zone_id as ZoneId] = clueRow.text as string;
+    const text = clueRow.text as string;
+    if (!NO_CLUE_TEXT.test(text.trim())) {
+      clues[clueRow.zone_id as ZoneId] = text;
+    }
   }
 
   return {
@@ -204,15 +269,23 @@ export async function getCasePreview(caseId: string): Promise<CasePreview | null
   };
 }
 
+/**
+ * Procura a pista do local como no jogo físico: pega o número do local no de-para do caso
+ * e lê esse número no livro de pistas. Devolve null quando o livro diz "Sem pista".
+ */
 export async function getCaseClue(caseId: string, zoneId: ZoneId): Promise<string | null> {
   await seedCasesIfEmpty();
   const db = getDatabase();
   const result = await db.execute({
-    sql: 'SELECT text FROM case_clues WHERE case_id = ? AND zone_id = ?',
+    sql: `SELECT cb.text AS text
+          FROM case_clues cc
+          JOIN cases c ON c.id = cc.case_id
+          JOIN clue_book cb ON cb.book_id = c.book_id AND cb.clue_number = cc.clue_number
+          WHERE cc.case_id = ? AND cc.zone_id = ?`,
     args: [caseId, zoneId],
   });
-  const row = result.rows[0];
-  return row ? (row.text as string) : null;
+  const text = result.rows[0]?.text as string | undefined;
+  return text && !NO_CLUE_TEXT.test(text.trim()) ? text : null;
 }
 
 export function getZoneLabel(zoneId: ZoneId): string {

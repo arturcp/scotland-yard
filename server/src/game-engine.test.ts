@@ -48,11 +48,11 @@ afterEach(async () => {
 
 describe('game engine', () => {
   test('creates a room with lobby phase and selected case', async () => {
-    const room = await createRoom('001');
+    const room = await createRoom('021');
     expect(room.code).toHaveLength(6);
     expect(room.phase).toBe('lobby');
-    expect(room.caseId).toBe('001');
-    expect(room.caseTitle).toBe('O Homem Profano');
+    expect(room.caseId).toBe('021');
+    expect(room.caseTitle).toBe('O Caso da Morte Reescrita');
     expect(room.caseIntro.length).toBeGreaterThan(0);
   });
 
@@ -61,7 +61,7 @@ describe('game engine', () => {
   });
 
   test('player can change own color in lobby', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     await joinRoom(room.code, 'Bob', 'yellow');
 
@@ -71,7 +71,7 @@ describe('game engine', () => {
   });
 
   test('creator can change another player color in lobby', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'yellow');
 
@@ -81,7 +81,7 @@ describe('game engine', () => {
   });
 
   test('non-creator cannot change another player color', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'yellow');
 
@@ -90,7 +90,7 @@ describe('game engine', () => {
   });
 
   test('rejects duplicate color in lobby', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     await joinRoom(room.code, 'Bob', 'yellow');
 
@@ -99,7 +99,7 @@ describe('game engine', () => {
   });
 
   test('rejects color change after game starts', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     await joinRoom(room.code, 'Bob', 'yellow');
     await startGame(room.code, first.playerId);
@@ -109,7 +109,7 @@ describe('game engine', () => {
   });
 
   test('starts turn order phase and waits for each player to roll', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'yellow');
     expect(first.error).toBeUndefined();
@@ -154,7 +154,7 @@ describe('game engine', () => {
   });
 
   test('keeps turn order phase until every connected player rolls', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'yellow');
     await startGame(room.code, first.playerId);
@@ -166,7 +166,7 @@ describe('game engine', () => {
   });
 
   test('rejects invalid dice values', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     await joinRoom(room.code, 'Bob', 'yellow');
     await startGame(room.code, first.playerId);
@@ -176,7 +176,7 @@ describe('game engine', () => {
   });
 
   test('rejects duplicate turn order rolls', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     await joinRoom(room.code, 'Bob', 'yellow');
     await startGame(room.code, first.playerId);
@@ -189,7 +189,7 @@ describe('game engine', () => {
   });
 
   test('deletes room when the last player leaves', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const only = await joinRoom(room.code, 'Alice', 'blue');
 
     const result = await leaveRoom(room.code, only.playerId);
@@ -199,7 +199,7 @@ describe('game engine', () => {
   });
 
   test('removes player and reassigns creator when someone leaves', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const creator = await joinRoom(room.code, 'Alice', 'blue');
     const other = await joinRoom(room.code, 'Bob', 'yellow');
 
@@ -212,7 +212,7 @@ describe('game engine', () => {
   });
 
   test('rolls dice only for active player', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'yellow');
     await startGame(room.code, first.playerId);
@@ -233,7 +233,7 @@ describe('game engine', () => {
   });
 
   test('keeps turn when discovering a clue', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'yellow');
     await startGame(room.code, first.playerId);
@@ -264,7 +264,7 @@ describe('game engine', () => {
   });
 
   test('records visits to zones without clues', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'yellow');
     await startGame(room.code, first.playerId);
@@ -292,7 +292,7 @@ describe('game engine', () => {
   });
 
   test('passTurn advances to the next player after a clue', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'yellow');
     await startGame(room.code, first.playerId);
@@ -319,7 +319,7 @@ describe('game engine', () => {
   });
 
   test('lockZoneFromClue consumes a key and locks the zone', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     await joinRoom(room.code, 'Bob', 'yellow');
     const started = await startGame(room.code, first.playerId);
@@ -346,7 +346,7 @@ describe('game engine', () => {
   });
 
   test('entering a locked zone without a key passes the turn', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'yellow');
     await startGame(room.code, first.playerId);
@@ -381,7 +381,7 @@ describe('game engine', () => {
   });
 
   test('creator can configure master keys in the lobby', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const creator = await joinRoom(room.code, 'Alice', 'blue');
 
     const updated = await setMasterKeysPerPlayer(room.code, creator.playerId, 3);
@@ -390,7 +390,7 @@ describe('game engine', () => {
   });
 
   test('reveals solution before player confirms', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'yellow');
     await startGame(room.code, first.playerId);
@@ -415,7 +415,7 @@ describe('game engine', () => {
   });
 
   test('eliminates player on wrong solution confirmation', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'yellow');
     await startGame(room.code, first.playerId);
@@ -440,7 +440,7 @@ describe('game engine', () => {
   });
 
   test('ends game when player confirms correct solution', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'yellow');
     await startGame(room.code, first.playerId);
@@ -466,20 +466,20 @@ describe('game engine', () => {
   });
 
   test('rejects invalid color on join', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const result = await joinRoom(room.code, 'Alice', 'brown');
     expect(result.error).toBe('Cor inválida.');
   });
 
   test('rejects duplicate color on join', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     await joinRoom(room.code, 'Alice', 'blue');
     const second = await joinRoom(room.code, 'Bob', 'blue');
     expect(second.error).toBe('Esta cor já está em uso.');
   });
 
   test('rejects reconnect with another players color', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     await joinRoom(room.code, 'Bob', 'yellow');
 
@@ -488,7 +488,7 @@ describe('game engine', () => {
   });
 
   test('allows reconnect with same color', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
     const first = await joinRoom(room.code, 'Alice', 'blue');
     await joinRoom(room.code, 'Bob', 'yellow');
 
@@ -498,7 +498,7 @@ describe('game engine', () => {
   });
 
   test('rejects join when room is full', async () => {
-    const room = await createRoom('002');
+    const room = await createRoom('021');
 
     for (let i = 0; i < MAX_PLAYERS; i++) {
       const joined = await joinRoom(room.code, `Player ${i + 1}`, PLAYER_COLORS[i]);

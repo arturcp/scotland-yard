@@ -13,6 +13,7 @@ import TurnBanner from '../TurnBanner';
 import ClueModal from '../ClueModal';
 import LockedZoneModal from '../LockedZoneModal';
 import DiceRoll from '../DiceRoll';
+import CaseIntro from '../CaseIntro';
 import MobileWarning from './MobileWarning';
 import TopBar from './TopBar';
 import type { GameController, Player, Position } from '../../types/game';
@@ -226,10 +227,7 @@ export default function Game({ roomCode }: GameProps) {
     }
   }, [phase, playerId, room?.players]);
 
-  const players = useMemo(
-    () => visiblePlayers as Player[],
-    [visiblePlayers],
-  );
+  const players = useMemo(() => visiblePlayers as Player[], [visiblePlayers]);
 
   const activePlayer = room?.players.find((player) => player.id === shift?.playerId);
 
@@ -376,14 +374,14 @@ export default function Game({ roomCode }: GameProps) {
                 {officialSolution.map((field) => (
                   <div key={field.key}>
                     <dt>{field.label}</dt>
-                    <dd>
-                      Resposta do vencedor: {lastSubmittedAnswers?.[field.key] ?? '—'}
-                    </dd>
+                    <dd>Resposta do vencedor: {lastSubmittedAnswers?.[field.key] ?? '—'}</dd>
                     <dd>Solução correta: {field.answer}</dd>
                   </div>
                 ))}
               </dl>
-              {solutionNarrative && <p className="game-over-overlay__narrative">{solutionNarrative}</p>}
+              {solutionNarrative && (
+                <p className="game-over-overlay__narrative">{solutionNarrative}</p>
+              )}
             </div>
           </div>
         )}
@@ -432,7 +430,7 @@ export default function Game({ roomCode }: GameProps) {
           <div className="turn-order-overlay__panel case-intro-overlay__panel">
             <h2>{room.caseTitle}</h2>
             <div className="case-intro-overlay__body">
-              <p className="case-intro__text">{room.caseIntro}</p>
+              <CaseIntro text={room.caseIntro} textClassName="case-intro__text" />
               {caseFields.length > 0 && (
                 <section className="case-intro-overlay__questions">
                   <h3>Perguntas a responder</h3>
@@ -561,11 +559,7 @@ export default function Game({ roomCode }: GameProps) {
         />
       )}
       {rolling && localDiceRoll && (
-        <DiceRoll
-          key={localDiceRoll}
-          showConfetti
-          onComplete={handleLocalDiceComplete}
-        />
+        <DiceRoll key={localDiceRoll} showConfetti onComplete={handleLocalDiceComplete} />
       )}
       {lastDiceRoll?.context === 'playing' && (
         <DiceRoll
