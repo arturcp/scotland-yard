@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import type { CasePreview } from '@/types/game';
+import CaseIntro from '@/components/CaseIntro';
 
 interface CaseStoryModalProps {
   casePreview: CasePreview | null;
@@ -65,9 +66,10 @@ export function CaseStoryModal({ casePreview, loading, onClose }: CaseStoryModal
           {loading && <p className="font-body text-muted-foreground">Carregando história…</p>}
           {!loading && casePreview && (
             <>
-              <p className="font-body text-base leading-relaxed whitespace-pre-wrap text-ivory/85">
-                {casePreview.intro}
-              </p>
+              <CaseIntro
+                text={casePreview.intro}
+                textClassName="mb-4 font-body text-base leading-relaxed whitespace-pre-wrap text-ivory/85"
+              />
 
               {casePreview.questions.length > 0 && (
                 <section className="mt-8 border-t border-gold/20 pt-6">

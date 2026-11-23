@@ -57,6 +57,10 @@
   margin-bottom: 0.75rem;
 }
 
+#modal-notes .notes__clues li p {
+  white-space: pre-line;
+}
+
 #modal-notes .notes__empty {
   margin: 0 0 1rem;
   font-size: 0.9rem;
